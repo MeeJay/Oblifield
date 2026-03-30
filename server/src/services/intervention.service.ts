@@ -180,6 +180,8 @@ export const interventionService = {
       contactPhone: string | null;
       contactEmail: string | null;
       estimatedDurationMinutes: number | null;
+      supervisorName: string | null;
+      ticketReference: string | null;
     }>,
   ): Promise<Intervention | null> {
     const updateData: Record<string, unknown> = { updated_at: new Date() };

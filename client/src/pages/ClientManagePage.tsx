@@ -10,7 +10,7 @@ import {
   MapPin,
   Phone,
 } from 'lucide-react';
-import type { ClientTreeNode, Client, Site } from '@oblifield/shared';
+import type { ClientTreeNode, Site } from '@oblifield/shared';
 import { clientsApi } from '@/api/clients.api';
 import { sitesApi } from '@/api/sites.api';
 import { Button } from '@/components/common/Button';

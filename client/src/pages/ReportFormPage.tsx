@@ -1,11 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   FileDown,
-  Building2,
-  MapPin,
-  Calendar,
-  Clock,
   Users,
   MessageSquare,
   Camera,
@@ -39,7 +35,6 @@ interface ReportFormData {
 export function ReportFormPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const interventionId = id ? Number(id) : null;
 
   const [loading, setLoading] = useState(!!interventionId);
