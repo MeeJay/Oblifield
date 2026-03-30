@@ -1,122 +1,101 @@
 <p align="center">
-  <img src="client/public/logo.svg" alt="Obliview" height="80">
+  <img src="client/public/logo.svg" alt="Oblifield" height="80">
 </p>
 
-<h3 align="center">Self-hosted Uptime & Infrastructure Monitoring</h3>
+<h3 align="center">Field Intervention Management for IT Service Companies</h3>
 
 <p align="center">
-  13 monitor types, native system agent, real-time dashboards, automated remediation.
+  Technician check-in/check-out, photo uploads, real-time dashboards, PDF reports.
   <br>
-  Part of the <a href="https://obli.tools"><strong>obli.tools</strong></a> ecosystem.
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/dashboard.png" alt="Dashboard" width="100%">
+  Part of the <a href="https://obli.tools"><strong>obli.tools</strong></a> ecosystem &mdash; compatible with <strong>Obligate</strong> SSO &amp; <strong>ObliTools</strong> desktop.
 </p>
 
 ---
 
-Obliview monitors your infrastructure from HTTP endpoints to bare-metal servers. Multi-tenant workspaces, hierarchical groups, RBAC, 10 notification channels, and a native Go agent that pushes CPU, memory, disk, network, GPU, and temperature metrics in real-time.
+Oblifield manages field interventions for IT service teams. Technicians check in and out of sites with GPS timestamps, upload photos, and add notes. Managers get a real-time dashboard, generate PDF intervention reports, and export data for billing and compliance.
 
 ## Features at a Glance
 
-- **13 monitor types** - HTTP, Ping, TCP, DNS, SSL, SMTP, Docker, Game Server, Push, Script, JSON API, Browser, Value Watcher
-- **Native system agent** - Windows/Linux/macOS, with CPU, memory, disk, network, temperature, GPU metrics
-- **10 notification channels** - Telegram, Discord, Slack, Teams, SMTP, Webhook, Gotify, Ntfy, Pushover, Free Mobile
-- **5 remediation actions** - Webhook, N8N, Script, Docker restart, SSH command
-- **Multi-tenant workspaces** - isolated tenants with per-workspace roles
-- **Teams & RBAC** - read-only / read-write per group or monitor
-- **Maintenance windows** - one-time or recurring, scope-based, suppresses notifications
-- **2FA** - TOTP authenticator apps + Email OTP
-- **Import / Export** - full config backup as JSON with conflict resolution
-- **18 UI languages**
-- **Real-time** - Socket.io live updates and live alert toasts
-- **Desktop tray app** - Windows & macOS, multi-tenant tab bar, auto-update
+- **Intervention lifecycle** &mdash; pending, assigned, in progress, done, issue, cancelled
+- **Technician check-in / check-out** &mdash; GPS timestamp, automatic status transitions
+- **Photo uploads** &mdash; per intervention, embedded in PDF reports
+- **Client & site hierarchy** &mdash; nested clients/sites with address, city, country, filtering by country
+- **PDF intervention reports** &mdash; branded layout matching paper forms (company name, comments, photos, signatures)
+- **Manager dashboard** &mdash; live status cards, today's schedule, recent activity feed
+- **Reports & CSV export** &mdash; per technician, per client, per period, with duration stats
+- **10 notification channels** &mdash; Telegram, Discord, Slack, Teams, SMTP, Webhook, Gotify, Ntfy, Pushover, Free Mobile
+- **Multi-tenant workspaces** &mdash; isolated tenants with per-workspace roles
+- **Teams & RBAC** &mdash; read-only / read-write per client or intervention
+- **SSO via Obligate** &mdash; single sign-on across the Obli suite
+- **ObliTools compatible** &mdash; runs inside the ObliTools desktop shell (iframe SSO)
+- **2FA** &mdash; TOTP authenticator apps + Email OTP
+- **Import / Export** &mdash; full config backup as JSON
+- **i18n** &mdash; French & English (extensible)
+- **Real-time** &mdash; Socket.io live updates and live alert toasts
+- **Theming** &mdash; Modern & Neon themes, accent color #AEEA00
 
 ---
 
-## Screenshots
+## Domain Model
 
-<table>
-  <tr>
-    <td><img src="docs/screenshots/dashboard-monitors.png" alt="Dashboard Monitors"><br><sub><b>Dashboard</b> — Per-monitor response time & status</sub></td>
-    <td><img src="docs/screenshots/monitor-detail.png" alt="Monitor Detail"><br><sub><b>Monitor Detail</b> — Uptime history & response chart</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/agent-overview.png" alt="Agent Overview"><br><sub><b>Agent Overview</b> — CPU, disk, memory, network, temps</sub></td>
-    <td><img src="docs/screenshots/agent-cpu.png" alt="Agent CPU"><br><sub><b>Agent CPU</b> — Per-core usage, clock speed, temperature</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/agent-gpu.png" alt="Agent GPU"><br><sub><b>Agent GPU</b> — Utilization, VRAM, temperature</sub></td>
-    <td><img src="docs/screenshots/agent-network.png" alt="Agent Network"><br><sub><b>Agent Network</b> — Per-interface throughput charts</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/notifications.png" alt="Notifications"><br><sub><b>Notifications</b> — Channel management & binding</sub></td>
-    <td><img src="docs/screenshots/teams.png" alt="Teams & RBAC"><br><sub><b>Teams & RBAC</b> — Granular permission tree</sub></td>
-  </tr>
-</table>
+| Entity | Description |
+|--------|-------------|
+| **Intervention** | A scheduled or ad-hoc field task (installation, maintenance, repair, inspection) |
+| **Client** | A customer organization, with nested sites/locations across countries |
+| **Technician** | A user linked to a field worker profile with GPS tracking |
+| **Timeline Event** | Check-in, check-out, note, photo, status change, assignment |
+| **Intervention Photo** | Uploaded image attached to an intervention and its timeline |
 
----
+### Intervention Statuses
 
-## Monitor Types
+| Status | Description |
+|--------|-------------|
+| `pending` | Created, not yet assigned |
+| `assigned` | Technician assigned, waiting for dispatch |
+| `in_progress` | Technician checked in on site |
+| `done` | Completed successfully |
+| `issue` | Completed with problems reported |
+| `cancelled` | Cancelled before completion |
 
-| Type | Description |
-|------|-------------|
-| **HTTP(S)** | URL monitoring with keyword matching, status code validation, custom headers & body, upside-down mode |
-| **Ping** | ICMP round-trip with response time tracking |
-| **TCP Port** | Raw TCP connectivity to any host:port |
-| **DNS** | Record lookup validation (A, AAAA, CNAME, MX, TXT...) |
-| **SSL Certificate** | Certificate expiry monitoring with configurable warning threshold |
-| **SMTP** | SMTP server availability check |
-| **Docker Container** | Container running/stopped status via Docker socket |
-| **Game Server** | Availability & player count via GameDig (Minecraft, CS2, Valheim, and 300+ games) |
-| **Push / Heartbeat** | Passive monitoring - external systems POST to a token URL, Obliview alerts if they stop |
-| **Script** | Run a shell command, validate exit code |
-| **JSON API** | Fetch a JSON endpoint, extract a value via JSONPath, validate it |
-| **Browser** | Headless Playwright browser check - renders JS, waits for selectors, optional screenshot on failure |
-| **Value Watcher** | Numeric value monitoring with operators: `>`, `<`, `>=`, `<=`, `==`, `!=`, `between`, `changed` |
+### Intervention Types
 
-Agent monitors (CPU, memory, disk, etc.) are a 14th category managed through the native agent system.
+`installation` &bull; `maintenance` &bull; `repair` &bull; `inspection` &bull; `other`
+
+### Priority Levels
+
+`low` &bull; `normal` &bull; `high` &bull; `urgent`
 
 ---
 
-## Native System Agent
+## Client & Site Management
 
-A lightweight Go binary runs on monitored hosts and pushes metrics to the server every N seconds. No inbound ports required.
+Clients are organized in a **nested hierarchy** (client &rarr; sites &rarr; sub-locations) using a closure table for efficient queries.
 
-**Collected metrics**
-- CPU usage (total + per-core)
-- Memory & swap usage
-- Disk usage per mount point
-- Network throughput (in/out per interface)
-- Temperatures - CPU, GPU, motherboard, NVMe (Windows: LibreHardwareMonitor + PawnIO + ASUS ATK; Linux/macOS: native sensors)
-- GPU utilization, VRAM, temperature (NVIDIA & AMD)
+- Full address fields: street, city, postal code, region, country
+- **Country filtering** &mdash; dropdown filter on the client list for multi-country deployments
+- A single client can have hundreds of sites across multiple countries
+- Intervention counts per client node
+- Settings and notification channels cascade through the hierarchy
 
-**Installation**
-- Windows: MSI installer (WiX v4) with optional PawnIO kernel driver for temperature sensors
-- Linux / macOS: native binary, systemd / launchctl service
-- Auto-update: agent downloads and reinstalls itself silently when a new version is available
-- Auto-uninstall command via server
+---
 
-**Configuration per device**
-- Threshold overrides per metric (CPU, memory, disk, network, temperature)
-- Group-level default thresholds with per-device override toggle
-- Push interval (seconds) - group default or device-specific
-- Heartbeat monitoring (alert if agent stops pushing)
-- Display config: hide/show sections, custom labels, chart preferences
-- Sensor display name renaming
+## PDF Intervention Reports
 
-**Device management**
-- Approval workflow (auto or manual)
-- Suspend / resume without deletion
-- Bulk approve, suspend, or uninstall
-- Auto-delete 10 minutes after uninstall command
+Generate professional PDF reports directly from any intervention, matching the structure of paper field forms:
+
+- **Header**: company logo/name + "RAPPORT D'INTERVENTION" + intervention title
+- **Info table**: client, site, date, start/end times, technician, supervisor, status, address
+- **Comments section**: intervention description + all timeline notes (with check-in/out timestamps)
+- **Photos section**: 2-column grid of uploaded photos with automatic page breaks
+- **Footer**: accent line + "Company Name &mdash; Document confidentiel" on every page
+
+The company name is configurable in **Settings &rarr; Company**.
 
 ---
 
 ## Notification Channels
 
-Bind channels at **global**, **group**, or **monitor** level with **merge**, **replace**, or **exclude** inheritance modes.
+Bind channels at **global**, **client**, or **intervention** level with **merge**, **replace**, or **exclude** inheritance modes.
 
 | Channel | Notes |
 |---------|-------|
@@ -124,46 +103,19 @@ Bind channels at **global**, **group**, or **monitor** level with **merge**, **r
 | **Discord** | Webhook URL |
 | **Slack** | Incoming webhook |
 | **Microsoft Teams** | Webhook URL |
-| **Email (SMTP)** | Custom SMTP server or platform SMTP |
-| **Webhook** | Generic HTTP - GET / POST / PUT / PATCH, custom headers |
-| **Gotify** | Self-hosted push (server URL + token) |
-| **Ntfy** | Self-hosted or ntfy.sh push |
-| **Pushover** | Mobile push via Pushover app |
-| **Free Mobile** | SMS via French mobile operator API |
-
-**Group notification mode** - receive one alert when the first monitor in a group goes down, and one recovery when all are back up.
-
-Test messages can be sent directly from the UI to validate channel configuration.
-
----
-
-## Remediation System
-
-Automatically react to monitor state changes with configurable actions.
-
-| Action | Description |
-|--------|-------------|
-| **Generic Webhook** | HTTP request (GET / POST / PUT / PATCH) to any endpoint |
-| **N8N Workflow** | Trigger an N8N automation workflow |
-| **Custom Script** | Run a shell script on the Obliview server |
-| **Docker Restart** | Restart a Docker container by name |
-| **SSH Command** | Execute a remote command over SSH (password or key auth) |
-
-- Trigger on: **down**, **up**, or **both**
-- Configurable cooldown between executions
-- Scope-based binding with merge / replace / exclude inheritance
-- AES-256-GCM encryption for SSH credentials
-- Full execution history: status, output, error, duration
+| **Email (SMTP)** | Custom SMTP server |
+| **Webhook** | Generic HTTP &mdash; GET / POST / PUT / PATCH, custom headers |
+| **Gotify** | Self-hosted push |
+| **Ntfy** | Self-hosted or ntfy.sh |
+| **Pushover** | Mobile push |
+| **Free Mobile** | SMS via French operator API |
 
 ---
 
 ## Multi-Tenant Workspaces
 
-Create isolated workspaces (tenants) within a single Obliview instance.
-
-- Each workspace has its own monitors, groups, teams, notification channels, settings, and remediation actions
+- Each workspace has its own interventions, clients, technicians, teams, notification channels, and settings
 - Users can belong to multiple workspaces with independent **admin** or **member** roles
-- Platform admins have cross-workspace visibility and can manage all tenants
 - Workspace switching from the UI without re-login
 - Notification channels can be shared across workspaces
 
@@ -172,23 +124,10 @@ Create isolated workspaces (tenants) within a single Obliview instance.
 ## Teams & RBAC
 
 - Create **teams** per workspace
-- Assign users to teams
-- Grant teams **read-only** (RO) or **read-write** (RW) access per group or monitor
-- Access cascades through the group hierarchy - assign a group and all children are covered
-- `canCreate` flag per team: allows non-admins to create monitors/groups
-- Platform admins always have full access to their workspace
-
----
-
-## Hierarchical Groups
-
-Organize monitors into nested groups with unlimited depth using a **closure table** for efficient queries.
-
-- Settings cascade: configure once at a parent group, override where needed
-- Notification channels cascade with merge / replace / exclude modes
-- **General groups** are visible to all users regardless of team permissions
-- Drag-and-drop reordering
-- Group notification mode for aggregate alerting
+- Grant teams **read-only** or **read-write** access per client or intervention
+- Access cascades through the client hierarchy
+- `canCreate` flag per team: allows non-admins to create interventions/clients
+- Admins always have full access
 
 ---
 
@@ -197,73 +136,10 @@ Organize monitors into nested groups with unlimited depth using a **closure tabl
 | Level | Scope |
 |-------|-------|
 | Global | Applies to everything in the workspace |
-| Group | Applies to the group and all subgroups |
-| Monitor | Monitor-specific override |
+| Client | Applies to the client and all sub-sites |
+| Intervention | Intervention-specific override |
 
-Deleting a setting at any scope reverts it to the inherited value from the parent. Settings include: check interval, timeout, retry interval, max retries, heartbeat monitoring (agents), push interval (agents).
-
----
-
-## Maintenance Windows
-
-Suppress alerts and exclude downtime from uptime statistics during planned maintenance.
-
-- **One-time** windows (auto-deleted after expiry) or **recurring** (daily / weekly)
-- Scope: global, group, monitor, or agent device
-- Scope inheritance - set a window on a group and it applies to all child monitors
-- Heartbeat records are shown in blue during maintenance
-- Notifications and remediations are suppressed
-- Uptime % and response time averages exclude maintenance periods
-
----
-
-## Two-Factor Authentication
-
-- **TOTP** - any authenticator app (Google Authenticator, Authy, 1Password, etc.)
-- **Email OTP** - one-time code sent via SMTP
-- Optional system-wide enforcement (all users must enroll 2FA)
-- Setup available during enrollment wizard or from the profile page
-
----
-
-## Import / Export
-
-Full configuration backup and restore as JSON.
-
-**Exportable sections:** monitor groups, monitors, settings, notification channels, agent groups, teams, remediation actions, remediation bindings.
-
-**Conflict resolution strategies** (when a UUID matches an existing record):
-- **Update** - overwrite the existing record
-- **Generate new** - create a duplicate with a fresh UUID
-- **Skip** - leave the existing record untouched
-
-Export and import are scoped to the **active workspace** - cross-tenant data is never included.
-
----
-
-## Live Alerts
-
-Real-time status-change notifications delivered via Socket.io without polling.
-
-- Floating toast notifications (bottom-right stack, 1-minute auto-dismiss)
-- Top-center banner showing the latest alert (10-second auto-dismiss)
-- Click to navigate directly to the affected monitor or agent
-- Per-workspace filtering - only see alerts relevant to your current tenant
-- Desktop app: unread badge per workspace tab, optional auto-switch to the alerting workspace
-
----
-
-## Desktop App
-
-A lightweight system tray application (Go) for quick access without keeping a browser tab open.
-
-- **Windows** (MSI installer) and **macOS** (DMG)
-- Per-workspace tab bar - switch between tenants
-- Unread alert badge per tab
-- **Auto-cycle mode** - rotate through workspaces every N seconds
-- **Follow alerts mode** - automatically switch to the workspace that just received an alert
-- Auto-update with in-tray update prompt
-- Starts minimized to tray, opens on click
+Settings include: default priority, default estimated duration, notification cooldown, timeline retention, photo max size, auto-complete on check-out.
 
 ---
 
@@ -283,19 +159,18 @@ docker compose -f docker-compose.external-db.yml up -d
 
 Set `DATABASE_URL` in your `.env` to point at your existing PostgreSQL instance.
 
-### Environment variables
+### Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgres://obliview:changeme@localhost:5432/obliview` |
-| `SESSION_SECRET` | Session signing secret | - |
+| `DATABASE_URL` | PostgreSQL connection string | `postgres://oblifield:changeme@localhost:5432/oblifield` |
+| `SESSION_SECRET` | Session signing secret | &mdash; |
 | `PORT` | Server port | `3001` |
 | `NODE_ENV` | `production` or `development` | `production` |
 | `CLIENT_ORIGIN` | CORS origin for the client | `http://localhost` |
-| `APP_NAME` | Prefix for notification messages | `Obliview` |
+| `APP_NAME` | Fallback app name (overridden by Settings &rarr; Company) | `Oblifield` |
 | `DEFAULT_ADMIN_USERNAME` | Admin account created on first run | `admin` |
 | `DEFAULT_ADMIN_PASSWORD` | Admin password on first run | `admin123` |
-| `MIN_CHECK_INTERVAL` | Minimum allowed check interval (seconds) | `10` |
 
 ---
 
@@ -307,17 +182,17 @@ Set `DATABASE_URL` in your `.env` to point at your existing PostgreSQL instance.
 | **Database** | PostgreSQL 16, Knex (migrations + query builder) |
 | **Real-time** | Socket.io |
 | **Client** | React 18, Vite, Tailwind CSS, Zustand |
-| **Agent** | Go (cross-platform binary) |
-| **Desktop app** | Go (systray) |
-| **Browser monitors** | Playwright (headless Chromium) |
+| **PDF** | PDFKit |
 | **Monorepo** | npm workspaces (`shared/`, `server/`, `client/`) |
 
 ---
 
-> **An experiment with Claude Code**
+> **Built with Claude Code**
 >
-> This project was built as an experiment to see how far Claude Code could be pushed as a development tool. Claude was used as a coding assistant throughout the entire development process.
+> This project was built using Claude Code as a development assistant throughout the entire process.
 
 <p align="center">
+  <a href="https://github.com/alexandreaj/Oblifield">github.com/alexandreaj/Oblifield</a>
+  &nbsp;&bull;&nbsp;
   <a href="https://obli.tools">obli.tools</a>
 </p>
