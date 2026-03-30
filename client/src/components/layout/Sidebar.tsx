@@ -13,7 +13,6 @@ import {
   BarChart3,
   PackageOpen,
   ChevronDown,
-  Building2,
   PanelLeft,
   PanelLeftClose,
   CalendarDays,
@@ -75,7 +74,6 @@ export function Sidebar() {
     { label: t('nav.notifications', 'Notifications'), path: '/notifications',      icon: <Bell size={18} />,        adminOnly: true },
     { label: t('nav.users', 'Users'),                path: '/admin/users',          icon: <Users size={18} />,       adminOnly: true },
     { label: t('nav.importExport', 'Import/Export'), path: '/admin/import-export',  icon: <PackageOpen size={18} />, adminOnly: true },
-    { label: t('tenant.pageTitle', 'Tenants'),       path: '/admin/tenants',        icon: <Building2 size={18} />,   adminOnly: true },
     { label: t('nav.settings', 'Settings'),          path: '/settings',             icon: <Settings size={18} />,    adminOnly: true },
   ];
 

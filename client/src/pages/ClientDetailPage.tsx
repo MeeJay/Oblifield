@@ -8,9 +8,10 @@ import {
   Clock,
   CheckCircle2,
 } from 'lucide-react';
-import type { Client, Intervention, InterventionStatus } from '@oblifield/shared';
+import type { Client, Site, Intervention, InterventionStatus } from '@oblifield/shared';
 import { INTERVENTION_STATUS_LABELS } from '@oblifield/shared';
 import { clientsApi } from '@/api/clients.api';
+import { sitesApi } from '@/api/sites.api';
 import { interventionsApi } from '@/api/interventions.api';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { cn } from '@/utils/cn';
@@ -30,16 +31,19 @@ export function ClientDetailPage() {
   const clientId = Number(id);
 
   const [client, setClient] = useState<Client | null>(null);
+  const [sites, setSites] = useState<Site[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     try {
-      const [cl, intvs] = await Promise.all([
+      const [cl, siteList, intvs] = await Promise.all([
         clientsApi.getById(clientId),
+        sitesApi.list({ clientId }),
         interventionsApi.list({ clientId }),
       ]);
       setClient(cl);
+      setSites(siteList);
       setInterventions(intvs);
     } catch {
       toast.error('Failed to load client details');
@@ -79,12 +83,6 @@ export function ClientDetailPage() {
               {client.name}
             </h1>
             <div className="flex flex-wrap items-center gap-4 text-sm text-text-secondary">
-              {client.address && (
-                <span className="flex items-center gap-1">
-                  <MapPin size={14} />
-                  {client.address}
-                </span>
-              )}
               {client.contactName && (
                 <span className="flex items-center gap-1">
                   <Phone size={14} />
@@ -127,6 +125,34 @@ export function ClientDetailPage() {
           <div className="text-sm text-text-secondary">Done</div>
         </div>
       </div>
+
+      {/* Sites */}
+      {sites.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+            <MapPin size={18} />
+            Sites ({sites.length})
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {sites.map((site) => (
+              <div
+                key={site.id}
+                className="rounded-lg border border-border bg-bg-secondary p-4"
+              >
+                <div className="text-sm font-medium text-text-primary">{site.name}</div>
+                {(site.city || site.country) && (
+                  <div className="text-xs text-text-secondary mt-1">
+                    {[site.city, site.country].filter(Boolean).join(', ')}
+                  </div>
+                )}
+                {site.address && (
+                  <div className="text-xs text-text-muted mt-0.5">{site.address}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Interventions */}
       <div>

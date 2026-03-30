@@ -199,16 +199,12 @@ export function InterventionDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <a
-            href={`/api/interventions/${intervention.id}/report/pdf`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <Link to={`/intervention/${intervention.id}/report`}>
             <Button variant="secondary" size="sm">
               <FileDown size={14} className="mr-1.5" />
               Rapport PDF
             </Button>
-          </a>
+          </Link>
           <Link to={`/intervention/${intervention.id}/edit`}>
             <Button variant="secondary" size="sm">
               <Pencil size={14} className="mr-1.5" />

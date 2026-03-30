@@ -388,7 +388,7 @@ router.get('/:id/report/pdf', async (req, res) => {
       timeline,
       photos,
       companyName,
-      supervisorName: (req.query.supervisor as string) || undefined,
+      supervisorName: (req.query.supervisor as string) || intervention.supervisorName || undefined,
     });
 
     const safeTitle = intervention.title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);

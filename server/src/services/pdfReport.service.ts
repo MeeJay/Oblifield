@@ -154,6 +154,10 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
   y = drawInfoRow('Statut :', intervention.status.toUpperCase().replace('_', ' '), y);
   y = drawInfoRow('Priorité :', intervention.priority.toUpperCase(), y);
 
+  if (intervention.ticketReference) {
+    y = drawInfoRow('Ticket :', intervention.ticketReference, y);
+  }
+
   if (intervention.address) {
     y = drawInfoRow('Adresse :', intervention.address, y);
   }

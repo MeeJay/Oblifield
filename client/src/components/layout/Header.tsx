@@ -9,7 +9,6 @@ import { useInterventionStore } from '@/store/interventionStore';
 import { appConfigApi } from '@/api/appConfig.api';
 import { Button } from '@/components/common/Button';
 import { NotificationCenter } from './NotificationCenter';
-import { TenantSwitcher } from './TenantSwitcher';
 import { cn } from '@/utils/cn';
 import { anonymizeUsername } from '@/utils/anonymize';
 
@@ -72,9 +71,6 @@ export function Header() {
         >
           <Menu size={20} />
         </button>
-
-        {/* Tenant switcher — hidden when single-tenant (tenants.length <= 1) */}
-        <TenantSwitcher />
 
         {/* Cross-app switch buttons via Obligate — hidden inside the native Obli.tools desktop app */}
         {obligateUrl && !isNativeApp && connectedApps.map(app => (

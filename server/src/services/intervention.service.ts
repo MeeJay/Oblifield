@@ -25,6 +25,8 @@ interface InterventionRow {
   contact_phone: string | null;
   contact_email: string | null;
   estimated_duration_minutes: number | null;
+  supervisor_name: string | null;
+  ticket_reference: string | null;
   created_by: number | null;
   tenant_id: number;
   created_at: Date;
@@ -36,7 +38,7 @@ function interventionBaseQuery(tenantId?: number) {
     .leftJoin('technicians as t', 'interventions.assigned_technician_id', 't.id')
     .leftJoin('users as u', 't.user_id', 'u.id')
     .leftJoin('clients as c', 'interventions.client_id', 'c.id')
-    .leftJoin('clients as s', 'interventions.site_id', 's.id')
+    .leftJoin('sites as s', 'interventions.site_id', 's.id')
     .select(
       'interventions.*',
       'u.display_name as assigned_technician_name',
@@ -74,6 +76,8 @@ function rowToIntervention(row: InterventionRow): Intervention {
     contactPhone: row.contact_phone,
     contactEmail: row.contact_email,
     estimatedDurationMinutes: row.estimated_duration_minutes,
+    supervisorName: row.supervisor_name,
+    ticketReference: row.ticket_reference,
     createdBy: row.created_by,
     tenantId: row.tenant_id,
     createdAt: row.created_at.toISOString(),
@@ -119,6 +123,8 @@ export const interventionService = {
       contactPhone?: string | null;
       contactEmail?: string | null;
       estimatedDurationMinutes?: number | null;
+      supervisorName?: string | null;
+      ticketReference?: string | null;
     },
     tenantId: number,
     createdBy: number,
@@ -144,6 +150,8 @@ export const interventionService = {
         contact_phone: data.contactPhone ?? null,
         contact_email: data.contactEmail ?? null,
         estimated_duration_minutes: data.estimatedDurationMinutes ?? null,
+        supervisor_name: data.supervisorName ?? null,
+        ticket_reference: data.ticketReference ?? null,
         created_by: createdBy,
         tenant_id: tenantId,
       })
@@ -192,6 +200,8 @@ export const interventionService = {
     if (data.contactPhone !== undefined) updateData.contact_phone = data.contactPhone;
     if (data.contactEmail !== undefined) updateData.contact_email = data.contactEmail;
     if (data.estimatedDurationMinutes !== undefined) updateData.estimated_duration_minutes = data.estimatedDurationMinutes;
+    if (data.supervisorName !== undefined) updateData.supervisor_name = data.supervisorName;
+    if (data.ticketReference !== undefined) updateData.ticket_reference = data.ticketReference;
 
     const [row] = await db('interventions')
       .where({ id })

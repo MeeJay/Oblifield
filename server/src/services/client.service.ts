@@ -6,11 +6,6 @@ interface ClientRow {
   name: string;
   slug: string;
   description: string | null;
-  address: string | null;
-  city: string | null;
-  postal_code: string | null;
-  region: string | null;
-  country: string | null;
   contact_name: string | null;
   contact_phone: string | null;
   contact_email: string | null;
@@ -27,11 +22,6 @@ function rowToClient(row: ClientRow): Client {
     name: row.name,
     slug: row.slug,
     description: row.description,
-    address: row.address,
-    city: row.city,
-    postalCode: row.postal_code,
-    region: row.region,
-    country: row.country,
     contactName: row.contact_name,
     contactPhone: row.contact_phone,
     contactEmail: row.contact_email,
@@ -63,13 +53,11 @@ async function ensureUniqueSlug(slug: string, tenantId: number, excludeId?: numb
 }
 
 export const clientService = {
-  async getAll(tenantId: number, filters?: { country?: string }): Promise<Client[]> {
-    const q = db<ClientRow>('clients')
+  async getAll(tenantId: number): Promise<Client[]> {
+    const rows = await db<ClientRow>('clients')
       .where({ tenant_id: tenantId })
       .orderBy('sort_order')
       .orderBy('name');
-    if (filters?.country) q.where('country', filters.country);
-    const rows = await q;
     return rows.map(rowToClient);
   },
 
@@ -95,10 +83,27 @@ export const clientService = {
       countMap.set(Number(r.client_id), Number(r.count));
     }
 
+    // Fetch site counts per client
+    const siteCountRows = await db('sites')
+      .where({ tenant_id: tenantId })
+      .groupBy('client_id')
+      .select('client_id')
+      .count('* as count');
+
+    const siteCountMap = new Map<number, number>();
+    for (const r of siteCountRows) {
+      siteCountMap.set(Number(r.client_id), Number(r.count));
+    }
+
     // Build tree
     const nodeMap = new Map<number, ClientTreeNode>();
     for (const c of allClients) {
-      nodeMap.set(c.id, { ...c, children: [], interventionCount: countMap.get(c.id) ?? 0 });
+      nodeMap.set(c.id, {
+        ...c,
+        children: [],
+        interventionCount: countMap.get(c.id) ?? 0,
+        siteCount: siteCountMap.get(c.id) ?? 0,
+      });
     }
 
     const roots: ClientTreeNode[] = [];
@@ -117,11 +122,6 @@ export const clientService = {
     data: {
       name: string;
       description?: string | null;
-      address?: string | null;
-      city?: string | null;
-      postalCode?: string | null;
-      region?: string | null;
-      country?: string | null;
       contactName?: string | null;
       contactPhone?: string | null;
       contactEmail?: string | null;
@@ -137,11 +137,6 @@ export const clientService = {
         name: data.name,
         slug,
         description: data.description ?? null,
-        address: data.address ?? null,
-        city: data.city ?? null,
-        postal_code: data.postalCode ?? null,
-        region: data.region ?? null,
-        country: data.country ?? null,
         contact_name: data.contactName ?? null,
         contact_phone: data.contactPhone ?? null,
         contact_email: data.contactEmail ?? null,
@@ -177,11 +172,6 @@ export const clientService = {
     data: Partial<{
       name: string;
       description: string | null;
-      address: string | null;
-      city: string | null;
-      postalCode: string | null;
-      region: string | null;
-      country: string | null;
       contactName: string | null;
       contactPhone: string | null;
       contactEmail: string | null;
@@ -199,11 +189,6 @@ export const clientService = {
       updateData.slug = await ensureUniqueSlug(slugify(data.name), existing.tenant_id, id);
     }
     if (data.description !== undefined) updateData.description = data.description;
-    if (data.address !== undefined) updateData.address = data.address;
-    if (data.city !== undefined) updateData.city = data.city;
-    if (data.postalCode !== undefined) updateData.postal_code = data.postalCode;
-    if (data.region !== undefined) updateData.region = data.region;
-    if (data.country !== undefined) updateData.country = data.country;
     if (data.contactName !== undefined) updateData.contact_name = data.contactName;
     if (data.contactPhone !== undefined) updateData.contact_phone = data.contactPhone;
     if (data.contactEmail !== undefined) updateData.contact_email = data.contactEmail;
@@ -221,16 +206,6 @@ export const clientService = {
   async delete(id: number): Promise<void> {
     // CASCADE in the DB handles closure table cleanup
     await db('clients').where({ id }).del();
-  },
-
-  async getCountries(tenantId: number): Promise<string[]> {
-    const rows = await db('clients')
-      .where({ tenant_id: tenantId })
-      .whereNotNull('country')
-      .where('country', '!=', '')
-      .distinct('country')
-      .orderBy('country');
-    return rows.map((r: any) => r.country);
   },
 
   async getStats(

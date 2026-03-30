@@ -5,13 +5,11 @@ import { clientService } from '../services/client.service';
 
 const router = Router();
 
-// GET /clients — list all clients for tenant (optional ?country=XX filter)
+// GET /clients — list all clients for tenant
 router.get('/', async (req, res) => {
   try {
     const tenantId = (req as any).tenantId;
-    const filters: { country?: string } = {};
-    if (req.query.country) filters.country = req.query.country as string;
-    const data = await clientService.getAll(tenantId, filters);
+    const data = await clientService.getAll(tenantId);
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -34,17 +32,6 @@ router.get('/stats', async (req, res) => {
   try {
     const tenantId = (req as any).tenantId;
     const data = await clientService.getStats(tenantId);
-    res.json({ success: true, data });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// GET /clients/countries — distinct country list for filter dropdown
-router.get('/countries', async (req, res) => {
-  try {
-    const tenantId = (req as any).tenantId;
-    const data = await clientService.getCountries(tenantId);
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

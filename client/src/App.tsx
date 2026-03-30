@@ -9,6 +9,7 @@ import { EnrollmentPage } from '@/pages/EnrollmentPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { SchedulePage } from '@/pages/SchedulePage';
 import { InterventionDetailPage } from '@/pages/InterventionDetailPage';
 import { InterventionEditPage } from '@/pages/InterventionEditPage';
 import { ClientManagePage } from '@/pages/ClientManagePage';
@@ -16,10 +17,10 @@ import { ClientDetailPage } from '@/pages/ClientDetailPage';
 import { TechnicianManagePage } from '@/pages/TechnicianManagePage';
 import { TechnicianDetailPage } from '@/pages/TechnicianDetailPage';
 import { ReportsPage } from '@/pages/ReportsPage';
+import { ReportFormPage } from '@/pages/ReportFormPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { AdminUsersPage } from '@/pages/AdminUsersPage';
-import { AdminTenantsPage } from '@/pages/AdminTenantsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { ImportExportPage } from '@/pages/ImportExportPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -46,10 +47,12 @@ export default function App() {
           <Route path="/enroll" element={<EnrollmentPage />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/schedule" element={<SchedulePage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/intervention/new" element={<InterventionEditPage />} />
             <Route path="/intervention/:id" element={<InterventionDetailPage />} />
             <Route path="/intervention/:id/edit" element={<InterventionEditPage />} />
+            <Route path="/intervention/:id/report" element={<ReportFormPage />} />
             <Route path="/client/:id" element={<ClientDetailPage />} />
 
             {/* Admin-only routes */}
@@ -61,7 +64,6 @@ export default function App() {
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />
               <Route path="/admin/import-export" element={<ImportExportPage />} />
-              <Route path="/admin/tenants" element={<AdminTenantsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>

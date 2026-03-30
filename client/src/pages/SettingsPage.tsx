@@ -283,7 +283,7 @@ export function SettingsPage() {
                     <Server size={12} /> Versions
                   </p>
                   <AboutRow label="Server"   value={`v${systemInfo.appVersion}`} />
-                  <AboutRow label="Agent"    value={`v${systemInfo.agentVersion}`} />
+                  <AboutRow label="Client"   value={`v${__APP_VERSION__}`} />
                   <AboutRow label="Node.js"  value={systemInfo.nodeVersion} />
                 </div>
                 {/* Instance */}

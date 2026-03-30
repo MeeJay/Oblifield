@@ -24,7 +24,6 @@ Oblifield manages field interventions for IT service teams. Technicians check in
 - **Manager dashboard** &mdash; live status cards, today's schedule, recent activity feed
 - **Reports & CSV export** &mdash; per technician, per client, per period, with duration stats
 - **10 notification channels** &mdash; Telegram, Discord, Slack, Teams, SMTP, Webhook, Gotify, Ntfy, Pushover, Free Mobile
-- **Multi-tenant workspaces** &mdash; isolated tenants with per-workspace roles
 - **Teams & RBAC** &mdash; read-only / read-write per client or intervention
 - **SSO via Obligate** &mdash; single sign-on across the Obli suite
 - **ObliTools compatible** &mdash; runs inside the ObliTools desktop shell (iframe SSO)
@@ -112,18 +111,9 @@ Bind channels at **global**, **client**, or **intervention** level with **merge*
 
 ---
 
-## Multi-Tenant Workspaces
-
-- Each workspace has its own interventions, clients, technicians, teams, notification channels, and settings
-- Users can belong to multiple workspaces with independent **admin** or **member** roles
-- Workspace switching from the UI without re-login
-- Notification channels can be shared across workspaces
-
----
-
 ## Teams & RBAC
 
-- Create **teams** per workspace
+- Create **teams**
 - Grant teams **read-only** or **read-write** access per client or intervention
 - Access cascades through the client hierarchy
 - `canCreate` flag per team: allows non-admins to create interventions/clients

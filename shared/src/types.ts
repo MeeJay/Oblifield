@@ -78,6 +78,8 @@ export interface Intervention {
   contactPhone: string | null;
   contactEmail: string | null;
   estimatedDurationMinutes: number | null;
+  supervisorName: string | null;
+  ticketReference: string | null;
   createdBy: number | null;
   tenantId: number;
   createdAt: string;
@@ -111,11 +113,6 @@ export interface Client {
   name: string;
   slug: string;
   description: string | null;
-  address: string | null;
-  city: string | null;
-  postalCode: string | null;
-  region: string | null;
-  country: string | null;
   contactName: string | null;
   contactPhone: string | null;
   contactEmail: string | null;
@@ -129,6 +126,30 @@ export interface Client {
 export interface ClientTreeNode extends Client {
   children: ClientTreeNode[];
   interventionCount: number;
+  siteCount: number;
+}
+
+// ============================================
+// Site types (physical locations belonging to a client)
+// ============================================
+export interface Site {
+  id: number;
+  clientId: number;
+  clientName: string | null;
+  name: string;
+  address: string | null;
+  city: string | null;
+  postalCode: string | null;
+  region: string | null;
+  country: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  contactName: string | null;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  tenantId: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ============================================
@@ -222,11 +243,6 @@ export interface BulkEditRequest {
 export interface CreateClientRequest {
   name: string;
   description?: string | null;
-  address?: string | null;
-  city?: string | null;
-  postalCode?: string | null;
-  region?: string | null;
-  country?: string | null;
   contactName?: string | null;
   contactPhone?: string | null;
   contactEmail?: string | null;
@@ -237,11 +253,6 @@ export interface CreateClientRequest {
 export interface UpdateClientRequest {
   name?: string;
   description?: string | null;
-  address?: string | null;
-  city?: string | null;
-  postalCode?: string | null;
-  region?: string | null;
-  country?: string | null;
   contactName?: string | null;
   contactPhone?: string | null;
   contactEmail?: string | null;

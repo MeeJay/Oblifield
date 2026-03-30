@@ -21,6 +21,7 @@ import interventionsRoutes from './interventions.routes';
 import clientsRoutes from './clients.routes';
 import techniciansRoutes from './technicians.routes';
 import reportsRoutes from './reports.routes';
+import sitesRoutes from './sites.routes';
 
 const router = Router();
 
@@ -49,6 +50,7 @@ tenantRouter.use(requireTenant);
 
 tenantRouter.use('/interventions', interventionsRoutes);
 tenantRouter.use('/clients', clientsRoutes);
+tenantRouter.use('/sites', sitesRoutes);
 tenantRouter.use('/technicians', techniciansRoutes);
 tenantRouter.use('/reports', reportsRoutes);
 tenantRouter.use('/settings', settingsRoutes);

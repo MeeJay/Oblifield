@@ -2,8 +2,8 @@ import apiClient from './client';
 import type { Client, ClientTreeNode, ApiResponse } from '@oblifield/shared';
 
 export const clientsApi = {
-  async list(filters?: { country?: string }): Promise<Client[]> {
-    const res = await apiClient.get<ApiResponse<Client[]>>('/clients', { params: filters });
+  async list(): Promise<Client[]> {
+    const res = await apiClient.get<ApiResponse<Client[]>>('/clients');
     return res.data.data!;
   },
 
@@ -36,8 +36,4 @@ export const clientsApi = {
     return res.data.data!;
   },
 
-  async getCountries(): Promise<string[]> {
-    const res = await apiClient.get<ApiResponse<string[]>>('/clients/countries');
-    return res.data.data!;
-  },
 };

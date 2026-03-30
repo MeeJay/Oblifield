@@ -6,6 +6,7 @@ import type {
   InterventionType,
   InterventionPriority,
   Client,
+  Site,
   Technician,
 } from '@oblifield/shared';
 import {
@@ -16,6 +17,7 @@ import {
 } from '@oblifield/shared';
 import { interventionsApi } from '@/api/interventions.api';
 import { clientsApi } from '@/api/clients.api';
+import { sitesApi } from '@/api/sites.api';
 import { techniciansApi } from '@/api/technicians.api';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
@@ -72,7 +74,7 @@ export function InterventionEditPage() {
 
   const [form, setForm] = useState<FormData>(emptyForm);
   const [clients, setClients] = useState<Client[]>([]);
-  const [sites, setSites] = useState<Client[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -84,7 +86,7 @@ export function InterventionEditPage() {
           clientsApi.list(),
           techniciansApi.list(),
         ]);
-        setClients(allClients.filter((c) => c.parentId == null));
+        setClients(allClients);
         setTechnicians(allTechs);
 
         if (isEdit) {
@@ -108,7 +110,8 @@ export function InterventionEditPage() {
 
           // Load sites for the selected client
           if (intv.clientId) {
-            setSites(allClients.filter((c) => c.parentId === intv.clientId));
+            const clientSites = await sitesApi.list({ clientId: intv.clientId });
+            setSites(clientSites);
           }
         }
       } catch {
@@ -124,9 +127,7 @@ export function InterventionEditPage() {
   const handleClientChange = (clientId: string) => {
     setForm((f) => ({ ...f, clientId, siteId: '' }));
     if (clientId) {
-      clientsApi.list().then((allClients) => {
-        setSites(allClients.filter((c) => c.parentId === Number(clientId)));
-      });
+      sitesApi.list({ clientId: Number(clientId) }).then(setSites);
     } else {
       setSites([]);
     }

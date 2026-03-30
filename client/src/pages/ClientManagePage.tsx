@@ -9,10 +9,10 @@ import {
   Building2,
   MapPin,
   Phone,
-  Filter,
 } from 'lucide-react';
-import type { ClientTreeNode, Client } from '@oblifield/shared';
+import type { ClientTreeNode, Client, Site } from '@oblifield/shared';
 import { clientsApi } from '@/api/clients.api';
+import { sitesApi } from '@/api/sites.api';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -23,6 +23,23 @@ import { useTranslation } from 'react-i18next';
 interface ClientFormData {
   name: string;
   description: string;
+  contactName: string;
+  contactPhone: string;
+  contactEmail: string;
+  parentId: number | null;
+}
+
+const emptyClientForm: ClientFormData = {
+  name: '',
+  description: '',
+  contactName: '',
+  contactPhone: '',
+  contactEmail: '',
+  parentId: null,
+};
+
+interface SiteFormData {
+  name: string;
   address: string;
   city: string;
   postalCode: string;
@@ -31,12 +48,11 @@ interface ClientFormData {
   contactName: string;
   contactPhone: string;
   contactEmail: string;
-  parentId: number | null;
+  clientId: number | null;
 }
 
-const emptyForm: ClientFormData = {
+const emptySiteForm: SiteFormData = {
   name: '',
-  description: '',
   address: '',
   city: '',
   postalCode: '',
@@ -45,33 +61,37 @@ const emptyForm: ClientFormData = {
   contactName: '',
   contactPhone: '',
   contactEmail: '',
-  parentId: null,
+  clientId: null,
 };
 
 export function ClientManagePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [tree, setTree] = useState<ClientTreeNode[]>([]);
-  const [allClients, setAllClients] = useState<Client[]>([]);
-  const [countries, setCountries] = useState<string[]>([]);
-  const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState<ClientFormData>(emptyForm);
-  const [saving, setSaving] = useState(false);
+
+  // Client modal state
+  const [clientModalOpen, setClientModalOpen] = useState(false);
+  const [editingClientId, setEditingClientId] = useState<number | null>(null);
+  const [clientForm, setClientForm] = useState<ClientFormData>(emptyClientForm);
+  const [savingClient, setSavingClient] = useState(false);
+
+  // Site modal state
+  const [siteModalOpen, setSiteModalOpen] = useState(false);
+  const [editingSiteId, setEditingSiteId] = useState<number | null>(null);
+  const [siteForm, setSiteForm] = useState<SiteFormData>(emptySiteForm);
+  const [savingSite, setSavingSite] = useState(false);
+
+  // Sites panel state
+  const [selectedClientSites, setSelectedClientSites] = useState<Site[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+  const [sitesLoading, setSitesLoading] = useState(false);
 
   const fetchData = async () => {
     try {
-      const [treeData, clientList, countryList] = await Promise.all([
-        clientsApi.tree(),
-        clientsApi.list(selectedCountry ? { country: selectedCountry } : undefined),
-        clientsApi.getCountries(),
-      ]);
+      const treeData = await clientsApi.tree();
       setTree(treeData);
-      setAllClients(clientList);
-      setCountries(countryList);
     } catch {
       toast.error(t('common.error', 'Failed to load data'));
     } finally {
@@ -81,7 +101,20 @@ export function ClientManagePage() {
 
   useEffect(() => {
     fetchData();
-  }, [selectedCountry]);
+  }, []);
+
+  const loadSitesForClient = async (clientId: number) => {
+    setSitesLoading(true);
+    try {
+      const sites = await sitesApi.list({ clientId });
+      setSelectedClientSites(sites);
+      setSelectedClientId(clientId);
+    } catch {
+      toast.error(t('common.error', 'Failed to load sites'));
+    } finally {
+      setSitesLoading(false);
+    }
+  };
 
   const toggleExpand = (id: number) => {
     setExpanded((prev) => {
@@ -92,94 +125,149 @@ export function ClientManagePage() {
     });
   };
 
-  const openAdd = (parentId: number | null = null) => {
-    setEditingId(null);
-    setForm({ ...emptyForm, parentId });
-    setModalOpen(true);
+  // Client CRUD
+  const openAddClient = (parentId: number | null = null) => {
+    setEditingClientId(null);
+    setClientForm({ ...emptyClientForm, parentId });
+    setClientModalOpen(true);
   };
 
-  const openEdit = (client: Client) => {
-    setEditingId(client.id);
-    setForm({
+  const openEditClient = (client: ClientTreeNode) => {
+    setEditingClientId(client.id);
+    setClientForm({
       name: client.name,
       description: client.description ?? '',
-      address: client.address ?? '',
-      city: client.city ?? '',
-      postalCode: client.postalCode ?? '',
-      region: client.region ?? '',
-      country: client.country ?? '',
       contactName: client.contactName ?? '',
       contactPhone: client.contactPhone ?? '',
       contactEmail: client.contactEmail ?? '',
       parentId: client.parentId,
     });
-    setModalOpen(true);
+    setClientModalOpen(true);
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleClientSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) {
+    if (!clientForm.name.trim()) {
       toast.error(t('common.required', 'Name is required'));
       return;
     }
-    setSaving(true);
+    setSavingClient(true);
     try {
       const payload = {
-        name: form.name.trim(),
-        description: form.description.trim() || null,
-        address: form.address.trim() || null,
-        city: form.city.trim() || null,
-        postalCode: form.postalCode.trim() || null,
-        region: form.region.trim() || null,
-        country: form.country.trim() || null,
-        contactName: form.contactName.trim() || null,
-        contactPhone: form.contactPhone.trim() || null,
-        contactEmail: form.contactEmail.trim() || null,
-        parentId: form.parentId,
+        name: clientForm.name.trim(),
+        description: clientForm.description.trim() || null,
+        contactName: clientForm.contactName.trim() || null,
+        contactPhone: clientForm.contactPhone.trim() || null,
+        contactEmail: clientForm.contactEmail.trim() || null,
+        parentId: clientForm.parentId,
       };
-      if (editingId) {
-        await clientsApi.update(editingId, payload);
+      if (editingClientId) {
+        await clientsApi.update(editingClientId, payload);
         toast.success(t('common.saved', 'Client updated'));
       } else {
         await clientsApi.create(payload);
         toast.success(t('common.saved', 'Client created'));
       }
-      setModalOpen(false);
+      setClientModalOpen(false);
       await fetchData();
     } catch {
       toast.error(t('common.error', 'Failed to save'));
     } finally {
-      setSaving(false);
+      setSavingClient(false);
     }
   };
 
-  const handleDelete = async (id: number, name: string) => {
+  const handleDeleteClient = async (id: number, name: string) => {
     if (!confirm(`${t('common.confirm', 'Are you sure?')} "${name}"`)) return;
     try {
       await clientsApi.delete(id);
       toast.success(t('common.deleted', 'Deleted'));
+      if (selectedClientId === id) {
+        setSelectedClientId(null);
+        setSelectedClientSites([]);
+      }
       await fetchData();
     } catch {
       toast.error(t('common.error', 'Failed to delete'));
     }
   };
 
-  // Filter tree by country (client-side for tree view)
-  const filterTree = (nodes: ClientTreeNode[]): ClientTreeNode[] => {
-    if (!selectedCountry) return nodes;
-    return nodes
-      .map((node) => {
-        const filteredChildren = filterTree(node.children);
-        const matchesSelf = node.country === selectedCountry;
-        if (matchesSelf || filteredChildren.length > 0) {
-          return { ...node, children: filteredChildren };
-        }
-        return null;
-      })
-      .filter(Boolean) as ClientTreeNode[];
+  // Site CRUD
+  const openAddSite = (clientId: number) => {
+    setEditingSiteId(null);
+    setSiteForm({ ...emptySiteForm, clientId });
+    setSiteModalOpen(true);
   };
 
-  const filteredTree = filterTree(tree);
+  const openEditSite = (site: Site) => {
+    setEditingSiteId(site.id);
+    setSiteForm({
+      name: site.name,
+      address: site.address ?? '',
+      city: site.city ?? '',
+      postalCode: site.postalCode ?? '',
+      region: site.region ?? '',
+      country: site.country ?? '',
+      contactName: site.contactName ?? '',
+      contactPhone: site.contactPhone ?? '',
+      contactEmail: site.contactEmail ?? '',
+      clientId: site.clientId,
+    });
+    setSiteModalOpen(true);
+  };
+
+  const handleSiteSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!siteForm.name.trim() || !siteForm.clientId) {
+      toast.error(t('common.required', 'Name and client are required'));
+      return;
+    }
+    setSavingSite(true);
+    try {
+      const payload = {
+        clientId: siteForm.clientId,
+        name: siteForm.name.trim(),
+        address: siteForm.address.trim() || null,
+        city: siteForm.city.trim() || null,
+        postalCode: siteForm.postalCode.trim() || null,
+        region: siteForm.region.trim() || null,
+        country: siteForm.country.trim() || null,
+        contactName: siteForm.contactName.trim() || null,
+        contactPhone: siteForm.contactPhone.trim() || null,
+        contactEmail: siteForm.contactEmail.trim() || null,
+      };
+      if (editingSiteId) {
+        await sitesApi.update(editingSiteId, payload);
+        toast.success(t('common.saved', 'Site updated'));
+      } else {
+        await sitesApi.create(payload);
+        toast.success(t('common.saved', 'Site created'));
+      }
+      setSiteModalOpen(false);
+      if (siteForm.clientId) {
+        await loadSitesForClient(siteForm.clientId);
+      }
+      await fetchData();
+    } catch {
+      toast.error(t('common.error', 'Failed to save'));
+    } finally {
+      setSavingSite(false);
+    }
+  };
+
+  const handleDeleteSite = async (site: Site) => {
+    if (!confirm(`${t('common.confirm', 'Are you sure?')} "${site.name}"`)) return;
+    try {
+      await sitesApi.delete(site.id);
+      toast.success(t('common.deleted', 'Deleted'));
+      if (selectedClientId) {
+        await loadSitesForClient(selectedClientId);
+      }
+      await fetchData();
+    } catch {
+      toast.error(t('common.error', 'Failed to delete'));
+    }
+  };
 
   if (loading) {
     return (
@@ -194,79 +282,114 @@ export function ClientManagePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-text-primary">{t('nav.clients', 'Clients')}</h1>
-        <Button variant="primary" size="sm" onClick={() => openAdd()}>
+        <Button variant="primary" size="sm" onClick={() => openAddClient()}>
           <Plus size={16} className="mr-1.5" />
           {t('common.add', 'Add')}
         </Button>
       </div>
 
-      {/* Country filter */}
-      {countries.length > 0 && (
-        <div className="flex items-center gap-3 mb-4">
-          <Filter size={16} className="text-text-muted" />
-          <select
-            value={selectedCountry}
-            onChange={(e) => setSelectedCountry(e.target.value)}
-            className="rounded-md border border-border bg-bg-tertiary px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
-          >
-            <option value="">{t('client.allCountries', 'All countries')}</option>
-            {countries.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          {selectedCountry && (
-            <span className="text-xs text-text-secondary">
-              {allClients.length} {t('common.results', 'results')}
-            </span>
+      <div className="flex gap-6">
+        {/* Tree */}
+        <div className="flex-1 min-w-0">
+          {tree.length === 0 ? (
+            <div className="rounded-lg border border-border bg-bg-secondary p-8 text-center">
+              <Building2 size={32} className="mx-auto mb-3 text-text-secondary" />
+              <p className="text-text-secondary">
+                {t('client.empty', 'No clients yet. Add your first client.')}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {tree.map((node) => (
+                <ClientTreeRow
+                  key={node.id}
+                  node={node}
+                  depth={0}
+                  expanded={expanded}
+                  selectedClientId={selectedClientId}
+                  onToggle={toggleExpand}
+                  onNavigate={(id) => navigate(`/client/${id}`)}
+                  onEdit={openEditClient}
+                  onDelete={(n) => handleDeleteClient(n.id, n.name)}
+                  onAddChild={(parentId) => openAddClient(parentId)}
+                  onAddSite={(clientId) => openAddSite(clientId)}
+                  onShowSites={(clientId) => loadSitesForClient(clientId)}
+                />
+              ))}
+            </div>
           )}
         </div>
-      )}
 
-      {/* Tree */}
-      {filteredTree.length === 0 ? (
-        <div className="rounded-lg border border-border bg-bg-secondary p-8 text-center">
-          <Building2 size={32} className="mx-auto mb-3 text-text-secondary" />
-          <p className="text-text-secondary">
-            {selectedCountry
-              ? t('common.noResults', 'No results')
-              : t('client.empty', 'No clients yet. Add your first client.')}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-1">
-          {filteredTree.map((node) => (
-            <ClientTreeRow
-              key={node.id}
-              node={node}
-              depth={0}
-              expanded={expanded}
-              onToggle={toggleExpand}
-              onNavigate={(id) => navigate(`/client/${id}`)}
-              onEdit={(n) => {
-                const c = allClients.find((cl) => cl.id === n.id);
-                if (c) openEdit(c);
-              }}
-              onDelete={(n) => handleDelete(n.id, n.name)}
-              onAddChild={(parentId) => openAdd(parentId)}
-            />
-          ))}
-        </div>
-      )}
+        {/* Sites panel */}
+        {selectedClientId && (
+          <div className="w-80 shrink-0">
+            <div className="rounded-lg border border-border bg-bg-secondary p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
+                  <MapPin size={14} />
+                  {t('site.sites', 'Sites')}
+                </h3>
+                <Button variant="ghost" size="sm" onClick={() => openAddSite(selectedClientId)}>
+                  <Plus size={14} />
+                </Button>
+              </div>
+              {sitesLoading ? (
+                <LoadingSpinner size="sm" />
+              ) : selectedClientSites.length === 0 ? (
+                <p className="text-xs text-text-secondary">{t('site.empty', 'No sites yet')}</p>
+              ) : (
+                <div className="space-y-2">
+                  {selectedClientSites.map((site) => (
+                    <div
+                      key={site.id}
+                      className="rounded border border-border bg-bg-primary p-2 text-xs group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-text-primary">{site.name}</span>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => openEditSite(site)}
+                            className="p-0.5 rounded hover:bg-bg-hover text-text-secondary hover:text-accent"
+                          >
+                            <Pencil size={12} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSite(site)}
+                            className="p-0.5 rounded hover:bg-bg-hover text-text-secondary hover:text-red-500"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                      {(site.city || site.country) && (
+                        <p className="text-text-secondary mt-0.5">
+                          {[site.city, site.country].filter(Boolean).join(', ')}
+                        </p>
+                      )}
+                      {site.address && (
+                        <p className="text-text-muted mt-0.5">{site.address}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* Modal */}
-      {modalOpen && (
+      {/* Client Modal */}
+      {clientModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-bg-primary p-6 shadow-xl">
+          <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-bg-primary p-6 shadow-xl">
             <h2 className="text-lg font-semibold text-text-primary mb-4">
-              {editingId ? t('common.edit', 'Edit') : t('common.add', 'Add')} {t('nav.clients', 'Client')}
+              {editingClientId ? t('common.edit', 'Edit') : t('common.add', 'Add')} {t('nav.clients', 'Client')}
             </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleClientSubmit} className="space-y-4">
               <Input
                 label={`${t('client.name', 'Name')} *`}
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                value={clientForm.name}
+                onChange={(e) => setClientForm((f) => ({ ...f, name: e.target.value }))}
                 required
               />
               <div className="space-y-1">
@@ -274,12 +397,65 @@ export function ClientManagePage() {
                   {t('intervention.description', 'Description')}
                 </label>
                 <textarea
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                  value={clientForm.description}
+                  onChange={(e) => setClientForm((f) => ({ ...f, description: e.target.value }))}
                   rows={2}
                   className="w-full rounded-md border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
                 />
               </div>
+
+              {/* Contact section */}
+              <div className="border-t border-border pt-4">
+                <h3 className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-1.5">
+                  <Phone size={14} />
+                  {t('client.contact', 'Contact')}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Input
+                    label={t('client.contactName', 'Name')}
+                    value={clientForm.contactName}
+                    onChange={(e) => setClientForm((f) => ({ ...f, contactName: e.target.value }))}
+                  />
+                  <Input
+                    label={t('technician.phone', 'Phone')}
+                    value={clientForm.contactPhone}
+                    onChange={(e) => setClientForm((f) => ({ ...f, contactPhone: e.target.value }))}
+                  />
+                  <Input
+                    label="Email"
+                    value={clientForm.contactEmail}
+                    onChange={(e) => setClientForm((f) => ({ ...f, contactEmail: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <Button type="submit" variant="primary" loading={savingClient}>
+                  {editingClientId ? t('common.save', 'Save') : t('common.add', 'Create')}
+                </Button>
+                <Button type="button" variant="ghost" onClick={() => setClientModalOpen(false)}>
+                  {t('common.cancel', 'Cancel')}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Site Modal */}
+      {siteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-bg-primary p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-text-primary mb-4">
+              {editingSiteId ? t('common.edit', 'Edit') : t('common.add', 'Add')} {t('site.site', 'Site')}
+            </h2>
+            <form onSubmit={handleSiteSubmit} className="space-y-4">
+              <Input
+                label={`${t('client.name', 'Name')} *`}
+                value={siteForm.name}
+                onChange={(e) => setSiteForm((f) => ({ ...f, name: e.target.value }))}
+                required
+              />
 
               {/* Address section */}
               <div className="border-t border-border pt-4">
@@ -289,30 +465,30 @@ export function ClientManagePage() {
                 </h3>
                 <Input
                   label={t('client.address', 'Address')}
-                  value={form.address}
-                  onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+                  value={siteForm.address}
+                  onChange={(e) => setSiteForm((f) => ({ ...f, address: e.target.value }))}
                   placeholder="123 Rue de l'Exemple"
                 />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
                   <Input
                     label={t('client.city', 'City')}
-                    value={form.city}
-                    onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                    value={siteForm.city}
+                    onChange={(e) => setSiteForm((f) => ({ ...f, city: e.target.value }))}
                   />
                   <Input
                     label={t('client.postalCode', 'Postal Code')}
-                    value={form.postalCode}
-                    onChange={(e) => setForm((f) => ({ ...f, postalCode: e.target.value }))}
+                    value={siteForm.postalCode}
+                    onChange={(e) => setSiteForm((f) => ({ ...f, postalCode: e.target.value }))}
                   />
                   <Input
                     label={t('client.region', 'Region')}
-                    value={form.region}
-                    onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))}
+                    value={siteForm.region}
+                    onChange={(e) => setSiteForm((f) => ({ ...f, region: e.target.value }))}
                   />
                   <Input
                     label={t('client.country', 'Country')}
-                    value={form.country}
-                    onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
+                    value={siteForm.country}
+                    onChange={(e) => setSiteForm((f) => ({ ...f, country: e.target.value }))}
                     placeholder="FR"
                   />
                 </div>
@@ -327,27 +503,27 @@ export function ClientManagePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <Input
                     label={t('client.contactName', 'Name')}
-                    value={form.contactName}
-                    onChange={(e) => setForm((f) => ({ ...f, contactName: e.target.value }))}
+                    value={siteForm.contactName}
+                    onChange={(e) => setSiteForm((f) => ({ ...f, contactName: e.target.value }))}
                   />
                   <Input
                     label={t('technician.phone', 'Phone')}
-                    value={form.contactPhone}
-                    onChange={(e) => setForm((f) => ({ ...f, contactPhone: e.target.value }))}
+                    value={siteForm.contactPhone}
+                    onChange={(e) => setSiteForm((f) => ({ ...f, contactPhone: e.target.value }))}
                   />
                   <Input
                     label="Email"
-                    value={form.contactEmail}
-                    onChange={(e) => setForm((f) => ({ ...f, contactEmail: e.target.value }))}
+                    value={siteForm.contactEmail}
+                    onChange={(e) => setSiteForm((f) => ({ ...f, contactEmail: e.target.value }))}
                   />
                 </div>
               </div>
 
               <div className="flex items-center gap-3 pt-2">
-                <Button type="submit" variant="primary" loading={saving}>
-                  {editingId ? t('common.save', 'Save') : t('common.add', 'Create')}
+                <Button type="submit" variant="primary" loading={savingSite}>
+                  {editingSiteId ? t('common.save', 'Save') : t('common.add', 'Create')}
                 </Button>
-                <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
+                <Button type="button" variant="ghost" onClick={() => setSiteModalOpen(false)}>
                   {t('common.cancel', 'Cancel')}
                 </Button>
               </div>
@@ -363,31 +539,38 @@ function ClientTreeRow({
   node,
   depth,
   expanded,
+  selectedClientId,
   onToggle,
   onNavigate,
   onEdit,
   onDelete,
   onAddChild,
+  onAddSite,
+  onShowSites,
 }: {
   node: ClientTreeNode;
   depth: number;
   expanded: Set<number>;
+  selectedClientId: number | null;
   onToggle: (id: number) => void;
   onNavigate: (id: number) => void;
   onEdit: (node: ClientTreeNode) => void;
   onDelete: (node: ClientTreeNode) => void;
   onAddChild: (parentId: number) => void;
+  onAddSite: (clientId: number) => void;
+  onShowSites: (clientId: number) => void;
 }) {
   const hasChildren = node.children.length > 0;
   const isExpanded = expanded.has(node.id);
-
-  const locationParts = [node.city, node.country].filter(Boolean);
-  const locationStr = locationParts.join(', ');
+  const isSelected = selectedClientId === node.id;
 
   return (
     <>
       <div
-        className="flex items-center gap-2 rounded-lg border border-border bg-bg-secondary p-3 hover:bg-bg-tertiary transition-colors group"
+        className={cn(
+          'flex items-center gap-2 rounded-lg border border-border bg-bg-secondary p-3 hover:bg-bg-tertiary transition-colors group',
+          isSelected && 'ring-1 ring-accent',
+        )}
         style={{ marginLeft: depth * 24 }}
       >
         {/* Expand toggle */}
@@ -404,17 +587,16 @@ function ClientTreeRow({
         {/* Name - clickable */}
         <button onClick={() => onNavigate(node.id)} className="flex-1 text-left min-w-0">
           <span className="text-sm font-medium text-text-primary">{node.name}</span>
-          {locationStr && (
-            <span className="ml-2 text-xs text-text-secondary">
-              <MapPin size={10} className="inline mr-0.5" />
-              {locationStr}
-            </span>
-          )}
-          {node.country && (
-            <span className="ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-bg-tertiary text-text-muted uppercase">
-              {node.country}
-            </span>
-          )}
+        </button>
+
+        {/* Site count badge */}
+        <button
+          onClick={() => onShowSites(node.id)}
+          className="text-xs text-text-secondary whitespace-nowrap hover:text-accent flex items-center gap-1"
+          title="Show sites"
+        >
+          <MapPin size={10} />
+          {node.siteCount} site{node.siteCount !== 1 ? 's' : ''}
         </button>
 
         {/* Intervention count */}
@@ -425,9 +607,16 @@ function ClientTreeRow({
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
-            onClick={() => onAddChild(node.id)}
+            onClick={() => onAddSite(node.id)}
             className="p-1 rounded hover:bg-bg-hover text-text-secondary hover:text-accent"
             title="Add site"
+          >
+            <MapPin size={14} />
+          </button>
+          <button
+            onClick={() => onAddChild(node.id)}
+            className="p-1 rounded hover:bg-bg-hover text-text-secondary hover:text-accent"
+            title="Add sub-client"
           >
             <Plus size={14} />
           </button>
@@ -457,11 +646,14 @@ function ClientTreeRow({
             node={child}
             depth={depth + 1}
             expanded={expanded}
+            selectedClientId={selectedClientId}
             onToggle={onToggle}
             onNavigate={onNavigate}
             onEdit={onEdit}
             onDelete={onDelete}
             onAddChild={onAddChild}
+            onAddSite={onAddSite}
+            onShowSites={onShowSites}
           />
         ))}
     </>
