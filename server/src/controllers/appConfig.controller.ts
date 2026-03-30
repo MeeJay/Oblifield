@@ -4,7 +4,7 @@ import { AppError } from '../middleware/errorHandler';
 
 const ALLOWED_KEYS = [
   'allow_2fa', 'force_2fa', 'otp_smtp_server_id',
-  'obligate_enabled',
+  'obligate_enabled', 'company_name',
 ] as const;
 
 export const appConfigController = {

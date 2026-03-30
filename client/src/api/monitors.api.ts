@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { Monitor, Heartbeat, ApiResponse, BulkEditRequest } from '@obliview/shared';
+import type { Monitor, Heartbeat, ApiResponse, BulkEditRequest } from '@oblifield/shared';
 
 export const monitorsApi = {
   async list(): Promise<Monitor[]> {

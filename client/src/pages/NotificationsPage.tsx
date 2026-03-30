@@ -17,7 +17,7 @@ import type {
   NotificationPluginMeta,
   NotificationBinding,
   SmtpServer,
-} from '@obliview/shared';
+} from '@oblifield/shared';
 import { notificationsApi } from '@/api/notifications.api';
 import { smtpServerApi } from '@/api/smtpServer.api';
 import { Button } from '@/components/common/Button';

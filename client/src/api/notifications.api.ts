@@ -7,7 +7,7 @@ import type {
   CreateNotificationChannelRequest,
   UpdateNotificationChannelRequest,
   OverrideMode,
-} from '@obliview/shared';
+} from '@oblifield/shared';
 
 export const notificationsApi = {
   // Plugins

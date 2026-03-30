@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Settings2, Pencil, Check } from 'lucide-react';
-import type { AgentDisplayConfig } from '@obliview/shared';
+import type { AgentDisplayConfig } from '@oblifield/shared';
 import { prettifySensorLabel } from '../../utils/sensorLabels';
 
 type Section = 'cpu' | 'ram' | 'gpu' | 'drives' | 'network' | 'temps';

@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import type { Heartbeat, MonitorStatus } from '@obliview/shared';
+import type { Heartbeat, MonitorStatus } from '@oblifield/shared';
 import { cn } from '@/utils/cn';
 
 interface HeartbeatBarProps {

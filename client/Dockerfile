@@ -5,7 +5,7 @@ WORKDIR /app
 # Root package.json for workspace resolution
 COPY package.json ./
 
-# Shared source (needed by Vite alias @obliview/shared → ../shared/src)
+# Shared source (needed by Vite alias @oblifield/shared → ../shared/src)
 # Also needs its own package.json for workspace linking
 COPY shared/ ./shared/
 

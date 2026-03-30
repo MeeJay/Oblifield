@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronRight, Folder, FolderOpen } from 'lucide-react';
 import { useDroppable } from '@dnd-kit/core';
-import type { GroupTreeNode } from '@obliview/shared';
+import type { GroupTreeNode } from '@oblifield/shared';
 import { cn } from '@/utils/cn';
 import { anonymize } from '@/utils/anonymize';
 import { useMonitorStore } from '@/store/monitorStore';

@@ -1,6 +1,6 @@
 import { db } from '../db';
-import type { NotificationChannel, NotificationBinding, NotificationTypeConfig, OverrideMode } from '@obliview/shared';
-import { DEFAULT_NOTIFICATION_TYPES } from '@obliview/shared';
+import type { NotificationChannel, NotificationBinding, NotificationTypeConfig, OverrideMode } from '@oblifield/shared';
+import { DEFAULT_NOTIFICATION_TYPES } from '@oblifield/shared';
 import type { NotificationPayload } from '../notifications/types';
 import { getPlugin } from '../notifications/registry';
 import { smtpServerService } from './smtpServer.service';

@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import path from 'path';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync } from 'fs';
 import { join } from 'path';
 
 // Read server version from package.json at startup.
@@ -18,6 +18,7 @@ try {
 import { config } from './config';
 import { errorHandler } from './middleware/errorHandler';
 import { apiLimiter } from './middleware/rateLimiter';
+import { requireAuth } from './middleware/auth';
 import { routes } from './routes';
 import { logger } from './utils/logger';
 
@@ -146,37 +147,12 @@ export function createApp() {
   // API routes
   app.use('/api', routes);
 
+  // Serve uploaded photos (auth-protected)
+  app.use('/uploads', requireAuth, express.static(path.resolve(process.cwd(), 'uploads')));
+
   // Health check (public — also used by login page to display server version)
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', version: serverVersion, timestamp: new Date().toISOString() });
-  });
-
-  // Obli.tools unified desktop app downloads — serves pre-built binaries from obli.tools/dist/.
-  // Whitelist prevents directory traversal; graceful 404 if a file isn't built yet.
-  const DESKTOP_FILES: Record<string, string> = {
-    'ObliTools.exe':          'ObliTools.exe',          // Windows binary (portable)
-    'ObliToolsSetup.msi':     'ObliToolsSetup.msi',     // Windows installer (Start Menu shortcut)
-    'ObliTools-arm64.zip':    'ObliTools-arm64.zip',    // macOS Apple Silicon — .app zipped
-    'ObliTools-amd64.zip':    'ObliTools-amd64.zip',    // macOS Intel — .app zipped
-    'ObliTools-arm64.dmg':    'ObliTools-arm64.dmg',    // macOS Apple Silicon — drag-to-Applications DMG
-    'ObliTools-amd64.dmg':    'ObliTools-amd64.dmg',    // macOS Intel — drag-to-Applications DMG
-  };
-  // process.cwd() = server/ directory (both in dev with npx tsx and in production).
-  // Go one level up to reach the project root, then into obli.tools/dist.
-  const desktopDistDir = path.resolve(process.cwd(), '..', 'obli.tools', 'dist');
-
-  app.get('/downloads/:filename', (req, res) => {
-    const mapped = DESKTOP_FILES[req.params.filename];
-    if (!mapped) {
-      res.status(404).json({ error: 'Not found' });
-      return;
-    }
-    const filePath = path.join(desktopDistDir, mapped);
-    if (!existsSync(filePath)) {
-      res.status(404).json({ error: 'File not yet available' });
-      return;
-    }
-    res.download(filePath, mapped);
   });
 
   // Serve static client build in production

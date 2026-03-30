@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Save } from 'lucide-react';
-import type { Monitor } from '@obliview/shared';
-import type { SettingsKey } from '@obliview/shared';
+import type { Monitor } from '@oblifield/shared';
+import type { SettingsKey } from '@oblifield/shared';
 import { monitorsApi } from '@/api/monitors.api';
 import { settingsApi } from '@/api/settings.api';
 import { useGroupStore } from '@/store/groupStore';

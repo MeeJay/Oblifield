@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { LiveAlertData } from '@obliview/shared';
+import type { LiveAlertData } from '@oblifield/shared';
 import apiClient from '../api/client';
 
 export type AlertSeverity = 'down' | 'up' | 'warning' | 'info';
@@ -137,7 +137,7 @@ export const useLiveAlertsStore = create<LiveAlertsState>()(
       },
     }),
     {
-      name: 'obliview-alert-prefs',
+      name: 'oblifield-alert-prefs',
       // Only persist preferences, NOT the alert list (alerts always fetched fresh from server)
       partialize: (s) => ({
         localEnabled: s.localEnabled,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CalendarClock, Loader2 } from 'lucide-react';
-import type { MaintenanceScopeType, NotificationChannel } from '@obliview/shared';
+import type { MaintenanceScopeType, NotificationChannel } from '@oblifield/shared';
 import { MaintenanceWindowList } from '@/components/maintenance/MaintenanceWindowList';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';

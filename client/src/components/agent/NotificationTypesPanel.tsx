@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { RotateCcw, Bell } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
-import type { NotificationTypeConfig } from '@obliview/shared';
-import { DEFAULT_NOTIFICATION_TYPES } from '@obliview/shared';
+import type { NotificationTypeConfig } from '@oblifield/shared';
+import { DEFAULT_NOTIFICATION_TYPES } from '@oblifield/shared';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Toggle switch helper

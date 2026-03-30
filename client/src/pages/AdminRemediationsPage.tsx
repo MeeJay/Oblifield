@@ -11,7 +11,7 @@ import type {
   ScriptRemediationConfig,
   DockerRestartRemediationConfig,
   SshRemediationConfig,
-} from '@obliview/shared';
+} from '@oblifield/shared';
 import { remediationApi } from '../api/remediation.api';
 import { anonymize } from '../utils/anonymize';
 import { Button } from '../components/common/Button';
@@ -576,7 +576,7 @@ export function AdminRemediationsPage() {
 // ─── Run history sub-component ────────────────────────────────────────────────
 
 function RunHistory({ actionId }: { actionId: number }) {
-  const [runs, setRuns] = useState<import('@obliview/shared').RemediationRun[]>([]);
+  const [runs, setRuns] = useState<import('@oblifield/shared').RemediationRun[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

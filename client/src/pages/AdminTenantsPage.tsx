@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Building2, Plus, Pencil, Trash2, Users, X, Check } from 'lucide-react';
-import type { Tenant } from '@obliview/shared';
+import type { Tenant } from '@oblifield/shared';
 import { Button } from '@/components/common/Button';
 import { anonymize, anonymizeUsername } from '@/utils/anonymize';
 import apiClient from '@/api/client';

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, type FormEvent } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, ChevronUp, ChevronDown, FolderTree, Server } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { MonitorGroup, GroupTreeNode } from '@obliview/shared';
+import type { MonitorGroup, GroupTreeNode } from '@oblifield/shared';
 import { groupsApi } from '@/api/groups.api';
 import { useGroupStore } from '@/store/groupStore';
 import { useAuthStore } from '@/store/authStore';

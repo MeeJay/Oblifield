@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import type { Monitor, Heartbeat } from '@obliview/shared';
-import { MONITOR_TYPE_LABELS } from '@obliview/shared';
+import type { Monitor, Heartbeat } from '@oblifield/shared';
+import { MONITOR_TYPE_LABELS } from '@oblifield/shared';
 import { MonitorStatusBadge } from '@/components/monitors/MonitorStatusBadge';
 import { MiniSparkline } from '@/components/monitors/MiniSparkline';
 import { cn } from '@/utils/cn';

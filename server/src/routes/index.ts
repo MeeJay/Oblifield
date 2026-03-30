@@ -3,33 +3,29 @@ import { requireAuth } from '../middleware/auth';
 import { requireTenant } from '../middleware/tenant';
 import authRoutes from './auth.routes';
 import tenantRoutes from './tenant.routes';
-import monitorsRoutes from './monitors.routes';
-import groupsRoutes from './groups.routes';
 import settingsRoutes from './settings.routes';
 import notificationsRoutes from './notifications.routes';
-import heartbeatRoutes from './heartbeat.routes';
 import usersRoutes from './users.routes';
 import profileRoutes from './profile.routes';
 import teamsRoutes from './teams.routes';
-import agentRoutes from './agent.routes';
 import importExportRoutes from './importExport.routes';
-import remediationRoutes from './remediation.routes';
 import smtpServerRoutes from './smtpServer.routes';
 import appConfigRoutes from './appConfig.routes';
 import twoFactorRoutes from './twoFactor.routes';
-import maintenanceRoutes from './maintenance.routes';
 import { liveAlertRouter } from './liveAlert.routes';
 import oblitoolsRoutes from './oblitools.routes';
 import obligateCallbackRoutes from './obligateCallback.routes';
 import permissionSetsRoutes from './permissionSets.routes';
 import systemRoutes from './system.routes';
+import interventionsRoutes from './interventions.routes';
+import clientsRoutes from './clients.routes';
+import techniciansRoutes from './technicians.routes';
+import reportsRoutes from './reports.routes';
 
 const router = Router();
 
 // ── Global (no tenant required) ────────────────────────────────────────────
 router.use('/auth', authRoutes);
-router.use('/heartbeat', heartbeatRoutes); // push monitors (no session)
-router.use('/agent', agentRoutes);          // agent push (authenticated via API key)
 router.use('/admin/config', appConfigRoutes);
 router.use('/system', systemRoutes);         // system info / about (admin only, no tenant required)
 router.use('/oblitools', oblitoolsRoutes);  // ObliTools desktop manifest (auth required)
@@ -51,17 +47,17 @@ const tenantRouter = Router();
 tenantRouter.use(requireAuth);
 tenantRouter.use(requireTenant);
 
-tenantRouter.use('/monitors', monitorsRoutes);
-tenantRouter.use('/groups', groupsRoutes);
+tenantRouter.use('/interventions', interventionsRoutes);
+tenantRouter.use('/clients', clientsRoutes);
+tenantRouter.use('/technicians', techniciansRoutes);
+tenantRouter.use('/reports', reportsRoutes);
 tenantRouter.use('/settings', settingsRoutes);
 tenantRouter.use('/notifications', notificationsRoutes);
 tenantRouter.use('/users', usersRoutes);
 tenantRouter.use('/profile', profileRoutes);
 tenantRouter.use('/teams', teamsRoutes);
 tenantRouter.use('/admin', importExportRoutes);
-tenantRouter.use('/remediation', remediationRoutes);
 tenantRouter.use('/admin/smtp-servers', smtpServerRoutes);
-tenantRouter.use('/maintenance', maintenanceRoutes);
 
 router.use('/', tenantRouter);
 

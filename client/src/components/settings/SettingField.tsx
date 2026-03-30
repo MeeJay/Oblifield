@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RotateCcw } from 'lucide-react';
-import type { SettingValue, SettingsScope } from '@obliview/shared';
-import type { SettingsKey, SettingDefinition } from '@obliview/shared';
+import type { SettingValue, SettingsScope } from '@oblifield/shared';
+import type { SettingsKey, SettingDefinition } from '@oblifield/shared';
 import { InheritanceBadge } from './InheritanceBadge';
 
 interface SettingFieldProps {

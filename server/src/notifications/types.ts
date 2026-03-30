@@ -1,4 +1,4 @@
-import type { NotificationConfigField } from '@obliview/shared';
+import type { NotificationConfigField } from '@oblifield/shared';
 
 export interface NotificationPayload {
   monitorName: string;

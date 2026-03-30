@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Globe, Monitor, Server, Folder, RefreshCw, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { MonitorGroup, Monitor as MonitorType, AgentDevice, MaintenanceScopeType } from '@obliview/shared';
+import type { MonitorGroup, Monitor as MonitorType, AgentDevice, MaintenanceScopeType } from '@oblifield/shared';
 import { groupsApi } from '@/api/groups.api';
 import { monitorsApi } from '@/api/monitors.api';
 import { agentApi } from '@/api/agent.api';

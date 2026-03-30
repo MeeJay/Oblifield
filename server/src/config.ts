@@ -17,7 +17,7 @@ export const config = {
   forceHttps: process.env.FORCE_HTTPS === 'true',
 
   // App name (used as prefix in SMS/push notifications)
-  appName: process.env.APP_NAME || 'Obliview',
+  appName: process.env.APP_NAME || 'Oblifield',
 
   // Default admin
   defaultAdminUsername: process.env.DEFAULT_ADMIN_USERNAME || 'admin',

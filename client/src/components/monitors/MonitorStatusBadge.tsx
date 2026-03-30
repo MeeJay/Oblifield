@@ -1,4 +1,4 @@
-import type { MonitorStatus } from '@obliview/shared';
+import type { MonitorStatus } from '@oblifield/shared';
 import { cn } from '@/utils/cn';
 
 interface MonitorStatusBadgeProps {

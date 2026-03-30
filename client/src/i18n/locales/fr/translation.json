@@ -74,6 +74,10 @@
   },
   "nav": {
     "dashboard": "Tableau de bord",
+    "schedule": "Planning",
+    "clients": "Clients",
+    "technicians": "Techniciens",
+    "reports": "Rapports",
     "groups": "Groupes",
     "notifications": "Notifications",
     "users": "Utilisateurs",
@@ -84,7 +88,9 @@
     "settings": "Paramètres",
     "profile": "Profil",
     "downloadApp": "Télécharger l'appli",
-    "signOut": "Se déconnecter"
+    "signOut": "Déconnexion",
+    "pinSidebar": "Épingler la barre latérale",
+    "floatSidebar": "Barre latérale flottante"
   },
   "login": {
     "title": "Tableau de bord de surveillance",
@@ -943,5 +949,75 @@
     "actionCreatedAndBound": "Action créée et liée",
     "bindingRemoved": "Liaison supprimée",
     "actionExcluded": "Action exclue pour cette portée"
+  },
+  "intervention": {
+    "new": "Nouvelle intervention",
+    "title": "Titre",
+    "description": "Description",
+    "type": "Type",
+    "priority": "Priorité",
+    "status": "Statut",
+    "client": "Client",
+    "site": "Site",
+    "technician": "Technicien",
+    "scheduledAt": "Planifié",
+    "dueAt": "Échéance",
+    "address": "Adresse",
+    "contact": "Contact",
+    "estimatedDuration": "Durée estimée",
+    "checkIn": "Pointage arrivée",
+    "checkOut": "Pointage départ",
+    "timeline": "Historique",
+    "photos": "Photos"
+  },
+  "interventionStatus": {
+    "pending": "En attente",
+    "assigned": "Assigné",
+    "in_progress": "En cours",
+    "done": "Terminé",
+    "issue": "Problème",
+    "cancelled": "Annulé"
+  },
+  "interventionPriority": {
+    "low": "Basse",
+    "normal": "Normale",
+    "high": "Haute",
+    "urgent": "Urgent"
+  },
+  "interventionType": {
+    "installation": "Installation",
+    "maintenance": "Maintenance",
+    "repair": "Réparation",
+    "inspection": "Inspection",
+    "other": "Autre"
+  },
+  "client": {
+    "name": "Nom",
+    "address": "Adresse",
+    "city": "Ville",
+    "country": "Pays",
+    "postalCode": "Code postal",
+    "region": "Région",
+    "contact": "Contact",
+    "allCountries": "Tous les pays"
+  },
+  "technician": {
+    "available": "Disponible",
+    "onSite": "Sur site",
+    "travelling": "En déplacement",
+    "offline": "Hors ligne",
+    "onBreak": "En pause",
+    "phone": "Téléphone",
+    "specialties": "Spécialités"
+  },
+  "report": {
+    "summary": "Résumé",
+    "byTechnician": "Par technicien",
+    "byClient": "Par client",
+    "exportCsv": "Exporter CSV",
+    "totalInterventions": "Total interventions",
+    "avgDuration": "Durée moyenne",
+    "completedCount": "Terminées",
+    "totalHours": "Heures totales"
   }
 }

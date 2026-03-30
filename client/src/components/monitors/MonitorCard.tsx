@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import type { Monitor, Heartbeat } from '@obliview/shared';
-import { MONITOR_TYPE_LABELS } from '@obliview/shared';
+import type { Monitor, Heartbeat } from '@oblifield/shared';
+import { MONITOR_TYPE_LABELS } from '@oblifield/shared';
 import { anonymize } from '@/utils/anonymize';
 import { MonitorStatusBadge } from './MonitorStatusBadge';
 import { HeartbeatBar } from './HeartbeatBar';

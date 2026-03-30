@@ -12,7 +12,7 @@ import type {
   ScriptRemediationConfig,
   DockerRestartRemediationConfig,
   SshRemediationConfig,
-} from '@obliview/shared';
+} from '@oblifield/shared';
 import { remediationApi } from '../../api/remediation.api';
 import { cn } from '../../utils/cn';
 import toast from 'react-hot-toast';

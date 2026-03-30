@@ -26,7 +26,7 @@ import type {
   PermissionLevel,
   PermissionScope,
   UserTenantAssignment,
-} from '@obliview/shared';
+} from '@oblifield/shared';
 import { usersApi } from '@/api/users.api';
 import { teamsApi } from '@/api/teams.api';
 import { groupsApi } from '@/api/groups.api';

@@ -11,13 +11,13 @@ import { useGroupStore } from '@/store/groupStore';
 import { useAuthStore } from '@/store/authStore';
 import { groupsApi } from '@/api/groups.api';
 import { monitorsApi } from '@/api/monitors.api';
-import { MONITOR_TYPE_LABELS } from '@obliview/shared';
+import { MONITOR_TYPE_LABELS } from '@oblifield/shared';
 import type {
   MonitorGroup, Monitor, Heartbeat,
   AgentThresholds, AgentMetricThreshold, AgentTempThreshold,
   NotificationTypeConfig,
-} from '@obliview/shared';
-import { DEFAULT_AGENT_THRESHOLDS } from '@obliview/shared';
+} from '@oblifield/shared';
+import { DEFAULT_AGENT_THRESHOLDS } from '@oblifield/shared';
 import { MonitorStatusBadge } from '@/components/monitors/MonitorStatusBadge';
 import { HeartbeatChart } from '@/components/monitors/HeartbeatChart';
 import { HeartbeatBar } from '@/components/monitors/HeartbeatBar';

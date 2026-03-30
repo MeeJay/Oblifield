@@ -15,7 +15,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@obliview/shared': path.resolve(__dirname, '../shared/src'),
+      '@oblifield/shared': path.resolve(__dirname, '../shared/src'),
     },
   },
   server: {

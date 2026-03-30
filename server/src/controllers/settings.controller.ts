@@ -1,8 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import { settingsService } from '../services/settings.service';
 import { MonitorWorkerManager } from '../workers/MonitorWorkerManager';
-import type { SettingsScope } from '@obliview/shared';
-import type { SettingsKey } from '@obliview/shared';
+import type { SettingsScope } from '@oblifield/shared';
+import type { SettingsKey } from '@oblifield/shared';
 import { AppError } from '../middleware/errorHandler';
 import type { SetSettingInput, SetSettingsBulkInput, DeleteSettingInput } from '../validators/settings.schema';
 

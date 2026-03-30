@@ -2,9 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
-import { DesktopUpdateBanner } from './DesktopUpdateBanner';
 import { LiveAlerts } from './LiveAlerts';
-import { GlobalAddAgentModal } from './GlobalAddAgentModal';
 import { useUiStore } from '@/store/uiStore';
 import { useSocket } from '@/hooks/useSocket';
 import { cn } from '@/utils/cn';
@@ -146,7 +144,6 @@ export function AppLayout() {
       {/* Main content */}
       <div ref={mainContentRef} className="flex flex-1 flex-col overflow-hidden">
         <Header />
-        <DesktopUpdateBanner />
         <main className="flex-1 overflow-y-auto flex flex-col">
           <Outlet />
         </main>
@@ -154,9 +151,6 @@ export function AppLayout() {
 
       {/* Live alert toasts */}
       <LiveAlerts />
-
-      {/* Global Add Agent modal (triggered from sidebar / dashboard) */}
-      <GlobalAddAgentModal />
     </div>
   );
 }

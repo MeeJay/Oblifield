@@ -3,7 +3,7 @@ import type {
   CreateMaintenanceWindowRequest,
   UpdateMaintenanceWindowRequest,
   ApiResponse,
-} from '@obliview/shared';
+} from '@oblifield/shared';
 import apiClient from './client';
 
 const BASE = '/maintenance';

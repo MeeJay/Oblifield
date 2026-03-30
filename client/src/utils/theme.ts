@@ -1,8 +1,8 @@
-import type { AppTheme } from '@obliview/shared';
+import type { AppTheme } from '@oblifield/shared';
 
 export { type AppTheme };
 
-const STORAGE_KEY = 'ov-theme';
+const STORAGE_KEY = 'of-theme';
 
 /** Apply a theme by setting data-theme on <html> and persisting it. */
 export function applyTheme(theme: AppTheme): void {

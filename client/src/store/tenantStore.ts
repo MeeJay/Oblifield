@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { TenantWithRole, ApiResponse } from '@obliview/shared';
+import type { TenantWithRole, ApiResponse } from '@oblifield/shared';
 import { useGroupStore } from './groupStore';
 import { useAuthStore } from './authStore';
 import apiClient from '../api/client';

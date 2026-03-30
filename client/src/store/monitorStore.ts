@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Monitor, Heartbeat } from '@obliview/shared';
+import type { Monitor, Heartbeat } from '@oblifield/shared';
 import { monitorsApi } from '../api/monitors.api';
 
 export interface MonitorSummary {

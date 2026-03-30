@@ -1,6 +1,6 @@
 import apiClient from './client';
-import type { ResolvedSettings, ApiResponse, SettingsScope } from '@obliview/shared';
-import type { SettingsKey } from '@obliview/shared';
+import type { ResolvedSettings, ApiResponse, SettingsScope } from '@oblifield/shared';
+import type { SettingsKey } from '@oblifield/shared';
 
 interface ResolvedWithOverrides {
   resolved: ResolvedSettings;

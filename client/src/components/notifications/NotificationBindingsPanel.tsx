@@ -3,7 +3,7 @@ import { Bell, BellOff, ArrowDown, Check, Ban } from 'lucide-react';
 import { notificationsApi } from '@/api/notifications.api';
 import { cn } from '@/utils/cn';
 import { anonymize } from '@/utils/anonymize';
-import type { NotificationChannel, OverrideMode } from '@obliview/shared';
+import type { NotificationChannel, OverrideMode } from '@oblifield/shared';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 

@@ -9,22 +9,19 @@ import { EnrollmentPage } from '@/pages/EnrollmentPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { DashboardPage } from '@/pages/DashboardPage';
-import { MonitorDetailPage } from '@/pages/MonitorDetailPage';
-import { MonitorEditPage } from '@/pages/MonitorEditPage';
-import { GroupManagePage } from '@/pages/GroupManagePage';
+import { InterventionDetailPage } from '@/pages/InterventionDetailPage';
+import { InterventionEditPage } from '@/pages/InterventionEditPage';
+import { ClientManagePage } from '@/pages/ClientManagePage';
+import { ClientDetailPage } from '@/pages/ClientDetailPage';
+import { TechnicianManagePage } from '@/pages/TechnicianManagePage';
+import { TechnicianDetailPage } from '@/pages/TechnicianDetailPage';
+import { ReportsPage } from '@/pages/ReportsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { AdminUsersPage } from '@/pages/AdminUsersPage';
-import { AdminAgentPage } from '@/pages/AdminAgentPage';
-import { AgentDetailPage } from '@/pages/AgentDetailPage';
-import { ProfilePage } from '@/pages/ProfilePage';
-import { GroupDetailPage } from '@/pages/GroupDetailPage';
-import { GroupEditPage } from '@/pages/GroupEditPage';
-import { DownloadPage } from '@/pages/DownloadPage';
-import { ImportExportPage } from '@/pages/ImportExportPage';
-import { AdminRemediationsPage } from '@/pages/AdminRemediationsPage';
-import { AdminMaintenancePage } from '@/pages/AdminMaintenancePage';
 import { AdminTenantsPage } from '@/pages/AdminTenantsPage';
+import { ProfilePage } from '@/pages/ProfilePage';
+import { ImportExportPage } from '@/pages/ImportExportPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import '@/i18n';
 
@@ -49,25 +46,22 @@ export default function App() {
           <Route path="/enroll" element={<EnrollmentPage />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<DashboardPage />} />
-            <Route path="/download" element={<DownloadPage />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/monitor/:id" element={<MonitorDetailPage />} />
-            <Route path="/monitor/new" element={<MonitorEditPage />} />
-            <Route path="/monitor/:id/edit" element={<MonitorEditPage />} />
-            <Route path="/group/:id" element={<GroupDetailPage />} />
-            <Route path="/group/:id/edit" element={<GroupEditPage />} />
+            <Route path="/intervention/new" element={<InterventionEditPage />} />
+            <Route path="/intervention/:id" element={<InterventionDetailPage />} />
+            <Route path="/intervention/:id/edit" element={<InterventionEditPage />} />
+            <Route path="/client/:id" element={<ClientDetailPage />} />
 
             {/* Admin-only routes */}
             <Route element={<ProtectedRoute requiredRole="admin" />}>
-              <Route path="/groups" element={<GroupManagePage />} />
+              <Route path="/clients" element={<ClientManagePage />} />
+              <Route path="/technicians" element={<TechnicianManagePage />} />
+              <Route path="/technicians/:id" element={<TechnicianDetailPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />
-              <Route path="/admin/agents" element={<AdminAgentPage />} />
               <Route path="/admin/import-export" element={<ImportExportPage />} />
-              <Route path="/admin/remediations" element={<AdminRemediationsPage />} />
-              <Route path="/admin/maintenance" element={<AdminMaintenancePage />} />
               <Route path="/admin/tenants" element={<AdminTenantsPage />} />
-              <Route path="/agents/:deviceId" element={<AgentDetailPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>

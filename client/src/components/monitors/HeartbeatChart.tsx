@@ -9,7 +9,7 @@ import {
   CartesianGrid,
   ReferenceArea,
 } from 'recharts';
-import type { Heartbeat } from '@obliview/shared';
+import type { Heartbeat } from '@oblifield/shared';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

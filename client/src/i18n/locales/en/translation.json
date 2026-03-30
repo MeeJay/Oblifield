@@ -75,6 +75,10 @@
   },
   "nav": {
     "dashboard": "Dashboard",
+    "schedule": "Schedule",
+    "clients": "Clients",
+    "technicians": "Technicians",
+    "reports": "Reports",
     "groups": "Groups",
     "notifications": "Notifications",
     "users": "Users",
@@ -1076,5 +1080,75 @@
     "actionCreatedAndBound": "Action created and bound",
     "bindingRemoved": "Binding removed",
     "actionExcluded": "Action excluded at this scope"
+  },
+  "intervention": {
+    "new": "New Intervention",
+    "title": "Title",
+    "description": "Description",
+    "type": "Type",
+    "priority": "Priority",
+    "status": "Status",
+    "client": "Client",
+    "site": "Site",
+    "technician": "Technician",
+    "scheduledAt": "Scheduled",
+    "dueAt": "Due",
+    "address": "Address",
+    "contact": "Contact",
+    "estimatedDuration": "Est. Duration",
+    "checkIn": "Check In",
+    "checkOut": "Check Out",
+    "timeline": "Timeline",
+    "photos": "Photos"
+  },
+  "interventionStatus": {
+    "pending": "Pending",
+    "assigned": "Assigned",
+    "in_progress": "In Progress",
+    "done": "Done",
+    "issue": "Issue",
+    "cancelled": "Cancelled"
+  },
+  "interventionPriority": {
+    "low": "Low",
+    "normal": "Normal",
+    "high": "High",
+    "urgent": "Urgent"
+  },
+  "interventionType": {
+    "installation": "Installation",
+    "maintenance": "Maintenance",
+    "repair": "Repair",
+    "inspection": "Inspection",
+    "other": "Other"
+  },
+  "client": {
+    "name": "Name",
+    "address": "Address",
+    "city": "City",
+    "country": "Country",
+    "postalCode": "Postal Code",
+    "region": "Region",
+    "contact": "Contact",
+    "allCountries": "All countries"
+  },
+  "technician": {
+    "available": "Available",
+    "onSite": "On Site",
+    "travelling": "Travelling",
+    "offline": "Offline",
+    "onBreak": "On Break",
+    "phone": "Phone",
+    "specialties": "Specialties"
+  },
+  "report": {
+    "summary": "Summary",
+    "byTechnician": "By Technician",
+    "byClient": "By Client",
+    "exportCsv": "Export CSV",
+    "totalInterventions": "Total Interventions",
+    "avgDuration": "Avg Duration",
+    "completedCount": "Completed",
+    "totalHours": "Total Hours"
   }
 }

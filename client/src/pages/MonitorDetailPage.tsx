@@ -7,7 +7,7 @@ import { anonymize, anonymizeUrl } from '@/utils/anonymize';
 import { useMonitorStore } from '@/store/monitorStore';
 import { useAuthStore } from '@/store/authStore';
 import { monitorsApi } from '@/api/monitors.api';
-import { MONITOR_TYPE_LABELS } from '@obliview/shared';
+import { MONITOR_TYPE_LABELS } from '@oblifield/shared';
 import { MonitorStatusBadge } from '@/components/monitors/MonitorStatusBadge';
 import { HeartbeatChart } from '@/components/monitors/HeartbeatChart';
 import { HeartbeatBar } from '@/components/monitors/HeartbeatBar';
@@ -19,7 +19,7 @@ import { SettingsPanel } from '@/components/settings/SettingsPanel';
 import { NotificationBindingsPanel } from '@/components/notifications/NotificationBindingsPanel';
 import { RemediationBindingsPanel } from '@/components/remediation/RemediationBindingsPanel';
 import { MaintenanceWindowList } from '@/components/maintenance/MaintenanceWindowList';
-import type { Heartbeat, NotificationChannel } from '@obliview/shared';
+import type { Heartbeat, NotificationChannel } from '@oblifield/shared';
 import toast from 'react-hot-toast';
 import apiClient from '@/api/client';
 

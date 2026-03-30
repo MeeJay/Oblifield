@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { AppConfig, AgentGlobalConfig, ObligateConfig, ApiResponse } from '@obliview/shared';
+import type { AppConfig, AgentGlobalConfig, ObligateConfig, ApiResponse } from '@oblifield/shared';
 
 export const appConfigApi = {
   async getConfig(): Promise<AppConfig> {
@@ -7,7 +7,7 @@ export const appConfigApi = {
     return res.data.data!;
   },
 
-  async setConfig(key: keyof AppConfig, value: boolean | number | null): Promise<void> {
+  async setConfig(key: keyof AppConfig, value: boolean | number | string | null): Promise<void> {
     await apiClient.put(`/admin/config/${key}`, { value: String(value ?? '') });
   },
 

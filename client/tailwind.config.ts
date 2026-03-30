@@ -36,10 +36,8 @@ export default {
           'maintenance-bg':  'rgb(var(--c-status-maintenance-bg)  / <alpha-value>)',
           paused:            'rgb(var(--c-status-paused)          / <alpha-value>)',
           'paused-bg':       'rgb(var(--c-status-paused-bg)       / <alpha-value>)',
-          'ssl-warning':     'rgb(var(--c-status-ssl-warning)     / <alpha-value>)',
-          'ssl-warning-bg':  'rgb(var(--c-status-ssl-warning-bg)  / <alpha-value>)',
-          'ssl-expired':     'rgb(var(--c-status-ssl-expired)     / <alpha-value>)',
-          'ssl-expired-bg':  'rgb(var(--c-status-ssl-expired-bg)  / <alpha-value>)',
+          'in-progress':     'rgb(var(--c-status-in-progress)     / <alpha-value>)',
+          'in-progress-bg':  'rgb(var(--c-status-in-progress-bg)  / <alpha-value>)',
         },
         accent: {
           DEFAULT: 'rgb(var(--c-accent)       / <alpha-value>)',

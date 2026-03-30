@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { User, UserPermissions, PermissionLevel } from '@obliview/shared';
+import type { User, UserPermissions, PermissionLevel } from '@oblifield/shared';
 import { authApi, type LoginResult } from '../api/auth.api';
 import { isInObliTools, OBLITOOLS_TOKEN_KEY } from '../api/client';
 import { connectSocket, disconnectSocket } from '../socket/socketClient';
@@ -38,10 +38,10 @@ interface AuthState {
   // Convenience permission checkers
   isAdmin: () => boolean;
   canCreate: () => boolean;
-  canWriteMonitor: (monitorId: number, groupId: number | null) => boolean;
-  canWriteGroup: (groupId: number) => boolean;
-  getMonitorPermission: (monitorId: number, groupId: number | null) => PermissionLevel | null;
-  getGroupPermission: (groupId: number) => PermissionLevel | null;
+  canWriteIntervention: (interventionId: number, clientId?: number | null) => boolean;
+  canWriteClient: (clientId: number) => boolean;
+  getInterventionPermission: (interventionId: number, clientId?: number | null) => PermissionLevel | null;
+  getClientPermission: (clientId: number) => PermissionLevel | null;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -170,52 +170,52 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return permissions?.canCreate ?? false;
   },
 
-  canWriteMonitor: (monitorId: number, groupId: number | null) => {
+  canWriteIntervention: (interventionId: number, clientId?: number | null) => {
     const { user, permissions } = get();
     if (!user) return false;
     if (user.role === 'admin') return true;
     if (!permissions) return false;
 
-    // Check direct monitor permission
-    const monitorPerm = permissions.permissions[`monitor:${monitorId}`];
-    if (monitorPerm === 'rw') return true;
+    // Check direct intervention permission
+    const interventionPerm = permissions.permissions[`intervention:${interventionId}`];
+    if (interventionPerm === 'rw') return true;
 
-    // Check group permission
-    if (groupId !== null) {
-      const groupPerm = permissions.permissions[`group:${groupId}`];
-      if (groupPerm === 'rw') return true;
+    // Check client permission
+    if (clientId != null) {
+      const clientPerm = permissions.permissions[`client:${clientId}`];
+      if (clientPerm === 'rw') return true;
     }
 
     return false;
   },
 
-  canWriteGroup: (groupId: number) => {
+  canWriteClient: (clientId: number) => {
     const { user, permissions } = get();
     if (!user) return false;
     if (user.role === 'admin') return true;
     if (!permissions) return false;
-    return permissions.permissions[`group:${groupId}`] === 'rw';
+    return permissions.permissions[`client:${clientId}`] === 'rw';
   },
 
-  getMonitorPermission: (monitorId: number, groupId: number | null) => {
+  getInterventionPermission: (interventionId: number, clientId?: number | null) => {
     const { user, permissions } = get();
     if (!user) return null;
     if (user.role === 'admin') return 'rw';
     if (!permissions) return null;
 
-    const monitorPerm = permissions.permissions[`monitor:${monitorId}`];
-    const groupPerm = groupId !== null ? permissions.permissions[`group:${groupId}`] : null;
+    const interventionPerm = permissions.permissions[`intervention:${interventionId}`];
+    const clientPerm = clientId != null ? permissions.permissions[`client:${clientId}`] : null;
 
-    if (monitorPerm === 'rw' || groupPerm === 'rw') return 'rw';
-    if (monitorPerm === 'ro' || groupPerm === 'ro') return 'ro';
+    if (interventionPerm === 'rw' || clientPerm === 'rw') return 'rw';
+    if (interventionPerm === 'ro' || clientPerm === 'ro') return 'ro';
     return null;
   },
 
-  getGroupPermission: (groupId: number) => {
+  getClientPermission: (clientId: number) => {
     const { user, permissions } = get();
     if (!user) return null;
     if (user.role === 'admin') return 'rw';
     if (!permissions) return null;
-    return permissions.permissions[`group:${groupId}`] ?? null;
+    return permissions.permissions[`client:${clientId}`] ?? null;
   },
 }));

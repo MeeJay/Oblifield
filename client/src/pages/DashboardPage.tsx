@@ -1,268 +1,126 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { Plus, CheckSquare, Activity, Clock, AlertTriangle, ShieldOff, Folder, Server, Bell, LayoutList, LayoutGrid, ChevronDown, ChevronRight } from 'lucide-react';
-import type { Monitor, GroupTreeNode } from '@obliview/shared';
-import { useMonitorStore } from '@/store/monitorStore';
-import { useGroupStore } from '@/store/groupStore';
-import { useAuthStore } from '@/store/authStore';
-import { useUiStore } from '@/store/uiStore';
-
-import { monitorsApi } from '@/api/monitors.api';
-import { MonitorCard } from '@/components/monitors/MonitorCard';
-import { BulkEditModal } from '@/components/monitors/BulkEditModal';
-import { estimateMaxBars } from '@/components/monitors/HeartbeatBar';
+import {
+  Plus,
+  Clock,
+  UserCheck,
+  Wrench,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  CalendarDays,
+  Activity,
+} from 'lucide-react';
+import type {
+  Intervention,
+  InterventionStatus,
+  TimelineEvent,
+} from '@oblifield/shared';
+import {
+  INTERVENTION_STATUS_LABELS,
+} from '@oblifield/shared';
+import { interventionsApi } from '@/api/interventions.api';
 import { Button } from '@/components/common/Button';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { PeekedGrid } from '@/components/dashboard/PeekedGrid';
-import { MonitorCardTile } from '@/components/dashboard/MonitorCardTile';
-import { AgentCardTile } from '@/components/dashboard/AgentCardTile';
 import { cn } from '@/utils/cn';
-import { anonymize } from '@/utils/anonymize';
 import toast from 'react-hot-toast';
 
+const STATUS_CARD_CONFIG: Record<
+  InterventionStatus,
+  { label: string; colorClass: string; icon: React.ReactNode }
+> = {
+  pending: {
+    label: 'Pending',
+    colorClass: 'text-yellow-500',
+    icon: <Clock size={20} />,
+  },
+  assigned: {
+    label: 'Assigned',
+    colorClass: 'text-blue-500',
+    icon: <UserCheck size={20} />,
+  },
+  in_progress: {
+    label: 'In Progress',
+    colorClass: 'text-accent',
+    icon: <Wrench size={20} />,
+  },
+  done: {
+    label: 'Done',
+    colorClass: 'text-green-500',
+    icon: <CheckCircle2 size={20} />,
+  },
+  issue: {
+    label: 'Issue',
+    colorClass: 'text-red-500',
+    icon: <AlertTriangle size={20} />,
+  },
+  cancelled: {
+    label: 'Cancelled',
+    colorClass: 'text-gray-500',
+    icon: <XCircle size={20} />,
+  },
+};
 
-/** Count all monitors inside a group tree node (recursively) */
-function countMonitors(
-  node: GroupTreeNode,
-  getMonitorsByGroup: (groupId: number | null) => Monitor[],
-): number {
-  let count = getMonitorsByGroup(node.id).length;
-  for (const child of node.children) {
-    count += countMonitors(child, getMonitorsByGroup);
-  }
-  return count;
+function StatusBadge({ status }: { status: InterventionStatus }) {
+  const cfg = STATUS_CARD_CONFIG[status];
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+        status === 'pending' && 'bg-yellow-500/10 text-yellow-500',
+        status === 'assigned' && 'bg-blue-500/10 text-blue-500',
+        status === 'in_progress' && 'bg-accent/10 text-accent',
+        status === 'done' && 'bg-green-500/10 text-green-500',
+        status === 'issue' && 'bg-red-500/10 text-red-500',
+        status === 'cancelled' && 'bg-gray-500/10 text-gray-500',
+      )}
+    >
+      {cfg?.label ?? status}
+    </span>
+  );
 }
 
-/** Check recursively if a group tree node has any monitors */
-function hasAnyMonitors(
-  node: GroupTreeNode,
-  getMonitorsByGroup: (groupId: number | null) => Monitor[],
-): boolean {
-  if (getMonitorsByGroup(node.id).length > 0) return true;
-  return node.children.some((child) => hasAnyMonitors(child, getMonitorsByGroup));
-}
-
-/**
- * Distribute items into 2 columns using a "shortest column first" algorithm.
- * Each item has a weight (estimated height). Returns [leftItems, rightItems].
- */
-function distributeColumns<T>(items: T[], getWeight: (item: T) => number): [T[], T[]] {
-  const left: T[] = [];
-  const right: T[] = [];
-  let leftWeight = 0;
-  let rightWeight = 0;
-
-  for (const item of items) {
-    const w = getWeight(item);
-    if (leftWeight <= rightWeight) {
-      left.push(item);
-      leftWeight += w;
-    } else {
-      right.push(item);
-      rightWeight += w;
-    }
-  }
-  return [left, right];
+function formatTime(dateStr: string | null): string {
+  if (!dateStr) return '--:--';
+  const d = new Date(dateStr);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 export function DashboardPage() {
-  const { t } = useTranslation();
-  const { canCreate } = useAuthStore();
-  const { openAddAgentModal, dashboardLayout, setDashboardLayout } = useUiStore();
-  const { fetchMonitors, fetchAllHeartbeats, getMonitorList, getMonitorsByGroup, getRecentHeartbeats, isLoading } = useMonitorStore();
-  const { tree, fetchTree, isGroupExpanded, toggleGroupExpanded } = useGroupStore();
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [selectionKind, setSelectionKind] = useState<'monitor' | 'agent' | null>(null);
-  const [bulkEditOpen, setBulkEditOpen] = useState(false);
-  const [overallUptime, setOverallUptime] = useState<number | null>(null);
-  const [overallAvgRt, setOverallAvgRt] = useState<number | null>(null);
+  const [summary, setSummary] = useState<Record<InterventionStatus, number> | null>(null);
+  const [schedule, setSchedule] = useState<Intervention[]>([]);
+  const [recentEvents, setRecentEvents] = useState<TimelineEvent[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchMonitors();
-    fetchAllHeartbeats(estimateMaxBars());
-    fetchTree();
-    monitorsApi.getSummary().then((summary) => {
-      const entries = Object.values(summary);
-      if (entries.length > 0) {
-        const totalUptime = entries.reduce((sum, e) => sum + e.uptimePct, 0);
-        setOverallUptime(Math.round((totalUptime / entries.length) * 100) / 100);
-        const rtEntries = entries.filter((e) => e.avgResponseTime !== null);
-        if (rtEntries.length > 0) {
-          const totalRt = rtEntries.reduce((sum, e) => sum + e.avgResponseTime!, 0);
-          setOverallAvgRt(Math.round(totalRt / rtEntries.length));
-        }
+    const load = async () => {
+      try {
+        const [sum, sched] = await Promise.all([
+          interventionsApi.getSummary(),
+          interventionsApi.getSchedule(),
+        ]);
+        setSummary(sum);
+        setSchedule(sched);
+
+        // Load recent activity from the first few scheduled interventions
+        const eventPromises = sched.slice(0, 5).map((i) =>
+          interventionsApi.getTimeline(i.id, 3).catch(() => [] as TimelineEvent[]),
+        );
+        const allEvents = (await Promise.all(eventPromises)).flat();
+        allEvents.sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+        setRecentEvents(allEvents.slice(0, 10));
+      } catch {
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
       }
-    }).catch(() => {});
-  }, [fetchMonitors, fetchAllHeartbeats, fetchTree]);
+    };
+    load();
+  }, []);
 
-  const monitors = getMonitorList();
-  const showCreate = canCreate();
-
-  const upCount = monitors.filter((m) => m.status === 'up').length;
-  const downCount = monitors.filter((m) => m.status === 'down').length;
-  const alertCount = monitors.filter((m) => m.status === 'alert').length;
-  const pendingCount = monitors.filter((m) => m.status === 'pending').length;
-  const pausedCount = monitors.filter((m) => m.status === 'paused').length;
-  const sslWarnCount = monitors.filter((m) => m.status === 'ssl_warning').length;
-  const sslExpiredCount = monitors.filter((m) => m.status === 'ssl_expired').length;
-
-  // ── Cards-layout: flat sorted lists ──
-  const STATUS_ORDER: Record<string, number> = {
-    down: 0, alert: 1, ssl_expired: 2, ssl_warning: 3,
-    pending: 4, up: 5, paused: 6, maintenance: 7, inactive: 8,
-  };
-  const sortByStatus = (a: Monitor, b: Monitor) =>
-    (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99) ||
-    a.name.localeCompare(b.name);
-
-  const cardMonitors = useMemo(
-    () => monitors.filter((m) => m.type !== 'agent').sort(sortByStatus),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [monitors],
-  );
-  const cardAgents = useMemo(
-    () => monitors.filter((m) => m.type === 'agent').sort(sortByStatus),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [monitors],
-  );
-  const cardAgentsOnline = cardAgents.filter((m) => m.status === 'up').length;
-
-  // Problem monitors (shown in dedicated sections above the column layout)
-  const downMonitors = monitors
-    .filter((m) => m.status === 'down')
-    .sort((a, b) => a.name.localeCompare(b.name));
-  const alertMonitors = monitors
-    .filter((m) => m.status === 'alert')
-    .sort((a, b) => a.name.localeCompare(b.name));
-  const sslExpiredMonitors = monitors
-    .filter((m) => m.status === 'ssl_expired')
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  // Ungrouped monitors
-  const ungroupedMonitors = getMonitorsByGroup(null)
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  // Build column items: each root group and ungrouped form a "block"
-  type ColumnBlock =
-    | { type: 'group'; node: GroupTreeNode }
-    | { type: 'ungrouped'; monitors: Monitor[] };
-
-  const columnBlocks = useMemo(() => {
-    const blocks: ColumnBlock[] = [];
-
-    // Root groups that have at least one monitor (anywhere in subtree)
-    for (const node of tree) {
-      if (hasAnyMonitors(node, getMonitorsByGroup)) {
-        blocks.push({ type: 'group', node });
-      }
-    }
-
-    // Ungrouped monitors
-    if (ungroupedMonitors.length > 0) {
-      blocks.push({ type: 'ungrouped', monitors: ungroupedMonitors });
-    }
-
-    return blocks;
-  }, [tree, ungroupedMonitors, getMonitorsByGroup]);
-
-  const [leftBlocks, rightBlocks] = useMemo(() => {
-    return distributeColumns(columnBlocks, (block) => {
-      if (block.type === 'ungrouped') return block.monitors.length + 1; // +1 for header
-      return countMonitors(block.node, getMonitorsByGroup) + 1;
-    });
-  }, [columnBlocks, getMonitorsByGroup]);
-
-  const handleSelect = (id: number) => {
-    const monitor = getMonitorList().find((m) => m.id === id);
-    if (!monitor) return;
-    const isAgent = monitor.type === 'agent';
-    const kind = isAgent ? 'agent' : 'monitor';
-
-    // Block cross-kind selection
-    if (selectionKind !== null && selectionKind !== kind && !selectedIds.has(id)) return;
-
-    const newSet = new Set(selectedIds);
-    if (newSet.has(id)) {
-      newSet.delete(id);
-    } else {
-      newSet.add(id);
-    }
-    setSelectedIds(newSet);
-    setSelectionKind(newSet.size === 0 ? null : kind);
-  };
-
-  const clearSelection = () => {
-    setSelectedIds(new Set());
-    setSelectionKind(null);
-  };
-
-  const handleBulkDelete = async () => {
-    const ids = Array.from(selectedIds);
-    if (!confirm(t('dashboard.confirmBulkDelete', { count: ids.length }))) return;
-    try {
-      await monitorsApi.bulkDelete(ids);
-      toast.success(t('dashboard.bulkDeleteSuccess', { count: ids.length }));
-      clearSelection();
-    } catch {
-      toast.error(t('dashboard.bulkDeleteFailed'));
-    }
-  };
-
-  const handleBulkPause = async () => {
-    const ids = Array.from(selectedIds);
-    try {
-      await monitorsApi.bulkPause(ids, true);
-      toast.success(t('dashboard.bulkPauseSuccess', { count: ids.length }));
-      clearSelection();
-    } catch {
-      toast.error(t('dashboard.bulkPauseFailed'));
-    }
-  };
-
-  const renderBlock = (block: ColumnBlock) => {
-    if (block.type === 'ungrouped') {
-      const ungroupedExpanded = isGroupExpanded(0);
-      return (
-        <DashboardSection
-          key="ungrouped"
-          title={t('dashboard.sectionUngrouped')}
-          borderColor="border-border"
-          collapsed={!ungroupedExpanded}
-          onToggle={() => toggleGroupExpanded(0)}
-        >
-          {block.monitors.map((m) => (
-            <MonitorCard
-              key={m.id}
-              monitor={m}
-              heartbeats={getRecentHeartbeats(m.id)}
-              selectionMode={selectionMode}
-              selected={selectedIds.has(m.id)}
-              selectionDisabled={selectionKind !== null && (m.type === 'agent') !== (selectionKind === 'agent')}
-              onSelect={handleSelect}
-            />
-          ))}
-        </DashboardSection>
-      );
-    }
-
-    return (
-      <GroupSection
-        key={block.node.id}
-        node={block.node}
-        depth={0}
-        getMonitorsByGroup={getMonitorsByGroup}
-        getRecentHeartbeats={getRecentHeartbeats}
-        selectionMode={selectionMode}
-        selectedIds={selectedIds}
-        selectionKind={selectionKind}
-        onSelect={handleSelect}
-      />
-    );
-  };
-
-  if (isLoading && monitors.length === 0) {
+  if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
         <LoadingSpinner size="lg" />
@@ -270,405 +128,143 @@ export function DashboardPage() {
     );
   }
 
+  const statuses: InterventionStatus[] = [
+    'pending',
+    'assigned',
+    'in_progress',
+    'done',
+    'issue',
+    'cancelled',
+  ];
+
   return (
     <div className="p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-text-primary">{t('dashboard.title')}</h1>
-        <div className="flex items-center gap-2">
-          {/* Layout toggle */}
-          <div className="flex items-center rounded-lg border border-border overflow-hidden">
-            <button
-              onClick={() => setDashboardLayout('list')}
-              title={t('dashboard.layoutList')}
-              className={cn(
-                'p-1.5 transition-colors',
-                dashboardLayout === 'list'
-                  ? 'bg-bg-tertiary text-text-primary'
-                  : 'text-text-muted hover:text-text-primary hover:bg-bg-hover',
-              )}
-            >
-              <LayoutList size={15} />
-            </button>
-            <button
-              onClick={() => setDashboardLayout('cards')}
-              title={t('dashboard.layoutCards')}
-              className={cn(
-                'p-1.5 transition-colors',
-                dashboardLayout === 'cards'
-                  ? 'bg-bg-tertiary text-text-primary'
-                  : 'text-text-muted hover:text-text-primary hover:bg-bg-hover',
-              )}
-            >
-              <LayoutGrid size={15} />
-            </button>
-          </div>
+        <h1 className="text-2xl font-semibold text-text-primary">Dashboard</h1>
+        <Link to="/intervention/new">
+          <Button variant="primary" size="sm">
+            <Plus size={16} className="mr-1.5" />
+            New Intervention
+          </Button>
+        </Link>
+      </div>
 
-          {showCreate && (
-            <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSelectionMode(!selectionMode);
-                  setSelectedIds(new Set());
-                  setSelectionKind(null);
-                }}
+      {/* Summary Stat Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        {statuses.map((status) => {
+          const cfg = STATUS_CARD_CONFIG[status];
+          const count = summary?.[status] ?? 0;
+          return (
+            <div
+              key={status}
+              className="rounded-lg border border-border bg-bg-secondary p-4"
+            >
+              <div className={cn('flex items-center gap-2 mb-1', cfg.colorClass)}>
+                {cfg.icon}
+                <span className="text-2xl font-bold">{count}</span>
+              </div>
+              <div className="text-sm text-text-secondary">{cfg.label}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Today's Schedule */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-4">
+          <CalendarDays size={18} className="text-accent" />
+          <h2 className="text-lg font-semibold text-text-primary">
+            Today&apos;s Schedule
+          </h2>
+          <span className="ml-2 text-sm text-text-secondary">
+            ({schedule.length} intervention{schedule.length !== 1 ? 's' : ''})
+          </span>
+        </div>
+
+        {schedule.length === 0 ? (
+          <div className="rounded-lg border border-border bg-bg-secondary p-6 text-center">
+            <p className="text-text-secondary">No interventions scheduled for today.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {schedule.map((intervention) => (
+              <Link
+                key={intervention.id}
+                to={`/intervention/${intervention.id}`}
+                className="block rounded-lg border border-border bg-bg-secondary p-4 hover:bg-bg-tertiary transition-colors"
               >
-                <CheckSquare size={16} className="mr-1.5" />
-                {selectionMode ? t('dashboard.cancelSelection') : t('dashboard.select')}
-              </Button>
-              <Button variant="secondary" size="sm" onClick={openAddAgentModal}>
-                <Plus size={16} className="mr-1.5" />
-                {t('dashboard.addAgent')}
-              </Button>
-              <Link to="/monitor/new">
-                <Button variant="secondary" size="sm">
-                  <Plus size={16} className="mr-1.5" />
-                  {t('dashboard.addMonitor')}
-                </Button>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm font-mono text-accent">
+                      {formatTime(intervention.scheduledAt)}
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-text-primary">
+                        {intervention.title}
+                      </div>
+                      <div className="text-xs text-text-secondary">
+                        {intervention.clientName ?? 'No client'}
+                        {intervention.assignedTechnicianName &&
+                          ` \u2022 ${intervention.assignedTechnicianName}`}
+                      </div>
+                    </div>
+                  </div>
+                  <StatusBadge status={intervention.status} />
+                </div>
               </Link>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4 mb-6">
-        <div className="rounded-lg border border-border bg-bg-secondary p-4" data-status="up">
-          <div className="text-2xl font-bold text-status-up">{upCount}</div>
-          <div className="text-sm text-text-secondary">{t('dashboard.statsUp')}</div>
-        </div>
-        <div className="rounded-lg border border-border bg-bg-secondary p-4" data-status="down">
-          <div className="text-2xl font-bold text-status-down">{downCount}</div>
-          <div className="text-sm text-text-secondary">{t('dashboard.statsDown')}</div>
-        </div>
-        {alertCount > 0 && (
-          <div className="rounded-lg border border-border bg-bg-secondary p-4" data-status="alert">
-            <div className="text-2xl font-bold text-orange-500">{alertCount}</div>
-            <div className="text-sm text-text-secondary">{t('dashboard.statsAlert')}</div>
-          </div>
-        )}
-        <div className="rounded-lg border border-border bg-bg-secondary p-4" data-status="pending">
-          <div className="text-2xl font-bold text-status-pending">{pendingCount}</div>
-          <div className="text-sm text-text-secondary">{t('dashboard.statsPending')}</div>
-        </div>
-        <div className="rounded-lg border border-border bg-bg-secondary p-4">
-          <div className="text-2xl font-bold text-status-paused">{pausedCount}</div>
-          <div className="text-sm text-text-secondary">{t('dashboard.statsPaused')}</div>
-        </div>
-        {(sslWarnCount > 0 || sslExpiredCount > 0) && (
-          <div className="rounded-lg border border-border bg-bg-secondary p-4" data-status="ssl_warning">
-            <div className="text-2xl font-bold text-status-ssl-warning">{sslWarnCount}</div>
-            <div className="text-sm text-text-secondary">{t('dashboard.statsSslWarn')}</div>
-          </div>
-        )}
-        {sslExpiredCount > 0 && (
-          <div className="rounded-lg border border-border bg-bg-secondary p-4" data-status="ssl_expired">
-            <div className="text-2xl font-bold text-status-ssl-expired">{sslExpiredCount}</div>
-            <div className="text-sm text-text-secondary">{t('dashboard.statsSslExpired')}</div>
-          </div>
-        )}
-        <div className="rounded-lg border border-border bg-bg-secondary p-4" data-status="info">
-          <div className="flex items-center gap-1.5 text-2xl font-bold text-accent">
-            <Activity size={20} />
-            {overallUptime !== null ? `${overallUptime}%` : '-'}
-          </div>
-          <div className="text-sm text-text-secondary">{t('dashboard.statsUptime')}</div>
-        </div>
-        <div className="rounded-lg border border-border bg-bg-secondary p-4">
-          <div className="flex items-center gap-1.5 text-2xl font-bold text-text-primary">
-            <Clock size={20} />
-            {overallAvgRt !== null ? `${overallAvgRt}ms` : '-'}
-          </div>
-          <div className="text-sm text-text-secondary">{t('dashboard.statsAvgResponse')}</div>
-        </div>
-      </div>
-
-      {/* Bulk action bar */}
-      {selectionMode && selectedIds.size > 0 && (
-        <div className="mb-4 flex items-center gap-3 rounded-lg border border-accent/30 bg-bg-tertiary p-3">
-          <span className="text-sm text-text-secondary">
-            {selectionKind === 'agent'
-              ? t(selectedIds.size === 1 ? 'dashboard.selectedCountAgent_one' : 'dashboard.selectedCountAgent_other', { count: selectedIds.size })
-              : t(selectedIds.size === 1 ? 'dashboard.selectedCount_one' : 'dashboard.selectedCount_other', { count: selectedIds.size })}
-          </span>
-          <Button variant="secondary" size="sm" onClick={() => setBulkEditOpen(true)}>
-            {t('dashboard.editSelected')}
-          </Button>
-          <Button variant="secondary" size="sm" onClick={handleBulkPause}>
-            {t('dashboard.pause')}
-          </Button>
-          <Button variant="danger" size="sm" onClick={handleBulkDelete}>
-            {t('dashboard.bulkDelete')}
-          </Button>
-        </div>
-      )}
-
-      {/* ── Down monitors (full width, above columns) — list mode only ── */}
-      {dashboardLayout !== 'cards' && downMonitors.length > 0 && (
-        <DashboardSection
-          icon={<AlertTriangle size={16} className="text-status-down" />}
-          title={t('dashboard.sectionDown')}
-          badge={<span className="text-xs font-semibold text-status-down">{downMonitors.length}</span>}
-          borderColor="border-status-down/30"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-            {downMonitors.map((m) => (
-              <MonitorCard
-                key={m.id}
-                monitor={m}
-                heartbeats={getRecentHeartbeats(m.id)}
-                selectionMode={selectionMode}
-                selected={selectedIds.has(m.id)}
-                selectionDisabled={selectionKind !== null && (m.type === 'agent') !== (selectionKind === 'agent')}
-                onSelect={handleSelect}
-              />
             ))}
           </div>
-        </DashboardSection>
-      )}
-
-      {/* ── Alert monitors — agent threshold violations — list mode only ── */}
-      {dashboardLayout !== 'cards' && alertMonitors.length > 0 && (
-        <DashboardSection
-          icon={<Bell size={16} className="text-orange-500" />}
-          title={t('dashboard.sectionAlert')}
-          badge={<span className="text-xs font-semibold text-orange-500">{alertMonitors.length}</span>}
-          borderColor="border-orange-500/30"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-            {alertMonitors.map((m) => (
-              <MonitorCard
-                key={m.id}
-                monitor={m}
-                heartbeats={getRecentHeartbeats(m.id)}
-                selectionMode={selectionMode}
-                selected={selectedIds.has(m.id)}
-                selectionDisabled={selectionKind !== null && (m.type === 'agent') !== (selectionKind === 'agent')}
-                onSelect={handleSelect}
-              />
-            ))}
-          </div>
-        </DashboardSection>
-      )}
-
-      {/* ── SSL Expired monitors — list mode only ── */}
-      {dashboardLayout !== 'cards' && sslExpiredMonitors.length > 0 && (
-        <DashboardSection
-          icon={<ShieldOff size={16} className="text-status-ssl-expired" />}
-          title={t('dashboard.sectionSslExpired')}
-          badge={<span className="text-xs font-semibold text-status-ssl-expired">{sslExpiredMonitors.length}</span>}
-          borderColor="border-status-ssl-expired/30"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-            {sslExpiredMonitors.map((m) => (
-              <MonitorCard
-                key={m.id}
-                monitor={m}
-                heartbeats={getRecentHeartbeats(m.id)}
-                selectionMode={selectionMode}
-                selected={selectedIds.has(m.id)}
-                selectionDisabled={selectionKind !== null && (m.type === 'agent') !== (selectionKind === 'agent')}
-                onSelect={handleSelect}
-              />
-            ))}
-          </div>
-        </DashboardSection>
-      )}
-
-      {dashboardLayout === 'cards' ? (
-        /* ── Cards layout ── */
-        <div>
-          {/* Monitors grid */}
-          {cardMonitors.length > 0 && (
-            <PeekedGrid
-              title={t('dashboard.sectionMonitors')}
-              icon={<Activity size={14} className="text-accent" />}
-              count={`${cardMonitors.length}`}
-              cardWidth={290}
-              rows={cardMonitors.length > 4 ? 2 : 1}
-            >
-              {cardMonitors.map((m) => (
-                <MonitorCardTile
-                  key={m.id}
-                  monitor={m}
-                  heartbeats={getRecentHeartbeats(m.id)}
-                />
-              ))}
-            </PeekedGrid>
-          )}
-
-          {/* Agents grid */}
-          {cardAgents.length > 0 && (
-            <PeekedGrid
-              title={t('dashboard.sectionAgents')}
-              icon={<Server size={14} className="text-accent" />}
-              count={`${cardAgentsOnline} online · ${cardAgents.length} total`}
-              cardWidth={450}
-              rows={cardAgents.length > 3 ? 2 : 1}
-            >
-              {cardAgents.map((m) => (
-                <AgentCardTile
-                  key={m.id}
-                  monitor={m}
-                  heartbeats={getRecentHeartbeats(m.id)}
-                />
-              ))}
-            </PeekedGrid>
-          )}
-
-          {monitors.length === 0 && (
-            <div className="py-12 text-center">
-              <p className="text-text-muted">{t('dashboard.noMonitors')}</p>
-            </div>
-          )}
-        </div>
-      ) : (
-        /* ── List layout (original two-column) ── */
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6">
-            <div>{leftBlocks.map(renderBlock)}</div>
-            <div>{rightBlocks.map(renderBlock)}</div>
-          </div>
-          {monitors.length === 0 && (
-            <div className="py-12 text-center">
-              <p className="text-text-muted">{t('dashboard.noMonitors')}</p>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Bulk edit modal */}
-      {bulkEditOpen && (
-        <BulkEditModal
-          monitorIds={Array.from(selectedIds)}
-          isAgentSelection={selectionKind === 'agent'}
-          onClose={() => setBulkEditOpen(false)}
-        />
-      )}
-    </div>
-  );
-}
-
-/** Renders a group and its subgroups recursively */
-function GroupSection({
-  node,
-  depth,
-  getMonitorsByGroup,
-  getRecentHeartbeats,
-  selectionMode,
-  selectedIds,
-  selectionKind,
-  onSelect,
-}: {
-  node: GroupTreeNode;
-  depth: number;
-  getMonitorsByGroup: (groupId: number | null) => Monitor[];
-  getRecentHeartbeats: (id: number) => import('@obliview/shared').Heartbeat[];
-  selectionMode: boolean;
-  selectedIds: Set<number>;
-  selectionKind: 'monitor' | 'agent' | null;
-  onSelect: (id: number) => void;
-}) {
-  const { isGroupExpanded, toggleGroupExpanded } = useGroupStore();
-  const groupMonitors = getMonitorsByGroup(node.id)
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  // Skip entirely empty groups (no monitors at any level)
-  if (!hasAnyMonitors(node, getMonitorsByGroup)) return null;
-
-  const groupIcon = node.kind === 'agent'
-    ? <Server size={16} className="text-accent" />
-    : <Folder size={16} className="text-accent" />;
-
-  const expanded = isGroupExpanded(node.id);
-
-  return (
-    <DashboardSection
-      icon={groupIcon}
-      title={anonymize(node.name)}
-      depth={depth}
-      borderColor="border-accent/20"
-      collapsed={!expanded}
-      onToggle={() => toggleGroupExpanded(node.id)}
-    >
-      {/* Direct monitors */}
-      {groupMonitors.map((m) => (
-        <MonitorCard
-          key={m.id}
-          monitor={m}
-          heartbeats={getRecentHeartbeats(m.id)}
-          selectionMode={selectionMode}
-          selected={selectedIds.has(m.id)}
-          selectionDisabled={selectionKind !== null && (m.type === 'agent') !== (selectionKind === 'agent')}
-          onSelect={onSelect}
-        />
-      ))}
-
-      {/* Child groups */}
-      {node.children.map((child) => (
-        <GroupSection
-          key={child.id}
-          node={child}
-          depth={depth + 1}
-          getMonitorsByGroup={getMonitorsByGroup}
-          getRecentHeartbeats={getRecentHeartbeats}
-          selectionMode={selectionMode}
-          selectedIds={selectedIds}
-          selectionKind={selectionKind}
-          onSelect={onSelect}
-        />
-      ))}
-    </DashboardSection>
-  );
-}
-
-/** Reusable section wrapper with a collapsible title header */
-function DashboardSection({
-  icon,
-  title,
-  badge,
-  borderColor = 'border-border',
-  depth = 0,
-  collapsed = false,
-  onToggle,
-  children,
-}: {
-  icon?: React.ReactNode;
-  title: string;
-  badge?: React.ReactNode;
-  borderColor?: string;
-  depth?: number;
-  collapsed?: boolean;
-  onToggle?: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={`mb-4 ${depth > 0 ? 'ml-4' : ''}`}>
-      <div
-        className={cn(
-          `flex items-center gap-2 mb-2 pb-1 border-b ${borderColor}`,
-          onToggle && 'cursor-pointer select-none',
         )}
-        onClick={onToggle}
-      >
-        {onToggle && (
-          <span className="text-text-muted shrink-0">
-            {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-          </span>
-        )}
-        {icon}
-        <span className="text-sm font-semibold text-text-secondary uppercase tracking-wider flex-1">
-          {title}
-        </span>
-        {badge}
       </div>
-      {!collapsed && (
-        <div className="space-y-2">
-          {children}
+
+      {/* Recent Activity */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <Activity size={18} className="text-accent" />
+          <h2 className="text-lg font-semibold text-text-primary">Recent Activity</h2>
         </div>
-      )}
+
+        {recentEvents.length === 0 ? (
+          <div className="rounded-lg border border-border bg-bg-secondary p-6 text-center">
+            <p className="text-text-secondary">No recent activity.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {recentEvents.map((event) => (
+              <div
+                key={event.id}
+                className="rounded-lg border border-border bg-bg-secondary p-3 flex items-start gap-3"
+              >
+                <div className="text-xs text-text-secondary whitespace-nowrap mt-0.5">
+                  {new Date(event.createdAt).toLocaleString([], {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm text-text-primary">
+                    <span className="font-medium">
+                      {event.technicianName ?? 'System'}
+                    </span>
+                    {' \u2014 '}
+                    <span className="text-text-secondary capitalize">
+                      {event.type.replace('_', ' ')}
+                    </span>
+                  </div>
+                  {event.message && (
+                    <p className="text-xs text-text-secondary mt-0.5 truncate">
+                      {event.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

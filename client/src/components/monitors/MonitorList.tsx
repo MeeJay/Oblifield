@@ -1,4 +1,4 @@
-import type { Monitor } from '@obliview/shared';
+import type { Monitor } from '@oblifield/shared';
 import { MonitorCard } from './MonitorCard';
 import { useMonitorStore } from '@/store/monitorStore';
 

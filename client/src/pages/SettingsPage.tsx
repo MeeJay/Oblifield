@@ -9,8 +9,8 @@ import { systemApi, type SystemInfo } from '@/api/system.api';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Checkbox } from '@/components/ui/Checkbox';
-import type { SmtpServer, AppConfig, AgentGlobalConfig, NotificationTypeConfig, ObligateConfig } from '@obliview/shared';
-import { DEFAULT_AGENT_GLOBAL_CONFIG } from '@obliview/shared';
+import type { SmtpServer, AppConfig, AgentGlobalConfig, NotificationTypeConfig, ObligateConfig } from '@oblifield/shared';
+import { DEFAULT_AGENT_GLOBAL_CONFIG } from '@oblifield/shared';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/cn';
 import { useTranslation } from 'react-i18next';
@@ -60,9 +60,11 @@ export function SettingsPage() {
   const [smtpSaving, setSmtpSaving] = useState(false);
   const [testingId, setTestingId] = useState<number | null>(null);
 
-  // ── App Config (2FA) ──
+  // ── App Config (2FA + company name) ──
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [configSaving, setConfigSaving] = useState(false);
+  const [companyName, setCompanyName] = useState('');
+  const [companySaving, setCompanySaving] = useState(false);
 
   // ── Agent Global Config ──
   const [agentGlobal, setAgentGlobal] = useState<AgentGlobalConfig | null>(null);
@@ -84,7 +86,10 @@ export function SettingsPage() {
     setSystemInfoLoading(true);
     systemApi.getInfo().then(setSystemInfo).catch(() => {}).finally(() => setSystemInfoLoading(false));
     smtpServerApi.list().then(setServers).catch(() => {});
-    appConfigApi.getConfig().then(setAppConfig).catch(() => {});
+    appConfigApi.getConfig().then((cfg) => {
+      setAppConfig(cfg);
+      setCompanyName(cfg.company_name || '');
+    }).catch(() => {});
     appConfigApi.getAgentGlobal().then((cfg) => {
       setAgentGlobal(cfg);
       setAgentInterval(cfg.checkIntervalSeconds !== null ? String(cfg.checkIntervalSeconds) : '');
@@ -248,6 +253,49 @@ export function SettingsPage() {
           {t('settings.globalDesc')}
         </p>
       </div>
+
+      {/* ── Company Name ── */}
+      {admin && (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <HardDrive size={18} className="text-accent" />
+            <h2 className="text-lg font-semibold text-text-primary">{t('settings.company', 'Company')}</h2>
+          </div>
+          <div className="rounded-lg border border-border bg-bg-secondary p-5">
+            <p className="text-sm text-text-muted mb-3">
+              {t('settings.companyDesc', 'Company name displayed on PDF reports and notifications.')}
+            </p>
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <Input
+                  label={t('settings.companyName', 'Company Name')}
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="Oblifield"
+                />
+              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                loading={companySaving}
+                onClick={async () => {
+                  setCompanySaving(true);
+                  try {
+                    await appConfigApi.setConfig('company_name', companyName.trim() || 'Oblifield');
+                    toast.success(t('common.saved', 'Saved'));
+                  } catch {
+                    toast.error(t('common.error', 'Error'));
+                  } finally {
+                    setCompanySaving(false);
+                  }
+                }}
+              >
+                {t('common.save', 'Save')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── About ── */}
       {admin && (

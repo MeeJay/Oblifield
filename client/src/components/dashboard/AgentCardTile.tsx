@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import type { Monitor, Heartbeat, AgentThresholds } from '@obliview/shared';
+import type { Monitor, Heartbeat, AgentThresholds } from '@oblifield/shared';
 import { anonymize } from '@/utils/anonymize';
 import { cn } from '@/utils/cn';
 

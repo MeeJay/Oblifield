@@ -6,7 +6,7 @@ import type {
   ApiResponse,
   CreateUserRequest,
   UpdateUserRequest,
-} from '@obliview/shared';
+} from '@oblifield/shared';
 
 export const usersApi = {
   async list(): Promise<User[]> {

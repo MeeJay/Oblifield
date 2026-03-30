@@ -20,8 +20,8 @@ import {
   Settings2,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { SOCKET_EVENTS } from '@obliview/shared';
-import type { AgentApiKey, AgentDevice, MonitorGroup } from '@obliview/shared';
+import { SOCKET_EVENTS } from '@oblifield/shared';
+import type { AgentApiKey, AgentDevice, MonitorGroup } from '@oblifield/shared';
 import { anonymize, anonymizeIp } from '@/utils/anonymize';
 import { agentApi } from '@/api/agent.api';
 import { groupsApi } from '@/api/groups.api';

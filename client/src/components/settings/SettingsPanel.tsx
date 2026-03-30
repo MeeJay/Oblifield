@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import type { ResolvedSettings, SettingsScope } from '@obliview/shared';
-import type { SettingsKey } from '@obliview/shared';
-import { SETTINGS_DEFINITIONS } from '@obliview/shared';
+import type { ResolvedSettings, SettingsScope } from '@oblifield/shared';
+import type { SettingsKey } from '@oblifield/shared';
+import { SETTINGS_DEFINITIONS } from '@oblifield/shared';
 import { settingsApi } from '@/api/settings.api';
 import { SettingField } from './SettingField';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';

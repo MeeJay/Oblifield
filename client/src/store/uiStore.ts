@@ -20,9 +20,9 @@ interface UiState {
 
 const MIN_SIDEBAR_WIDTH = 220;
 const MAX_SIDEBAR_WIDTH = 600;
-const STORAGE_KEY_WIDTH    = 'ov-sidebar-width';
-const STORAGE_KEY_FLOATING = 'ov-sidebar-floating';
-const STORAGE_KEY_DASH_LAYOUT = 'ov-dashboard-layout';
+const STORAGE_KEY_WIDTH    = 'of-sidebar-width';
+const STORAGE_KEY_FLOATING = 'of-sidebar-floating';
+const STORAGE_KEY_DASH_LAYOUT = 'of-dashboard-layout';
 
 function loadSavedDashLayout(): DashboardLayout {
   try {

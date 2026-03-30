@@ -1,14 +1,14 @@
 import { create } from 'zustand';
-import type { MonitorGroup, GroupTreeNode } from '@obliview/shared';
+import type { MonitorGroup, GroupTreeNode } from '@oblifield/shared';
 import { groupsApi } from '../api/groups.api';
 
 // ── localStorage persistence for collapsed groups (per-user per-tenant) ──
-const COLLAPSED_LEGACY_KEY = 'ov-group-collapsed';
+const COLLAPSED_LEGACY_KEY = 'of-client-collapsed';
 
 /** Returns a storage key scoped to the given user + tenant so each context has its own state. */
 function collapsedKey(userId: number | null, tenantId: number | null): string {
   if (userId == null) return COLLAPSED_LEGACY_KEY;
-  return `ov-group-collapsed-u${userId}-t${tenantId ?? 0}`;
+  return `of-client-collapsed-u${userId}-t${tenantId ?? 0}`;
 }
 
 function loadCollapsedFromKey(key: string): Set<number> {

@@ -1,6 +1,6 @@
 import { db } from '../db';
-import type { AppConfig, AgentGlobalConfig, NotificationTypeConfig, ObligateConfig } from '@obliview/shared';
-import { DEFAULT_NOTIFICATION_TYPES } from '@obliview/shared';
+import type { AppConfig, AgentGlobalConfig, NotificationTypeConfig, ObligateConfig } from '@oblifield/shared';
+import { DEFAULT_NOTIFICATION_TYPES } from '@oblifield/shared';
 
 const AGENT_GLOBAL_CONFIG_KEY = 'agent_global_config';
 const OBLIGATE_CONFIG_KEY     = 'obligate_config';
@@ -34,6 +34,7 @@ export const appConfigService = {
       otp_smtp_server_id: map['otp_smtp_server_id'] ? parseInt(map['otp_smtp_server_id'], 10) : null,
       obligate_url:     parseUrl(OBLIGATE_CONFIG_KEY),
       obligate_enabled: map['obligate_enabled'] === 'true',
+      company_name: map['company_name'] || 'Oblifield',
     };
   },
 

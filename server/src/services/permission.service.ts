@@ -1,5 +1,5 @@
 import { db } from '../db';
-import type { PermissionLevel, UserPermissions } from '@obliview/shared';
+import type { PermissionLevel, UserPermissions } from '@oblifield/shared';
 
 export const permissionService = {
   /**
@@ -26,7 +26,36 @@ export const permissionService = {
   },
 
   /**
-   * Get the effective permission level for a user on a specific monitor.
+   * Get the effective permission level for a user on a specific intervention.
+   * Returns 'rw', 'ro', or null (no access).
+   * Checks: direct intervention permissions + client permissions (with inheritance via closure table).
+   */
+  async getInterventionPermission(
+    userId: number,
+    interventionId: number,
+    isAdmin: boolean,
+  ): Promise<PermissionLevel | null> {
+    if (isAdmin) return 'rw';
+
+    // Check if intervention belongs to a client
+    const interventionRow = await db('interventions').where({ id: interventionId }).select('client_id').first();
+    if (!interventionRow) return null;
+
+    // Direct intervention permission
+    const directLevel = await this._getHighestPermission(userId, 'intervention', interventionId);
+
+    // Client permission (inherited via closure table)
+    let clientLevel: PermissionLevel | null = null;
+    if (interventionRow.client_id) {
+      clientLevel = await this._getClientPermissionViaClosure(userId, interventionRow.client_id);
+    }
+
+    // Return highest: rw > ro > null
+    return this._highest(directLevel, clientLevel);
+  },
+
+  /**
+   * Get the effective permission level for a user on a specific monitor (legacy).
    * Returns 'rw', 'ro', or null (no access).
    * Checks: direct monitor permissions + group permissions (with inheritance via closure table).
    */
@@ -37,7 +66,6 @@ export const permissionService = {
   ): Promise<PermissionLevel | null> {
     if (isAdmin) return 'rw';
 
-    // Check if monitor is in a general group (always readable)
     const monitorRow = await db('monitors').where({ id: monitorId }).select('group_id').first();
     if (!monitorRow) return null;
 
@@ -46,7 +74,6 @@ export const permissionService = {
         .where({ id: monitorRow.group_id, is_general: true })
         .first();
       if (generalGroup) {
-        // General group: at minimum RO. Check if any team gives RW.
         const rwPerm = await this._getHighestPermission(userId, 'monitor', monitorId);
         const groupRw = await this._getGroupPermissionViaClosureForMonitor(userId, monitorRow.group_id);
         if (rwPerm === 'rw' || groupRw === 'rw') return 'rw';
@@ -54,21 +81,34 @@ export const permissionService = {
       }
     }
 
-    // Direct monitor permission
     const directLevel = await this._getHighestPermission(userId, 'monitor', monitorId);
 
-    // Group permission (inherited via closure table)
     let groupLevel: PermissionLevel | null = null;
     if (monitorRow.group_id) {
       groupLevel = await this._getGroupPermissionViaClosureForMonitor(userId, monitorRow.group_id);
     }
 
-    // Return highest: rw > ro > null
     return this._highest(directLevel, groupLevel);
   },
 
   /**
-   * Check if user can read a monitor.
+   * Check if user can read an intervention.
+   */
+  async canReadIntervention(userId: number, interventionId: number, isAdmin: boolean): Promise<boolean> {
+    const perm = await this.getInterventionPermission(userId, interventionId, isAdmin);
+    return perm !== null;
+  },
+
+  /**
+   * Check if user can write (edit/delete) an intervention.
+   */
+  async canWriteIntervention(userId: number, interventionId: number, isAdmin: boolean): Promise<boolean> {
+    const perm = await this.getInterventionPermission(userId, interventionId, isAdmin);
+    return perm === 'rw';
+  },
+
+  /**
+   * Check if user can read a monitor (legacy).
    */
   async canReadMonitor(userId: number, monitorId: number, isAdmin: boolean): Promise<boolean> {
     const perm = await this.getMonitorPermission(userId, monitorId, isAdmin);
@@ -76,7 +116,7 @@ export const permissionService = {
   },
 
   /**
-   * Check if user can write (edit/delete) a monitor.
+   * Check if user can write (edit/delete) a monitor (legacy).
    */
   async canWriteMonitor(userId: number, monitorId: number, isAdmin: boolean): Promise<boolean> {
     const perm = await this.getMonitorPermission(userId, monitorId, isAdmin);
@@ -84,7 +124,30 @@ export const permissionService = {
   },
 
   /**
-   * Get effective permission for a user on a group.
+   * Get effective permission for a user on a client.
+   * Checks direct client permissions + ancestor permissions via closure table.
+   */
+  async getClientPermission(
+    userId: number,
+    clientId: number,
+    isAdmin: boolean,
+  ): Promise<PermissionLevel | null> {
+    if (isAdmin) return 'rw';
+    return this._getClientPermissionViaClosure(userId, clientId);
+  },
+
+  async canReadClient(userId: number, clientId: number, isAdmin: boolean): Promise<boolean> {
+    const perm = await this.getClientPermission(userId, clientId, isAdmin);
+    return perm !== null;
+  },
+
+  async canWriteClient(userId: number, clientId: number, isAdmin: boolean): Promise<boolean> {
+    const perm = await this.getClientPermission(userId, clientId, isAdmin);
+    return perm === 'rw';
+  },
+
+  /**
+   * Get effective permission for a user on a group (legacy).
    * Checks direct group permissions + ancestor permissions via closure table.
    */
   async getGroupPermission(
@@ -94,7 +157,6 @@ export const permissionService = {
   ): Promise<PermissionLevel | null> {
     if (isAdmin) return 'rw';
 
-    // General groups are always readable
     const group = await db('monitor_groups').where({ id: groupId }).select('is_general').first();
     if (group?.is_general) {
       const level = await this._getGroupPermissionViaClosure(userId, groupId);
@@ -363,6 +425,25 @@ export const permissionService = {
     groupId: number,
   ): Promise<PermissionLevel | null> {
     return this._getGroupPermissionViaClosure(userId, groupId);
+  },
+
+  /**
+   * Get the highest client permission for a user on a client.
+   * Checks direct client permissions from teams.
+   */
+  async _getClientPermissionViaClosure(
+    userId: number,
+    clientId: number,
+  ): Promise<PermissionLevel | null> {
+    const rows = await db('team_permissions')
+      .join('team_memberships', 'team_permissions.team_id', 'team_memberships.team_id')
+      .where('team_memberships.user_id', userId)
+      .where('team_permissions.scope', 'client')
+      .where('team_permissions.scope_id', clientId)
+      .select('team_permissions.level');
+
+    if (rows.length === 0) return null;
+    return rows.some((r) => r.level === 'rw') ? 'rw' : 'ro';
   },
 
   _highest(a: PermissionLevel | null, b: PermissionLevel | null): PermissionLevel | null {

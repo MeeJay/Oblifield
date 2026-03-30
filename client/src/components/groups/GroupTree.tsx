@@ -21,7 +21,7 @@ import { estimateMaxBars } from '@/components/monitors/HeartbeatBar';
 import { monitorsApi } from '@/api/monitors.api';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import type { Monitor } from '@obliview/shared';
+import type { Monitor } from '@oblifield/shared';
 
 interface GroupTreeProps {
   selectedGroupId?: number | null;
@@ -109,7 +109,7 @@ export function GroupTree({ selectedGroupId, onSelectGroup, searchQuery = '' }: 
   const monitorTree = tree.filter(n => n.kind !== 'agent');
 
   // When searching, filter root nodes to those that have at least one matching monitor in their subtree
-  const hasMatchingMonitor = (node: import('@obliview/shared').GroupTreeNode): boolean => {
+  const hasMatchingMonitor = (node: import('@oblifield/shared').GroupTreeNode): boolean => {
     if (getMonitorsByGroup(node.id).some(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()))) return true;
     return node.children.some(hasMatchingMonitor);
   };

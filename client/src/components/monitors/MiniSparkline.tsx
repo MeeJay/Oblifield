@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
-import type { Heartbeat, Monitor } from '@obliview/shared';
+import type { Heartbeat, Monitor } from '@oblifield/shared';
 
 interface MiniSparklineProps {
   heartbeats: Heartbeat[];

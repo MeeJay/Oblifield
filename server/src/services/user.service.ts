@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { hashPassword } from '../utils/crypto';
-import type { User, UserRole, UserTenantAssignment } from '@obliview/shared';
+import type { User, UserRole, UserTenantAssignment } from '@oblifield/shared';
 
 interface UserRow {
   id: number;

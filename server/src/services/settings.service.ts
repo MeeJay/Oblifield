@@ -1,7 +1,7 @@
 import { db } from '../db';
-import type { SettingsScope, ResolvedSettings, SettingValue } from '@obliview/shared';
-import type { SettingsKey } from '@obliview/shared';
-import { SETTINGS_KEYS, HARDCODED_DEFAULTS, SETTINGS_DEFINITIONS } from '@obliview/shared';
+import type { SettingsScope, ResolvedSettings, SettingValue } from '@oblifield/shared';
+import type { SettingsKey } from '@oblifield/shared';
+import { SETTINGS_KEYS, HARDCODED_DEFAULTS, SETTINGS_DEFINITIONS } from '@oblifield/shared';
 
 interface SettingsRow {
   id: number;

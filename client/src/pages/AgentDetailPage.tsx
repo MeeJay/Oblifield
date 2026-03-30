@@ -8,8 +8,8 @@ import {
   Pencil, Check, X, LayoutDashboard,
   MemoryStick, Wifi, RotateCcw,
 } from 'lucide-react';
-import type { AgentDevice, AgentThresholds, AgentMetricThreshold, AgentTempThreshold, AgentDisplayConfig, NotificationChannel, NotificationTypeConfig } from '@obliview/shared';
-import { DEFAULT_AGENT_THRESHOLDS, SOCKET_EVENTS } from '@obliview/shared';
+import type { AgentDevice, AgentThresholds, AgentMetricThreshold, AgentTempThreshold, AgentDisplayConfig, NotificationChannel, NotificationTypeConfig } from '@oblifield/shared';
+import { DEFAULT_AGENT_THRESHOLDS, SOCKET_EVENTS } from '@oblifield/shared';
 import { AgentDisplayConfigModal } from '../components/agent/AgentDisplayConfigModal';
 import { NotificationTypesPanel } from '../components/agent/NotificationTypesPanel';
 import { agentApi } from '../api/agent.api';
@@ -384,7 +384,7 @@ function ResizeHandle({ onResize }: { onResize: (dy: number) => void }) {
 
 function CpuCard({ metrics, violating, displayConfig, onConfig }: {
   metrics: AgentMetrics; violating: boolean;
-  displayConfig: import('@obliview/shared').AgentDisplayConfig;
+  displayConfig: import('@oblifield/shared').AgentDisplayConfig;
   onConfig?: () => void;
 }) {
   const cpu = metrics.cpu;
@@ -541,7 +541,7 @@ function CpuCard({ metrics, violating, displayConfig, onConfig }: {
 
 function RamCard({ metrics, violating, displayConfig, onConfig }: {
   metrics: AgentMetrics; violating: boolean;
-  displayConfig: import('@obliview/shared').AgentDisplayConfig;
+  displayConfig: import('@oblifield/shared').AgentDisplayConfig;
   onConfig?: () => void;
 }) {
   const mem = metrics.memory;
@@ -599,7 +599,7 @@ function RamCard({ metrics, violating, displayConfig, onConfig }: {
 
 function GpuCard({ metrics, displayConfig, onConfig }: {
   metrics: AgentMetrics;
-  displayConfig: import('@obliview/shared').AgentDisplayConfig;
+  displayConfig: import('@oblifield/shared').AgentDisplayConfig;
   onConfig?: () => void;
 }) {
   const gpus = metrics.gpus;
@@ -675,7 +675,7 @@ function GpuCard({ metrics, displayConfig, onConfig }: {
 
 function DrivesCard({ metrics, violating, displayConfig, onConfig, onRenameMount }: {
   metrics: AgentMetrics; violating: boolean;
-  displayConfig: import('@obliview/shared').AgentDisplayConfig;
+  displayConfig: import('@oblifield/shared').AgentDisplayConfig;
   onConfig?: () => void;
   onRenameMount?: (mount: string, name: string) => Promise<void>;
 }) {
@@ -797,7 +797,7 @@ function FansCard({ metrics }: { metrics: AgentMetrics }) {
 
 function InterfacesCard({ metrics, displayConfig, onConfig, onRenameInterface }: {
   metrics: AgentMetrics;
-  displayConfig: import('@obliview/shared').AgentDisplayConfig;
+  displayConfig: import('@oblifield/shared').AgentDisplayConfig;
   onConfig?: () => void;
   onRenameInterface?: (iface: string, name: string) => Promise<void>;
 }) {
@@ -895,7 +895,7 @@ function TempsSection({
   metrics: AgentMetrics;
   sensorDisplayNames: Record<string, string> | null;
   onRename: (key: string, name: string) => Promise<void>;
-  displayConfig: import('@obliview/shared').AgentDisplayConfig;
+  displayConfig: import('@oblifield/shared').AgentDisplayConfig;
   onConfig?: () => void;
 }) {
   const temps = metrics.temps;
@@ -979,7 +979,7 @@ function OverviewView({
   violations: string[];
   sensorDisplayNames: Record<string, string> | null;
   onRename: (key: string, name: string) => Promise<void>;
-  displayConfig: import('@obliview/shared').AgentDisplayConfig;
+  displayConfig: import('@oblifield/shared').AgentDisplayConfig;
   openConfigModal: (section: 'cpu' | 'ram' | 'gpu' | 'drives' | 'network' | 'temps') => void;
   onRenameMount: (mount: string, name: string) => Promise<void>;
   onRenameInterface: (iface: string, name: string) => Promise<void>;
@@ -1146,7 +1146,7 @@ const CPU_CORES_HEIGHT_KEY = 'bk:agent-cpu-cores-height';
 
 function CpuView({ metrics, history, period, displayConfig }: {
   metrics: AgentMetrics; history: AgentPushSnapshot[]; period: 'realtime' | '1h' | '24h';
-  displayConfig: import('@obliview/shared').AgentDisplayConfig;
+  displayConfig: import('@oblifield/shared').AgentDisplayConfig;
 }) {
   const cpu = metrics.cpu;
   const vendor = cpu?.model ? extractVendor(cpu.model) : '';
@@ -1348,7 +1348,7 @@ function CpuView({ metrics, history, period, displayConfig }: {
 
 function RamView({ history, period, displayConfig }: {
   history: AgentPushSnapshot[]; period: 'realtime' | '1h' | '24h';
-  displayConfig: import('@obliview/shared').AgentDisplayConfig;
+  displayConfig: import('@oblifield/shared').AgentDisplayConfig;
 }) {
   const timestamps = history.map(h => h.receivedAt);
   const memPct = history.map(h => h.metrics.memory?.percent ?? 0);
@@ -1421,7 +1421,7 @@ function RamView({ history, period, displayConfig }: {
 
 function GpuView({ history, period, displayConfig }: {
   history: AgentPushSnapshot[]; period: 'realtime' | '1h' | '24h';
-  displayConfig: import('@obliview/shared').AgentDisplayConfig;
+  displayConfig: import('@oblifield/shared').AgentDisplayConfig;
 }) {
   const timestamps = history.map(h => h.receivedAt);
   // Collect unique GPU names across history
@@ -1490,7 +1490,7 @@ function GpuView({ history, period, displayConfig }: {
 
 function OthersView({ history, period, displayConfig }: {
   history: AgentPushSnapshot[]; period: 'realtime' | '1h' | '24h';
-  displayConfig: import('@obliview/shared').AgentDisplayConfig;
+  displayConfig: import('@oblifield/shared').AgentDisplayConfig;
 }) {
   const timestamps = history.map(h => h.receivedAt);
   // Collect unique disk mounts and interface names

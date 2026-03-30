@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Pencil, Trash2, CalendarClock, Clock, RefreshCw, CheckCircle2, Globe, Users, Ban } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { MaintenanceWindow, MaintenanceScopeType, NotificationChannel } from '@obliview/shared';
+import type { MaintenanceWindow, MaintenanceScopeType, NotificationChannel } from '@oblifield/shared';
 import { maintenanceApi } from '@/api/maintenance.api';
 import { MaintenanceWindowModal } from './MaintenanceWindowModal';
 import { cn } from '@/utils/cn';

@@ -10,7 +10,7 @@ import type {
   OverrideModeR,
   RemediationTrigger,
   ApiResponse,
-} from '@obliview/shared';
+} from '@oblifield/shared';
 
 export const remediationApi = {
   // ── Actions ────────────────────────────────────────────────────────────────
