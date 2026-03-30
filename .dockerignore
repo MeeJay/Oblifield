@@ -1,10 +1,13 @@
 node_modules
 **/node_modules
 **/dist
-!agent/dist
-!obli.tools/dist
-!obli.tools/VERSION
 .git
 .env
 *.md
 .vscode
+agent/
+obli.tools/
+docs/
+uploads/
+SampleReport.pdf
+000-RegularUpdate.bat

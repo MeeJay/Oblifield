@@ -4,7 +4,7 @@ export const config = {
   isDev: (process.env.NODE_ENV || 'development') === 'development',
 
   // Database
-  databaseUrl: process.env.DATABASE_URL || 'postgres://obliview:changeme@localhost:5432/obliview',
+  databaseUrl: process.env.DATABASE_URL || 'postgres://oblifield:changeme@localhost:5432/oblifield',
 
   // Session
   sessionSecret: process.env.SESSION_SECRET || 'dev-secret-change-me',

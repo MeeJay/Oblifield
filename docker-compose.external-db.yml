@@ -2,12 +2,12 @@
 # Usage: docker compose -f docker-compose.external-db.yml up -d
 #
 # Required .env variables:
-#   DATABASE_URL=postgres://obliview:<password>@<host>:5432/obliview
+#   DATABASE_URL=postgres://oblifield:<password>@<host>:5432/oblifield
 #   SESSION_SECRET=<random-string>
 
 services:
   server:
-    image: meejay/obliview-server:${OBLIVIEW_VERSION:-latest}
+    image: alexandreaj/oblifield-server:${OBLIFIELD_VERSION:-latest}
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -18,15 +18,16 @@ services:
       DEFAULT_ADMIN_USERNAME: ${DEFAULT_ADMIN_USERNAME:-admin}
       DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-admin123}
     volumes:
-      # Persistent custom directory: scripts, SSH keys, etc.
-      # SSH keys: chmod 700 custom/.ssh && chmod 600 custom/.ssh/id_*
-      - ${CUSTOM_DIR:-./custom}:/custom
+      - uploads_data:/app/uploads
 
   client:
-    image: meejay/obliview-client:${OBLIVIEW_VERSION:-latest}
+    image: alexandreaj/oblifield-client:${OBLIFIELD_VERSION:-latest}
     restart: unless-stopped
     depends_on:
       server:
         condition: service_healthy
     ports:
       - "${LISTEN_PORT:-3000}:80"
+
+volumes:
+  uploads_data:
