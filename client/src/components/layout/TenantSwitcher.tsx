@@ -2,8 +2,8 @@ import { useRef, useState, useEffect } from 'react';
 import { ChevronDown, Building2, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTenantStore } from '@/store/tenantStore';
-import { useGroupStore } from '@/store/groupStore';
-import { useMonitorStore } from '@/store/monitorStore';
+import { useClientStore } from '@/store/clientStore';
+import { useInterventionStore } from '@/store/interventionStore';
 import { disconnectSocket, connectSocket } from '@/socket/socketClient';
 import { useAuthStore } from '@/store/authStore';
 import { cn } from '@/utils/cn';
@@ -52,8 +52,8 @@ export function TenantSwitcher() {
 
       // Reload all tenant-scoped data in parallel
       await Promise.all([
-        useMonitorStore.getState().fetchMonitors(),
-        useGroupStore.getState().fetchTree(),
+        useInterventionStore.getState().fetchInterventions(),
+        useClientStore.getState().fetchTree(),
       ]);
 
       // Reconnect socket with new tenantId

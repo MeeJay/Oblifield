@@ -3,7 +3,7 @@ import type { Knex } from 'knex';
 import { randomUUID } from 'crypto';
 import { db } from '../db';
 import { AppError } from '../middleware/errorHandler';
-import { MonitorWorkerManager } from '../workers/MonitorWorkerManager';
+// MonitorWorkerManager removed (no longer applicable)
 
 type ExportSection =
   | 'monitorGroups'
@@ -1005,15 +1005,10 @@ export const importExportController = {
 
       }); // end transaction
 
-      // Start/restart workers for all imported monitors (fire-and-don't-block response)
-      if (importedMonitorIds.size > 0) {
-        MonitorWorkerManager.getInstance()
-          .restartMonitors([...importedMonitorIds])
-          .catch((err) => console.error('[Import] Failed to restart monitor workers:', err));
-      }
+      // (Monitor workers removed — no longer applicable)
 
       res.json({ success: true, data: results });
-    } catch (err) {
+    } catch (err: unknown) {
       // Log the full error so it's visible in the server terminal
       console.error('[Import] Failed:', err instanceof Error ? err.message : String(err));
       if (err instanceof Error && err.stack) console.error(err.stack);

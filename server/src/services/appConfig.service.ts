@@ -1,8 +1,6 @@
 import { db } from '../db';
-import type { AppConfig, AgentGlobalConfig, NotificationTypeConfig, ObligateConfig } from '@oblifield/shared';
-import { DEFAULT_NOTIFICATION_TYPES } from '@oblifield/shared';
+import type { AppConfig, ObligateConfig } from '@oblifield/shared';
 
-const AGENT_GLOBAL_CONFIG_KEY = 'agent_global_config';
 const OBLIGATE_CONFIG_KEY     = 'obligate_config';
 
 export const appConfigService = {
@@ -73,52 +71,4 @@ export const appConfigService = {
     return { url: merged.url, apiKeySet: !!merged.apiKey, enabled: enabled === 'true' };
   },
 
-  /** Get global agent defaults from app_config */
-  async getAgentGlobal(): Promise<AgentGlobalConfig> {
-    const raw = await this.get(AGENT_GLOBAL_CONFIG_KEY);
-    if (!raw) {
-      return {
-        checkIntervalSeconds: null,
-        heartbeatMonitoring: null,
-        maxMissedPushes: null,
-        notificationTypes: null,
-      };
-    }
-    try {
-      return JSON.parse(raw) as AgentGlobalConfig;
-    } catch {
-      return {
-        checkIntervalSeconds: null,
-        heartbeatMonitoring: null,
-        maxMissedPushes: null,
-        notificationTypes: null,
-      };
-    }
-  },
-
-  /** Merge-patch global agent defaults */
-  async setAgentGlobal(patch: Partial<AgentGlobalConfig>): Promise<AgentGlobalConfig> {
-    const current = await this.getAgentGlobal();
-    const updated: AgentGlobalConfig = { ...current, ...patch };
-    await this.set(AGENT_GLOBAL_CONFIG_KEY, JSON.stringify(updated));
-    return updated;
-  },
-
-  /**
-   * Read the global notification types (fully resolved — each field falls back to
-   * DEFAULT_NOTIFICATION_TYPES when null).
-   */
-  async getResolvedAgentNotificationTypes(): Promise<{
-    global: boolean; down: boolean; up: boolean; alert: boolean; update: boolean;
-  }> {
-    const cfg = await this.getAgentGlobal();
-    const nt: NotificationTypeConfig | null = cfg.notificationTypes ?? null;
-    return {
-      global: nt?.global ?? DEFAULT_NOTIFICATION_TYPES.global,
-      down:   nt?.down   ?? DEFAULT_NOTIFICATION_TYPES.down,
-      up:     nt?.up     ?? DEFAULT_NOTIFICATION_TYPES.up,
-      alert:  nt?.alert  ?? DEFAULT_NOTIFICATION_TYPES.alert,
-      update: nt?.update ?? DEFAULT_NOTIFICATION_TYPES.update,
-    };
-  },
 };

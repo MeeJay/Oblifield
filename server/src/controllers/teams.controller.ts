@@ -207,7 +207,7 @@ export const teamsController = {
       if (req.tenantId !== 1) throw new AppError(403, 'Only the default tenant admin can manage cross-tenant permissions');
       const { tenantId, permissions } = req.body as {
         tenantId: number;
-        permissions: Array<{ scope: 'group' | 'monitor'; scopeId: number; level: 'ro' | 'rw' }>;
+        permissions: Array<{ scope: 'client' | 'intervention'; scopeId: number; level: 'ro' | 'rw' }>;
       };
       if (!tenantId || !Array.isArray(permissions)) throw new AppError(400, 'Invalid body');
 

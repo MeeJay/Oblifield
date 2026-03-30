@@ -1,11 +1,11 @@
-import { LogOut, Menu, Download, ArrowLeftRight } from 'lucide-react';
+import { LogOut, Menu, ArrowLeftRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { useUiStore } from '@/store/uiStore';
 import { useSocketStore } from '@/store/socketStore';
-import { useMonitorStore } from '@/store/monitorStore';
+import { useInterventionStore } from '@/store/interventionStore';
 import { appConfigApi } from '@/api/appConfig.api';
 import { Button } from '@/components/common/Button';
 import { NotificationCenter } from './NotificationCenter';
@@ -13,16 +13,16 @@ import { TenantSwitcher } from './TenantSwitcher';
 import { cn } from '@/utils/cn';
 import { anonymizeUsername } from '@/utils/anonymize';
 
-/** True when running inside the Obliview native desktop app (gear overlay sets this). */
+/** True when running inside the Oblifield native desktop app (gear overlay sets this). */
 const isNativeApp = typeof window !== 'undefined' &&
-  !!(window as Window & { __obliview_is_native_app?: boolean }).__obliview_is_native_app;
+  !!(window as Window & { __oblifield_is_native_app?: boolean }).__oblifield_is_native_app;
 
 export function Header() {
   const { t } = useTranslation();
   const { user, logout } = useAuthStore();
   const { toggleSidebar, sidebarFloating } = useUiStore();
   const { status: socketStatus } = useSocketStore();
-  const monitors = useMonitorStore((s) => s.monitors);
+  const interventions = useInterventionStore((s) => s.interventions);
   const [connectedApps, setConnectedApps] = useState<Array<{ appType: string; name: string; baseUrl: string }>>([]);
   const [obligateUrl, setObligateUrl] = useState<string | null>(null);
 
@@ -31,7 +31,7 @@ export function Header() {
     fetch('/api/auth/connected-apps', { credentials: 'include' })
       .then(r => r.json())
       .then((d: { success: boolean; data?: Array<{ appType: string; name: string; baseUrl: string }> }) => {
-        if (d.success && d.data) setConnectedApps(d.data.filter(a => a.appType !== 'obliview'));
+        if (d.success && d.data) setConnectedApps(d.data.filter(a => a.appType !== 'oblifield'));
       })
       .catch(() => {});
     // Get Obligate URL for cross-app redirect
@@ -40,16 +40,16 @@ export function Header() {
       .catch(() => {});
   }, []);
 
-  // Monitor status counts for header chips
+  // Intervention status counts for header chips
   const statusCounts = useMemo(() => {
-    let up = 0, down = 0, warn = 0;
-    for (const m of monitors.values()) {
-      if (m.status === 'up')    up++;
-      else if (m.status === 'down')  down++;
-      else if (m.status === 'alert') warn++;
+    let active = 0, issues = 0, pending = 0;
+    for (const i of interventions.values()) {
+      if (i.status === 'in_progress') active++;
+      else if (i.status === 'issue')  issues++;
+      else if (i.status === 'pending' || i.status === 'assigned') pending++;
     }
-    return { up, down, warn };
-  }, [monitors]);
+    return { active, issues, pending };
+  }, [interventions]);
 
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-bg-secondary px-4">
@@ -61,7 +61,7 @@ export function Header() {
             is mirrored here so it remains always accessible. */}
         {sidebarFloating && (
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <img src="/logo.svg" alt="Obliview" className="h-10 w-auto max-w-[200px] object-contain" />
+            <img src="/logo.svg" alt="Oblifield" className="h-10 w-auto max-w-[200px] object-contain" />
           </Link>
         )}
 
@@ -96,53 +96,44 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Monitor status chips */}
-        {monitors.size > 0 && (
+        {/* Intervention status chips */}
+        {interventions.size > 0 && (
           <div className="hidden sm:flex items-center gap-1.5">
             <Link
               to="/"
-              title={t('dashboard.statsUp')}
+              title="Active"
               className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
-                text-green-400 bg-green-500/10 border border-green-500/25
-                hover:bg-green-500/20 transition-colors"
+                text-accent bg-accent/10 border border-accent/25
+                hover:bg-accent/20 transition-colors"
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              {statusCounts.up}
+              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+              {statusCounts.active}
             </Link>
-            <Link
-              to="/"
-              title={t('dashboard.statsDown')}
-              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
-                text-red-400 bg-red-500/10 border border-red-500/25
-                hover:bg-red-500/20 transition-colors"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-              {statusCounts.down}
-            </Link>
-            {statusCounts.warn > 0 && (
+            {statusCounts.issues > 0 && (
               <Link
                 to="/"
-                title={t('dashboard.statsAlert')}
+                title="Issues"
                 className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
-                  text-orange-400 bg-orange-500/10 border border-orange-500/25
-                  hover:bg-orange-500/20 transition-colors"
+                  text-red-400 bg-red-500/10 border border-red-500/25
+                  hover:bg-red-500/20 transition-colors"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                {statusCounts.warn}
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                {statusCounts.issues}
+              </Link>
+            )}
+            {statusCounts.pending > 0 && (
+              <Link
+                to="/"
+                title="Pending"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
+                  text-yellow-400 bg-yellow-500/10 border border-yellow-500/25
+                  hover:bg-yellow-500/20 transition-colors"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
+                {statusCounts.pending}
               </Link>
             )}
           </div>
-        )}
-
-        {/* Download App link — hidden inside the native desktop app */}
-        {!isNativeApp && (
-          <Link
-            to="/download"
-            className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
-          >
-            <Download size={14} />
-            {t('nav.downloadApp')}
-          </Link>
         )}
 
         {/* Socket connection status dot */}

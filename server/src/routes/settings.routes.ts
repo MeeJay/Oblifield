@@ -11,8 +11,8 @@ router.use(requireAuth);
 
 // Read resolved settings (admin only for now)
 router.get('/global/resolved', requireRole('admin'), settingsController.getGlobalResolved);
-router.get('/group/:scopeId/resolved', requireRole('admin'), settingsController.getGroupResolved);
-router.get('/monitor/:scopeId/resolved', requireRole('admin'), settingsController.getMonitorResolved);
+router.get('/client/:scopeId/resolved', requireRole('admin'), settingsController.getClientResolved);
+router.get('/intervention/:scopeId/resolved', requireRole('admin'), settingsController.getInterventionResolved);
 
 // Write settings (admin only)
 router.put('/:scope/:scopeId', requireRole('admin'), validate(setSettingSchema), settingsController.set);

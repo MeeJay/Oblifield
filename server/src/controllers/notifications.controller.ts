@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { notificationService } from '../services/notification.service';
-import { monitorService } from '../services/monitor.service';
+import { interventionService } from '../services/intervention.service';
 import { getPluginMetas } from '../notifications/registry';
 import { AppError } from '../middleware/errorHandler';
 import type {
@@ -172,7 +172,7 @@ export const notificationsController = {
   // GET /api/notifications/bindings/resolved?scope=monitor|group|agent&scopeId=N
   async resolvedBindings(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const scope = req.query.scope as 'group' | 'monitor' | 'agent';
+      const scope = req.query.scope as 'client' | 'intervention' | 'agent';
       const scopeId = parseInt(req.query.scopeId as string, 10);
 
       if (!scope || isNaN(scopeId)) {
@@ -186,15 +186,15 @@ export const notificationsController = {
         return;
       }
 
-      // For monitor scope, we need the monitor's groupId for resolution
-      let groupId: number | null = null;
-      if (scope === 'monitor') {
-        const monitor = await monitorService.getById(scopeId);
-        if (!monitor) throw new AppError(404, 'Monitor not found');
-        groupId = monitor.groupId;
+      // For intervention scope, we need the intervention's clientId for resolution
+      let clientId: number | null = null;
+      if (scope === 'intervention') {
+        const intervention = await interventionService.getById(scopeId);
+        if (!intervention) throw new AppError(404, 'Intervention not found');
+        clientId = intervention.clientId;
       }
 
-      const resolved = await notificationService.resolveBindingsWithSources(scope, scopeId, groupId);
+      const resolved = await notificationService.resolveBindingsWithSources(scope as 'client' | 'intervention', scopeId, clientId);
       res.json({ success: true, data: resolved });
     } catch (err) {
       next(err);

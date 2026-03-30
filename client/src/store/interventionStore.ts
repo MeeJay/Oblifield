@@ -104,7 +104,7 @@ export const useInterventionStore = create<InterventionStore>((set, get) => ({
   getByStatus: (status) =>
     Array.from(get().interventions.values()).filter((i) => i.status === status),
   getByTechnician: (techId) =>
-    Array.from(get().interventions.values()).filter((i) => i.technicianId === techId),
+    Array.from(get().interventions.values()).filter((i) => i.assignedTechnicianId === techId),
   getByClient: (clientId) =>
     Array.from(get().interventions.values()).filter((i) => i.clientId === clientId),
 }));

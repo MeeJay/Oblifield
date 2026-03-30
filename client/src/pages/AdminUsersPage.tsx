@@ -9,7 +9,7 @@ import {
   UserX,
   Users,
   FolderOpen,
-  Monitor,
+  Briefcase,
   Check,
   ChevronRight,
   ChevronDown,
@@ -21,16 +21,16 @@ import type {
   User,
   UserTeam,
   TeamPermission,
-  GroupTreeNode,
-  Monitor as MonitorType,
+  ClientTreeNode,
+  Intervention,
   PermissionLevel,
   PermissionScope,
   UserTenantAssignment,
 } from '@oblifield/shared';
 import { usersApi } from '@/api/users.api';
 import { teamsApi } from '@/api/teams.api';
-import { groupsApi } from '@/api/groups.api';
-import { monitorsApi } from '@/api/monitors.api';
+import { clientsApi } from '@/api/clients.api';
+import { interventionsApi } from '@/api/interventions.api';
 import { useAuthStore } from '@/store/authStore';
 import { useTenantStore } from '@/store/tenantStore';
 import { anonymize, anonymizeUsername } from '@/utils/anonymize';
@@ -57,8 +57,8 @@ export function AdminUsersPage() {
   // Data
   const [users, setUsers] = useState<User[]>([]);
   const [teams, setTeams] = useState<UserTeam[]>([]);
-  const [tree, setTree] = useState<GroupTreeNode[]>([]);
-  const [monitors, setMonitors] = useState<MonitorType[]>([]);
+  const [tree, setTree] = useState<ClientTreeNode[]>([]);
+  const [interventions, setInterventions] = useState<Intervention[]>([]);
 
   // User form
   const [userFormMode, setUserFormMode] = useState<UserFormMode>(null);
@@ -100,16 +100,16 @@ export function AdminUsersPage() {
 
   const load = async () => {
     try {
-      const [u, t, tr, m] = await Promise.all([
+      const [u, t, tr, iv] = await Promise.all([
         usersApi.list(),
         isPlatformAdmin ? teamsApi.listAll() : teamsApi.list(),
-        groupsApi.tree(),
-        monitorsApi.list(),
+        clientsApi.tree(),
+        interventionsApi.list(),
       ]);
       setUsers(u);
       setTeams(t);
       setTree(tr);
-      setMonitors(m);
+      setInterventions(iv);
     } catch {
       toast.error(t('users.failedLoad'));
     }
@@ -441,25 +441,25 @@ export function AdminUsersPage() {
   const selectedTeam = teams.find((t) => t.id === selectedTeamId);
 
   // Build sets for quick lookup
-  const assignedGroupIds = new Set(teamPermissions.filter((p) => p.scope === 'group').map((p) => p.scopeId));
-  const assignedMonitorIds = new Set(teamPermissions.filter((p) => p.scope === 'monitor').map((p) => p.scopeId));
+  const assignedClientIds = new Set(teamPermissions.filter((p) => p.scope === 'client').map((p) => p.scopeId));
+  const assignedInterventionIds = new Set(teamPermissions.filter((p) => p.scope === 'intervention').map((p) => p.scopeId));
 
-  // Collect all descendant group IDs covered by a group permission (implicit coverage)
-  const coveredGroupIds = new Set<number>();
-  const coveredByGroupId = new Map<number, number>(); // descendant → assigned ancestor
-  const collectDescendants = (nodes: GroupTreeNode[], coveredBy: number | null) => {
+  // Collect all descendant client IDs covered by a client permission (implicit coverage)
+  const coveredClientIds = new Set<number>();
+  const coveredByClientId = new Map<number, number>(); // descendant → assigned ancestor
+  const collectDescendants = (nodes: ClientTreeNode[], coveredBy: number | null) => {
     for (const node of nodes) {
-      const directlyAssigned = assignedGroupIds.has(node.id);
+      const directlyAssigned = assignedClientIds.has(node.id);
       const effectiveCover = directlyAssigned ? node.id : coveredBy;
       if (coveredBy && !directlyAssigned) {
-        coveredGroupIds.add(node.id);
-        coveredByGroupId.set(node.id, coveredBy);
+        coveredClientIds.add(node.id);
+        coveredByClientId.set(node.id, coveredBy);
       }
       collectDescendants(node.children, effectiveCover);
       if (effectiveCover) {
-        for (const m of monitors.filter((mon) => mon.groupId === node.id)) {
-          if (!assignedMonitorIds.has(m.id)) {
-            coveredByGroupId.set(-m.id, effectiveCover);
+        for (const iv of interventions.filter((intv) => intv.clientId === node.id)) {
+          if (!assignedInterventionIds.has(iv.id)) {
+            coveredByClientId.set(-iv.id, effectiveCover);
           }
         }
       }
@@ -467,21 +467,21 @@ export function AdminUsersPage() {
   };
   collectDescendants(tree, null);
 
-  // Merge monitors into tree nodes for display
-  const monitorsByGroup = new Map<number, MonitorType[]>();
-  const ungroupedMonitors: MonitorType[] = [];
-  for (const m of monitors) {
-    if (m.groupId) {
-      if (!monitorsByGroup.has(m.groupId)) monitorsByGroup.set(m.groupId, []);
-      monitorsByGroup.get(m.groupId)!.push(m);
+  // Merge interventions into tree nodes for display
+  const interventionsByClient = new Map<number, Intervention[]>();
+  const unassignedInterventions: Intervention[] = [];
+  for (const iv of interventions) {
+    if (iv.clientId) {
+      if (!interventionsByClient.has(iv.clientId)) interventionsByClient.set(iv.clientId, []);
+      interventionsByClient.get(iv.clientId)!.push(iv);
     } else {
-      ungroupedMonitors.push(m);
+      unassignedInterventions.push(iv);
     }
   }
 
-  // Get permission for a group/monitor
-  const getGroupPerm = (groupId: number) => teamPermissions.find((p) => p.scope === 'group' && p.scopeId === groupId);
-  const getMonitorPerm = (monitorId: number) => teamPermissions.find((p) => p.scope === 'monitor' && p.scopeId === monitorId);
+  // Get permission for a client/intervention
+  const getClientPerm = (clientId: number) => teamPermissions.find((p) => p.scope === 'client' && p.scopeId === clientId);
+  const getInterventionPerm = (interventionId: number) => teamPermissions.find((p) => p.scope === 'intervention' && p.scopeId === interventionId);
 
   return (
     <>
@@ -882,7 +882,7 @@ export function AdminUsersPage() {
               {/* Permissions panel — Hierarchical tree */}
               {rightTab === 'permissions' && (
                 <div className="rounded-lg border border-border bg-bg-secondary max-h-[70vh] overflow-y-auto">
-                  {tree.length === 0 && ungroupedMonitors.length === 0 ? (
+                  {tree.length === 0 && unassignedInterventions.length === 0 ? (
                     <p className="p-4 text-sm text-text-muted text-center">{t('users.teams.noResources')}</p>
                   ) : (
                     <div className="py-1">
@@ -891,24 +891,24 @@ export function AdminUsersPage() {
                           key={node.id}
                           node={node}
                           depth={0}
-                          monitorsByGroup={monitorsByGroup}
-                          getGroupPerm={getGroupPerm}
-                          getMonitorPerm={getMonitorPerm}
-                          assignedGroupIds={assignedGroupIds}
-                          coveredGroupIds={coveredGroupIds}
-                          coveredByGroupId={coveredByGroupId}
+                          interventionsByClient={interventionsByClient}
+                          getClientPerm={getClientPerm}
+                          getInterventionPerm={getInterventionPerm}
+                          assignedClientIds={assignedClientIds}
+                          coveredClientIds={coveredClientIds}
+                          coveredByClientId={coveredByClientId}
                           addPermission={addPermission}
                           removePermission={removePermission}
                           togglePermissionLevel={togglePermissionLevel}
                         />
                       ))}
-                      {/* Ungrouped monitors */}
-                      {ungroupedMonitors.map((m) => {
-                        const perm = getMonitorPerm(m.id);
+                      {/* Unassigned interventions */}
+                      {unassignedInterventions.map((iv) => {
+                        const perm = getInterventionPerm(iv.id);
                         return (
-                          <PermMonitorRow
-                            key={m.id}
-                            monitor={m}
+                          <PermInterventionRow
+                            key={iv.id}
+                            intervention={iv}
                             depth={0}
                             perm={perm}
                             isCovered={false}
@@ -1102,14 +1102,14 @@ export function AdminUsersPage() {
 // ── Permission Tree Sub-Components ──
 
 interface PermTreeNodeProps {
-  node: GroupTreeNode;
+  node: ClientTreeNode;
   depth: number;
-  monitorsByGroup: Map<number, MonitorType[]>;
-  getGroupPerm: (groupId: number) => TeamPermission | undefined;
-  getMonitorPerm: (monitorId: number) => TeamPermission | undefined;
-  assignedGroupIds: Set<number>;
-  coveredGroupIds: Set<number>;
-  coveredByGroupId: Map<number, number>;
+  interventionsByClient: Map<number, Intervention[]>;
+  getClientPerm: (groupId: number) => TeamPermission | undefined;
+  getInterventionPerm: (monitorId: number) => TeamPermission | undefined;
+  assignedClientIds: Set<number>;
+  coveredClientIds: Set<number>;
+  coveredByClientId: Map<number, number>;
   addPermission: (scope: PermissionScope, scopeId: number, level: PermissionLevel) => Promise<void>;
   removePermission: (permId: number) => Promise<void>;
   togglePermissionLevel: (perm: TeamPermission) => Promise<void>;
@@ -1118,25 +1118,25 @@ interface PermTreeNodeProps {
 function PermTreeNode({
   node,
   depth,
-  monitorsByGroup,
-  getGroupPerm,
-  getMonitorPerm,
-  assignedGroupIds,
-  coveredGroupIds,
-  coveredByGroupId,
+  interventionsByClient,
+  getClientPerm,
+  getInterventionPerm,
+  assignedClientIds,
+  coveredClientIds,
+  coveredByClientId,
   addPermission,
   removePermission,
   togglePermissionLevel,
 }: PermTreeNodeProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
-  const perm = getGroupPerm(node.id);
-  const isCovered = coveredGroupIds.has(node.id);
-  const hasChildren = node.children.length > 0 || (monitorsByGroup.get(node.id)?.length ?? 0) > 0;
+  const perm = getClientPerm(node.id);
+  const isCovered = coveredClientIds.has(node.id);
+  const hasChildren = node.children.length > 0 || (interventionsByClient.get(node.id)?.length ?? 0) > 0;
 
   return (
     <div>
-      {/* Group row */}
+      {/* Client row */}
       <div
         className={`flex items-center gap-1.5 px-2 py-1.5 hover:bg-bg-hover transition-colors ${
           perm ? 'bg-accent/5' : isCovered ? 'bg-accent/[0.02]' : ''
@@ -1155,10 +1155,6 @@ function PermTreeNode({
         <span className={`flex-1 text-sm truncate ${perm ? 'text-text-primary font-medium' : isCovered ? 'text-text-muted' : 'text-text-primary'}`}>
           {anonymize(node.name)}
         </span>
-
-        {node.isGeneral && (
-          <span className="text-[10px] text-accent bg-accent/10 px-1 rounded shrink-0">{t('users.teams.generalBadge')}</span>
-        )}
 
         {/* Permission controls */}
         {perm ? (
@@ -1182,11 +1178,11 @@ function PermTreeNode({
           <span className="text-[10px] text-text-muted italic shrink-0">{t('users.teams.inherited')}</span>
         ) : (
           <>
-            <button onClick={() => addPermission('group', node.id, 'ro')}
+            <button onClick={() => addPermission('client', node.id, 'ro')}
               className="px-1.5 py-0.5 text-[10px] rounded bg-bg-tertiary text-text-muted hover:bg-bg-hover shrink-0" title="Read Only">
               {t('users.teams.roLabel')}
             </button>
-            <button onClick={() => addPermission('group', node.id, 'rw')}
+            <button onClick={() => addPermission('client', node.id, 'rw')}
               className="px-1.5 py-0.5 text-[10px] rounded bg-accent/10 text-accent hover:bg-accent/20 shrink-0" title="Read/Write">
               {t('users.teams.rwLabel')}
             </button>
@@ -1194,7 +1190,7 @@ function PermTreeNode({
         )}
       </div>
 
-      {/* Children (groups + monitors) */}
+      {/* Children (clients + interventions) */}
       {expanded && (
         <>
           {node.children.map((child) => (
@@ -1202,24 +1198,24 @@ function PermTreeNode({
               key={child.id}
               node={child}
               depth={depth + 1}
-              monitorsByGroup={monitorsByGroup}
-              getGroupPerm={getGroupPerm}
-              getMonitorPerm={getMonitorPerm}
-              assignedGroupIds={assignedGroupIds}
-              coveredGroupIds={coveredGroupIds}
-              coveredByGroupId={coveredByGroupId}
+              interventionsByClient={interventionsByClient}
+              getClientPerm={getClientPerm}
+              getInterventionPerm={getInterventionPerm}
+              assignedClientIds={assignedClientIds}
+              coveredClientIds={coveredClientIds}
+              coveredByClientId={coveredByClientId}
               addPermission={addPermission}
               removePermission={removePermission}
               togglePermissionLevel={togglePermissionLevel}
             />
           ))}
-          {(monitorsByGroup.get(node.id) ?? []).map((m) => {
-            const mPerm = getMonitorPerm(m.id);
-            const mCovered = !mPerm && (assignedGroupIds.has(node.id) || coveredGroupIds.has(node.id));
+          {(interventionsByClient.get(node.id) ?? []).map((iv: Intervention) => {
+            const mPerm = getInterventionPerm(iv.id);
+            const mCovered = !mPerm && (assignedClientIds.has(node.id) || coveredClientIds.has(node.id));
             return (
-              <PermMonitorRow
-                key={m.id}
-                monitor={m}
+              <PermInterventionRow
+                key={iv.id}
+                intervention={iv}
                 depth={depth + 1}
                 perm={mPerm}
                 isCovered={mCovered}
@@ -1235,8 +1231,8 @@ function PermTreeNode({
   );
 }
 
-interface PermMonitorRowProps {
-  monitor: MonitorType;
+interface PermInterventionRowProps {
+  intervention: Intervention;
   depth: number;
   perm: TeamPermission | undefined;
   isCovered: boolean;
@@ -1245,15 +1241,15 @@ interface PermMonitorRowProps {
   togglePermissionLevel: (perm: TeamPermission) => Promise<void>;
 }
 
-function PermMonitorRow({
-  monitor,
+function PermInterventionRow({
+  intervention,
   depth,
   perm,
   isCovered,
   addPermission,
   removePermission,
   togglePermissionLevel,
-}: PermMonitorRowProps) {
+}: PermInterventionRowProps) {
   const { t } = useTranslation();
   return (
     <div
@@ -1262,9 +1258,9 @@ function PermMonitorRow({
       }`}
       style={{ paddingLeft: `${depth * 20 + 28}px` }}
     >
-      <Monitor size={13} className={`shrink-0 ${perm ? 'text-accent' : isCovered ? 'text-accent/40' : 'text-text-muted'}`} />
+      <Briefcase size={13} className={`shrink-0 ${perm ? 'text-accent' : isCovered ? 'text-accent/40' : 'text-text-muted'}`} />
       <span className={`flex-1 text-sm truncate ${perm ? 'text-text-primary font-medium' : isCovered ? 'text-text-muted' : 'text-text-primary'}`}>
-        {anonymize(monitor.name)}
+        {anonymize(intervention.title)}
       </span>
 
       {perm ? (
@@ -1288,11 +1284,11 @@ function PermMonitorRow({
         <span className="text-[10px] text-text-muted italic shrink-0">{t('users.teams.inherited')}</span>
       ) : (
         <>
-          <button onClick={() => addPermission('monitor', monitor.id, 'ro')}
+          <button onClick={() => addPermission('intervention', intervention.id, 'ro')}
             className="px-1.5 py-0.5 text-[10px] rounded bg-bg-tertiary text-text-muted hover:bg-bg-hover shrink-0" title="Read Only">
             {t('users.teams.roLabel')}
           </button>
-          <button onClick={() => addPermission('monitor', monitor.id, 'rw')}
+          <button onClick={() => addPermission('intervention', intervention.id, 'rw')}
             className="px-1.5 py-0.5 text-[10px] rounded bg-accent/10 text-accent hover:bg-accent/20 shrink-0" title="Read/Write">
             {t('users.teams.rwLabel')}
           </button>

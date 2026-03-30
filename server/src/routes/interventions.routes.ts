@@ -63,7 +63,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const tenantId = (req as any).tenantId;
-    const userId = req.session.userId;
+    const userId = req.session?.userId ?? 0;
     const {
       title, type, priority, clientId, siteId,
       assignedTechnicianId, scheduledAt, dueAt,
@@ -229,11 +229,8 @@ router.post('/:id/check-in', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Intervention not found' });
     }
 
-    const updates: Record<string, any> = { status: 'in_progress' };
-    if (!intervention.startedAt) {
-      updates.startedAt = new Date().toISOString();
-    }
-    const updated = await interventionService.update(interventionId, updates);
+    // Use changeStatus for the status change (it also sets started_at for in_progress)
+    const updated = await interventionService.changeStatus(interventionId, 'in_progress');
 
     // 3. Update technician status
     if (intervention.assignedTechnicianId) {
@@ -287,10 +284,8 @@ router.post('/:id/check-out', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Intervention not found' });
     }
 
-    const updated = await interventionService.update(interventionId, {
-      status: finalStatus,
-      completedAt: new Date().toISOString(),
-    });
+    // Use changeStatus for the status change (it also sets completed_at for 'done')
+    const updated = await interventionService.changeStatus(interventionId, finalStatus);
 
     // 3. Update technician status
     if (intervention.assignedTechnicianId) {

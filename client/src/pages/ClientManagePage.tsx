@@ -9,7 +9,6 @@ import {
   Building2,
   MapPin,
   Phone,
-  Globe,
   Filter,
 } from 'lucide-react';
 import type { ClientTreeNode, Client } from '@oblifield/shared';

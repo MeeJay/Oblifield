@@ -41,16 +41,6 @@ export const settingsService = {
       throw new Error(`Value for ${key} must be between ${def.min} and ${def.max}`);
     }
 
-    // Admin policy: enforce MIN_CHECK_INTERVAL / MIN_RETRY_INTERVAL env vars
-    const minCheckInterval = Math.max(1, parseInt(process.env.MIN_CHECK_INTERVAL ?? '10', 10));
-    if (key === SETTINGS_KEYS.CHECK_INTERVAL && value < minCheckInterval) {
-      throw new Error(`Check interval must be at least ${minCheckInterval}s (admin policy)`);
-    }
-    const minRetryInterval = Math.max(1, parseInt(process.env.MIN_RETRY_INTERVAL ?? '5', 10));
-    if (key === SETTINGS_KEYS.RETRY_INTERVAL && value < minRetryInterval) {
-      throw new Error(`Retry interval must be at least ${minRetryInterval}s (admin policy)`);
-    }
-
     await db('settings')
       .insert({
         scope,
@@ -80,11 +70,11 @@ export const settingsService = {
 
   /**
    * Resolve all settings for a given scope, walking up the hierarchy:
-   *   Hardcoded defaults → Global → Group ancestors (root→leaf) → Monitor
+   *   Hardcoded defaults → Global → Client ancestors (root→leaf) → Intervention
    *
    * Each resolved value tracks its source for UI display.
    */
-  async resolveForMonitor(monitorId: number, groupId: number | null): Promise<ResolvedSettings> {
+  async resolveForMonitor(interventionId: number, clientId: number | null): Promise<ResolvedSettings> {
     // 1. Start with hardcoded defaults
     const resolved: ResolvedSettings = {} as ResolvedSettings;
     const allKeys = Object.values(SETTINGS_KEYS);
@@ -111,22 +101,22 @@ export const settingsService = {
       }
     }
 
-    // 3. Apply group chain (root → leaf) if monitor is in a group
-    if (groupId !== null) {
+    // 3. Apply client chain (root → leaf) if intervention is linked to a client
+    if (clientId !== null) {
       // Get ancestors ordered by depth DESC (root first → direct parent last)
-      const ancestorRows = await db('group_closure')
-        .join('monitor_groups', 'monitor_groups.id', 'group_closure.ancestor_id')
-        .where('group_closure.descendant_id', groupId)
-        .orderBy('group_closure.depth', 'desc')
-        .select('monitor_groups.id', 'monitor_groups.name', 'group_closure.depth');
+      const ancestorRows = await db('client_closure')
+        .join('clients', 'clients.id', 'client_closure.ancestor_id')
+        .where('client_closure.descendant_id', clientId)
+        .orderBy('client_closure.depth', 'desc')
+        .select('clients.id', 'clients.name', 'client_closure.depth');
 
       for (const ancestor of ancestorRows) {
-        const groupOverrides = await this.getByScope('group', ancestor.id);
+        const clientOverrides = await this.getByScope('client', ancestor.id);
         for (const key of allKeys) {
-          if (groupOverrides[key] !== undefined) {
+          if (clientOverrides[key] !== undefined) {
             resolved[key] = {
-              value: groupOverrides[key],
-              source: 'group',
+              value: clientOverrides[key],
+              source: 'client',
               sourceId: ancestor.id,
               sourceName: ancestor.name,
             };
@@ -135,15 +125,15 @@ export const settingsService = {
       }
     }
 
-    // 4. Apply monitor-level overrides
-    const monitorOverrides = await this.getByScope('monitor', monitorId);
+    // 4. Apply intervention-level overrides
+    const interventionOverrides = await this.getByScope('intervention', interventionId);
     for (const key of allKeys) {
-      if (monitorOverrides[key] !== undefined) {
+      if (interventionOverrides[key] !== undefined) {
         resolved[key] = {
-          value: monitorOverrides[key],
-          source: 'monitor',
-          sourceId: monitorId,
-          sourceName: 'This monitor',
+          value: interventionOverrides[key],
+          source: 'intervention',
+          sourceId: interventionId,
+          sourceName: 'This intervention',
         };
       }
     }
@@ -152,11 +142,11 @@ export const settingsService = {
   },
 
   /**
-   * Resolve settings for a group level (for display in group settings UI).
-   * Chain: Hardcoded → Global → Ancestor groups (root→parent)
-   * Does NOT include the group's own overrides as resolved — returns them separately.
+   * Resolve settings for a client level (for display in client settings UI).
+   * Chain: Hardcoded → Global → Ancestor clients (root→parent)
+   * Does NOT include the client's own overrides as resolved — returns them separately.
    */
-  async resolveForGroup(groupId: number): Promise<{ resolved: ResolvedSettings; overrides: Record<string, number> }> {
+  async resolveForGroup(clientId: number): Promise<{ resolved: ResolvedSettings; overrides: Record<string, number> }> {
     const allKeys = Object.values(SETTINGS_KEYS);
 
     // 1. Start with hardcoded defaults
@@ -184,20 +174,20 @@ export const settingsService = {
     }
 
     // 3. Ancestors (root→parent, excluding self)
-    const ancestorRows = await db('group_closure')
-      .join('monitor_groups', 'monitor_groups.id', 'group_closure.ancestor_id')
-      .where('group_closure.descendant_id', groupId)
-      .where('group_closure.depth', '>', 0) // exclude self
-      .orderBy('group_closure.depth', 'desc')
-      .select('monitor_groups.id', 'monitor_groups.name', 'group_closure.depth');
+    const ancestorRows = await db('client_closure')
+      .join('clients', 'clients.id', 'client_closure.ancestor_id')
+      .where('client_closure.descendant_id', clientId)
+      .where('client_closure.depth', '>', 0) // exclude self
+      .orderBy('client_closure.depth', 'desc')
+      .select('clients.id', 'clients.name', 'client_closure.depth');
 
     for (const ancestor of ancestorRows) {
-      const groupOvr = await this.getByScope('group', ancestor.id);
+      const clientOvr = await this.getByScope('client', ancestor.id);
       for (const key of allKeys) {
-        if (groupOvr[key] !== undefined) {
+        if (clientOvr[key] !== undefined) {
           resolved[key] = {
-            value: groupOvr[key],
-            source: 'group',
+            value: clientOvr[key],
+            source: 'client',
             sourceId: ancestor.id,
             sourceName: ancestor.name,
           };
@@ -205,8 +195,8 @@ export const settingsService = {
       }
     }
 
-    // 4. Get this group's own overrides (separate, not merged into resolved)
-    const overrides = await this.getByScope('group', groupId);
+    // 4. Get this client's own overrides (separate, not merged into resolved)
+    const overrides = await this.getByScope('client', clientId);
 
     return { resolved, overrides };
   },

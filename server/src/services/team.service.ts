@@ -16,7 +16,7 @@ interface TeamRow {
 interface PermissionRow {
   id: number;
   team_id: number;
-  scope: 'group' | 'monitor';
+  scope: 'client' | 'intervention';
   scope_id: number;
   level: 'ro' | 'rw';
 }
@@ -167,7 +167,7 @@ export const teamService = {
 
   setPermissions(
     teamId: number,
-    permissions: Array<{ scope: 'group' | 'monitor'; scopeId: number; level: 'ro' | 'rw' }>,
+    permissions: Array<{ scope: 'client' | 'intervention'; scopeId: number; level: 'ro' | 'rw' }>,
   ): Promise<TeamPermission[]> {
     return db.transaction(async (trx) => {
       await trx('team_permissions').where({ team_id: teamId }).del();
@@ -191,7 +191,7 @@ export const teamService = {
 
   async addPermission(
     teamId: number,
-    scope: 'group' | 'monitor',
+    scope: 'client' | 'intervention',
     scopeId: number,
     level: 'ro' | 'rw',
   ): Promise<TeamPermission> {
@@ -241,24 +241,24 @@ export const teamService = {
       .orderBy('scope_id');
 
     // Resolve tenant_id for each permission's scope_id
-    const groupIds = perms.filter(p => p.scope === 'group').map(p => p.scope_id);
-    const monitorIds = perms.filter(p => p.scope === 'monitor').map(p => p.scope_id);
+    const clientIds = perms.filter(p => p.scope === 'client').map(p => p.scope_id);
+    const interventionIds = perms.filter(p => p.scope === 'intervention').map(p => p.scope_id);
 
-    const groupTenants: Record<number, number> = {};
-    const monitorTenants: Record<number, number> = {};
+    const clientTenants: Record<number, number> = {};
+    const interventionTenants: Record<number, number> = {};
 
-    if (groupIds.length > 0) {
-      const rows = await db('monitor_groups').whereIn('id', groupIds).select('id', 'tenant_id');
-      for (const r of rows) groupTenants[r.id] = r.tenant_id;
+    if (clientIds.length > 0) {
+      const rows = await db('clients').whereIn('id', clientIds).select('id', 'tenant_id');
+      for (const r of rows) clientTenants[r.id] = r.tenant_id;
     }
-    if (monitorIds.length > 0) {
-      const rows = await db('monitors').whereIn('id', monitorIds).select('id', 'tenant_id');
-      for (const r of rows) monitorTenants[r.id] = r.tenant_id;
+    if (interventionIds.length > 0) {
+      const rows = await db('interventions').whereIn('id', interventionIds).select('id', 'tenant_id');
+      for (const r of rows) interventionTenants[r.id] = r.tenant_id;
     }
 
     const result: Record<number, TeamPermission[]> = {};
     for (const p of perms) {
-      const tenantId = p.scope === 'group' ? groupTenants[p.scope_id] : monitorTenants[p.scope_id];
+      const tenantId = p.scope === 'client' ? clientTenants[p.scope_id] : interventionTenants[p.scope_id];
       if (tenantId === undefined) continue;
       if (!result[tenantId]) result[tenantId] = [];
       result[tenantId].push(rowToPermission(p));

@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   UserCheck,
-  Phone,
-  Wrench,
   CircleDot,
 } from 'lucide-react';
 import type { Technician, TechnicianStatus, User } from '@oblifield/shared';

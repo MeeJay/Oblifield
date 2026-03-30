@@ -21,7 +21,7 @@ export function InheritanceBadge({ setting }: InheritanceBadgeProps) {
     );
   }
 
-  if (setting.source === 'group') {
+  if (setting.source === 'client') {
     return (
       <span className="text-xs text-accent">
         {setting.sourceName}
@@ -29,7 +29,7 @@ export function InheritanceBadge({ setting }: InheritanceBadgeProps) {
     );
   }
 
-  if (setting.source === 'monitor') {
+  if (setting.source === 'intervention') {
     return (
       <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-500">
         Override

@@ -1,6 +1,5 @@
 import { db } from '../db';
-import type { NotificationChannel, NotificationBinding, NotificationTypeConfig, OverrideMode } from '@oblifield/shared';
-import { DEFAULT_NOTIFICATION_TYPES } from '@oblifield/shared';
+import type { NotificationChannel, NotificationBinding, OverrideMode } from '@oblifield/shared';
 import type { NotificationPayload } from '../notifications/types';
 import { getPlugin } from '../notifications/registry';
 import { smtpServerService } from './smtpServer.service';
@@ -287,14 +286,14 @@ export const notificationService = {
    * Also tracks excluded channels so the UI can show "Unbind" state.
    */
   async resolveBindingsWithSources(
-    scope: 'group' | 'monitor',
+    scope: 'client' | 'intervention',
     scopeId: number,
-    groupId?: number | null,
+    clientId?: number | null,
   ): Promise<{
     channelId: number;
     channelName: string;
     channelType: string;
-    source: 'global' | 'group' | 'monitor';
+    source: 'global' | 'client' | 'intervention';
     sourceId: number | null;
     sourceName: string;
     isDirect: boolean;
@@ -302,7 +301,7 @@ export const notificationService = {
   }[]> {
     interface SourceInfo {
       channelId: number;
-      source: 'global' | 'group' | 'monitor';
+      source: 'global' | 'client' | 'intervention';
       sourceId: number | null;
       sourceName: string;
       isDirect: boolean;
@@ -361,45 +360,45 @@ export const notificationService = {
     const globalBindings = await this.getBindings('global', null);
     applyBindingsWithSources(globalBindings, 'global', null, 'Global', false);
 
-    // 2. Group chain (for monitor scope: walk group ancestors; for group scope: walk parent ancestors)
-    const effectiveGroupId = scope === 'monitor' ? groupId : null;
+    // 2. Client chain (for intervention scope: walk client ancestors; for client scope: walk parent ancestors)
+    const effectiveClientId = scope === 'intervention' ? clientId : null;
 
-    // For group scope, walk the parent chain (ancestors of this group)
-    if (scope === 'group') {
-      const ancestorRows = await db('group_closure')
+    // For client scope, walk the parent chain (ancestors of this client)
+    if (scope === 'client') {
+      const ancestorRows = await db('client_closure')
         .where('descendant_id', scopeId)
         .where('depth', '>', 0) // exclude self
         .orderBy('depth', 'desc')
         .select('ancestor_id');
 
       for (const row of ancestorRows) {
-        const groupBindings = await this.getBindings('group', row.ancestor_id);
-        const groupRow = await db('monitor_groups').where({ id: row.ancestor_id }).first('name');
+        const clientBindings = await this.getBindings('client', row.ancestor_id);
+        const clientRow = await db('clients').where({ id: row.ancestor_id }).first('name');
         applyBindingsWithSources(
-          groupBindings,
-          'group',
+          clientBindings,
+          'client',
           row.ancestor_id,
-          groupRow?.name || `Group #${row.ancestor_id}`,
+          clientRow?.name || `Client #${row.ancestor_id}`,
           false,
         );
       }
     }
 
-    // For monitor scope, walk all group ancestors (including the direct group)
-    if (scope === 'monitor' && effectiveGroupId !== null && effectiveGroupId !== undefined) {
-      const ancestorRows = await db('group_closure')
-        .where('descendant_id', effectiveGroupId)
+    // For intervention scope, walk all client ancestors (including the direct client)
+    if (scope === 'intervention' && effectiveClientId !== null && effectiveClientId !== undefined) {
+      const ancestorRows = await db('client_closure')
+        .where('descendant_id', effectiveClientId)
         .orderBy('depth', 'desc')
         .select('ancestor_id');
 
       for (const row of ancestorRows) {
-        const groupBindings = await this.getBindings('group', row.ancestor_id);
-        const groupRow = await db('monitor_groups').where({ id: row.ancestor_id }).first('name');
+        const clientBindings = await this.getBindings('client', row.ancestor_id);
+        const clientRow = await db('clients').where({ id: row.ancestor_id }).first('name');
         applyBindingsWithSources(
-          groupBindings,
-          'group',
+          clientBindings,
+          'client',
           row.ancestor_id,
-          groupRow?.name || `Group #${row.ancestor_id}`,
+          clientRow?.name || `Client #${row.ancestor_id}`,
           false,
         );
       }
@@ -641,85 +640,6 @@ export const notificationService = {
   },
 
   /**
-   * Resolve the effective notification types for an agent device.
-   * Chain: device notification_types → group agentGroupConfig.notificationTypes (ancestor chain) → system defaults.
-   * Each field uses the first non-null value found in the chain.
-   */
-  async resolveNotificationTypesForDevice(deviceId: number): Promise<{
-    global: boolean; down: boolean; up: boolean; alert: boolean; update: boolean;
-  }> {
-    // Accumulated values — undefined means "not yet resolved"
-    let global: boolean | undefined;
-    let down: boolean | undefined;
-    let up: boolean | undefined;
-    let alert: boolean | undefined;
-    let update: boolean | undefined;
-
-    const applyConfig = (cfg: NotificationTypeConfig | null | undefined) => {
-      if (!cfg) return;
-      if (global === undefined && cfg.global !== null && cfg.global !== undefined) global = cfg.global;
-      if (down   === undefined && cfg.down   !== null && cfg.down   !== undefined) down   = cfg.down;
-      if (up     === undefined && cfg.up     !== null && cfg.up     !== undefined) up     = cfg.up;
-      if (alert  === undefined && cfg.alert  !== null && cfg.alert  !== undefined) alert  = cfg.alert;
-      if (update === undefined && cfg.update !== null && cfg.update !== undefined) update = cfg.update;
-    };
-
-    // 1. Device-level override
-    const deviceRow = await db('agent_devices')
-      .where({ id: deviceId })
-      .select('group_id', 'notification_types')
-      .first() as { group_id: number | null; notification_types: unknown } | undefined;
-
-    if (deviceRow?.notification_types) {
-      const nt = typeof deviceRow.notification_types === 'string'
-        ? JSON.parse(deviceRow.notification_types)
-        : deviceRow.notification_types as NotificationTypeConfig;
-      applyConfig(nt);
-    }
-
-    // 2. Walk up the group hierarchy (leaf → root)
-    if (deviceRow?.group_id) {
-      const ancestorRows = await db('group_closure')
-        .where('descendant_id', deviceRow.group_id)
-        .orderBy('depth', 'asc')
-        .select('ancestor_id');
-
-      for (const row of ancestorRows) {
-        const groupRow = await db('monitor_groups')
-          .where({ id: row.ancestor_id })
-          .select('agent_group_config')
-          .first() as { agent_group_config: unknown } | undefined;
-        if (groupRow?.agent_group_config) {
-          const cfg = typeof groupRow.agent_group_config === 'string'
-            ? JSON.parse(groupRow.agent_group_config)
-            : groupRow.agent_group_config as { notificationTypes?: NotificationTypeConfig | null };
-          applyConfig(cfg.notificationTypes);
-        }
-      }
-    }
-
-    // 3. Global agent defaults (from app_config agent_global_config)
-    if (global === undefined || down === undefined || up === undefined || alert === undefined || update === undefined) {
-      const { appConfigService } = await import('./appConfig.service');
-      const globalTypes = await appConfigService.getResolvedAgentNotificationTypes();
-      if (global === undefined) global = globalTypes.global;
-      if (down   === undefined) down   = globalTypes.down;
-      if (up     === undefined) up     = globalTypes.up;
-      if (alert  === undefined) alert  = globalTypes.alert;
-      if (update === undefined) update = globalTypes.update;
-    }
-
-    // 4. Hardcoded system defaults for any still-unresolved fields
-    return {
-      global: global ?? DEFAULT_NOTIFICATION_TYPES.global,
-      down:   down   ?? DEFAULT_NOTIFICATION_TYPES.down,
-      up:     up     ?? DEFAULT_NOTIFICATION_TYPES.up,
-      alert:  alert  ?? DEFAULT_NOTIFICATION_TYPES.alert,
-      update: update ?? DEFAULT_NOTIFICATION_TYPES.update,
-    };
-  },
-
-  /**
    * Send notifications for an agent device threshold alert.
    * Resolves channels using the global → agent chain.
    */
@@ -733,26 +653,6 @@ export const notificationService = {
   ): Promise<void> {
     // Only notify on status transitions (up → alert or alert → up)
     if (newStatus === previousStatus) return;
-
-    // Check notification type preferences
-    const types = await this.resolveNotificationTypesForDevice(deviceId);
-    if (!types.global) {
-      logger.info(`Agent notification suppressed (global=off) for device ${deviceId}`);
-      return;
-    }
-    const effectiveType = notifType ?? (newStatus === 'alert' ? 'alert' : 'up');
-    if (effectiveType === 'alert' && !types.alert) {
-      logger.info(`Agent notification suppressed (alert type disabled) for device ${deviceId}`);
-      return;
-    }
-    if (effectiveType === 'up' && !types.up) {
-      logger.info(`Agent notification suppressed (up type disabled) for device ${deviceId}`);
-      return;
-    }
-    if (effectiveType === 'update' && !types.update) {
-      logger.info(`Agent notification suppressed (update type disabled) for device ${deviceId}`);
-      return;
-    }
 
     const channelIds = await this.resolveChannelsForAgent(deviceId);
     if (channelIds.length === 0) {

@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { settingsService } from '../services/settings.service';
-import { MonitorWorkerManager } from '../workers/MonitorWorkerManager';
+// MonitorWorkerManager removed (no longer applicable)
 import type { SettingsScope } from '@oblifield/shared';
 import type { SettingsKey } from '@oblifield/shared';
 import { AppError } from '../middleware/errorHandler';
@@ -10,12 +10,12 @@ function parseScope(req: Request): { scope: SettingsScope; scopeId: number | nul
   const { scope, scopeId } = req.params;
 
   if (scope === 'global') return { scope: 'global', scopeId: null };
-  if (scope === 'group' || scope === 'monitor') {
+  if (scope === 'client' || scope === 'intervention') {
     const id = parseInt(scopeId, 10);
     if (isNaN(id)) throw new AppError(400, 'Invalid scope ID');
     return { scope, scopeId: id };
   }
-  throw new AppError(400, 'Invalid scope. Must be global, group, or monitor');
+  throw new AppError(400, 'Invalid scope. Must be global, client, or intervention');
 }
 
 export const settingsController = {
@@ -29,33 +29,33 @@ export const settingsController = {
     }
   },
 
-  // GET /api/settings/group/:scopeId/resolved
-  async getGroupResolved(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // GET /api/settings/client/:scopeId/resolved
+  async getClientResolved(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const groupId = parseInt(req.params.scopeId, 10);
-      if (isNaN(groupId)) throw new AppError(400, 'Invalid group ID');
-      const result = await settingsService.resolveForGroup(groupId);
+      const clientId = parseInt(req.params.scopeId, 10);
+      if (isNaN(clientId)) throw new AppError(400, 'Invalid client ID');
+      const result = await settingsService.resolveForGroup(clientId);
       res.json({ success: true, data: result });
     } catch (err) {
       next(err);
     }
   },
 
-  // GET /api/settings/monitor/:scopeId/resolved
-  async getMonitorResolved(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // GET /api/settings/intervention/:scopeId/resolved
+  async getInterventionResolved(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const monitorId = parseInt(req.params.scopeId, 10);
-      if (isNaN(monitorId)) throw new AppError(400, 'Invalid monitor ID');
+      const interventionId = parseInt(req.params.scopeId, 10);
+      if (isNaN(interventionId)) throw new AppError(400, 'Invalid intervention ID');
 
-      // Need the monitor's group_id
+      // Need the intervention's client_id
       const { db: database } = await import('../db');
-      const monitor = await database('monitors').where({ id: monitorId }).first();
-      if (!monitor) throw new AppError(404, 'Monitor not found');
+      const intervention = await database('interventions').where({ id: interventionId }).first();
+      if (!intervention) throw new AppError(404, 'Intervention not found');
 
-      const resolved = await settingsService.resolveForMonitor(monitorId, monitor.group_id);
+      const resolved = await settingsService.resolveForMonitor(interventionId, intervention.client_id);
 
-      // Also get monitor-level overrides specifically
-      const overrides = await settingsService.getByScope('monitor', monitorId);
+      // Also get intervention-level overrides specifically
+      const overrides = await settingsService.getByScope('intervention', interventionId);
 
       res.json({ success: true, data: { resolved, overrides } });
     } catch (err) {
@@ -70,9 +70,6 @@ export const settingsController = {
       const { key, value } = req.body as SetSettingInput;
 
       await settingsService.set(scope, scopeId, key as SettingsKey, value);
-
-      // Restart affected workers so they pick up the new settings immediately.
-      void MonitorWorkerManager.getInstance().restartAffectedBySettings(scope, scopeId);
 
       // Broadcast settings update
       const io = req.app.get('io');
@@ -102,8 +99,6 @@ export const settingsController = {
         overrides.map((o) => ({ key: o.key as SettingsKey, value: o.value })),
       );
 
-      // Restart affected workers so they pick up the new settings immediately.
-      void MonitorWorkerManager.getInstance().restartAffectedBySettings(scope, scopeId);
 
       const io = req.app.get('io');
       if (io) {
@@ -125,9 +120,6 @@ export const settingsController = {
       const deleted = await settingsService.remove(scope, scopeId, key as SettingsKey);
 
       if (deleted) {
-        // Restart affected workers so they pick up the reset (inherited) settings.
-        void MonitorWorkerManager.getInstance().restartAffectedBySettings(scope, scopeId);
-
         const io = req.app.get('io');
         if (io) {
           io.to('role:admin').emit('settings:updated', { scope, scopeId, key, removed: true });

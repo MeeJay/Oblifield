@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { AppConfig, AgentGlobalConfig, ObligateConfig, ApiResponse } from '@oblifield/shared';
+import type { AppConfig, ObligateConfig, ApiResponse } from '@oblifield/shared';
 
 export const appConfigApi = {
   async getConfig(): Promise<AppConfig> {
@@ -9,16 +9,6 @@ export const appConfigApi = {
 
   async setConfig(key: keyof AppConfig, value: boolean | number | string | null): Promise<void> {
     await apiClient.put(`/admin/config/${key}`, { value: String(value ?? '') });
-  },
-
-  async getAgentGlobal(): Promise<AgentGlobalConfig> {
-    const res = await apiClient.get<ApiResponse<AgentGlobalConfig>>('/admin/config/agent-global');
-    return res.data.data!;
-  },
-
-  async patchAgentGlobal(patch: Partial<AgentGlobalConfig>): Promise<AgentGlobalConfig> {
-    const res = await apiClient.patch<ApiResponse<AgentGlobalConfig>>('/admin/config/agent-global', patch);
-    return res.data.data!;
   },
 
   // ── Obligate SSO gateway ────────────────────────────────────────────────

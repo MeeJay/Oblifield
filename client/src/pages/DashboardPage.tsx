@@ -16,9 +16,6 @@ import type {
   InterventionStatus,
   TimelineEvent,
 } from '@oblifield/shared';
-import {
-  INTERVENTION_STATUS_LABELS,
-} from '@oblifield/shared';
 import { interventionsApi } from '@/api/interventions.api';
 import { Button } from '@/components/common/Button';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';

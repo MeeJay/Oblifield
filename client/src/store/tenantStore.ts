@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { TenantWithRole, ApiResponse } from '@oblifield/shared';
-import { useGroupStore } from './groupStore';
+import { useClientStore } from './clientStore';
 import { useAuthStore } from './authStore';
 import apiClient from '../api/client';
 
@@ -33,7 +33,7 @@ export const useTenantStore = create<TenantState>((set) => ({
       set({ currentTenantId: tenantId });
       // Reload group collapsed state for the new tenant context
       const userId = useAuthStore.getState().user?.id ?? null;
-      useGroupStore.getState().reinitForTenant(userId, tenantId);
+      useClientStore.getState().reinitForTenant(userId, tenantId);
     } catch {
       // ignore
     }

@@ -102,12 +102,13 @@ export const technicianService = {
 
   async update(
     id: number,
-    data: Partial<{ phone: string | null; specialties: string[] }>,
+    data: Partial<{ phone: string | null; specialties: string[]; currentInterventionId: number | null }>,
   ): Promise<Technician | null> {
     const updateData: Record<string, unknown> = { updated_at: new Date() };
 
     if (data.phone !== undefined) updateData.phone = data.phone;
     if (data.specialties !== undefined) updateData.specialties = JSON.stringify(data.specialties);
+    if (data.currentInterventionId !== undefined) updateData.current_intervention_id = data.currentInterventionId;
 
     const [row] = await db('technicians')
       .where({ id })

@@ -10,10 +10,6 @@ router.get('/', requireAuth, appConfigController.getAll);
 
 // Specific named routes MUST come before /:key (otherwise /:key captures them first)
 
-// Agent global defaults — admin only
-router.get('/agent-global', requireAuth, requireRole('admin'), appConfigController.getAgentGlobal);
-router.patch('/agent-global', requireAuth, requireRole('admin'), appConfigController.patchAgentGlobal);
-
 // Obligate SSO gateway config — admin only
 router.get('/obligate', requireAuth, requireRole('admin'), appConfigController.getObligateConfig);
 router.put('/obligate', requireAuth, requireRole('admin'), appConfigController.setObligateConfig);

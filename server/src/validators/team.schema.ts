@@ -19,7 +19,7 @@ export const setTeamMembersSchema = z.object({
 export const setTeamPermissionsSchema = z.object({
   permissions: z.array(
     z.object({
-      scope: z.enum(['group', 'monitor']),
+      scope: z.enum(['client', 'intervention']),
       scopeId: z.number().int().positive(),
       level: z.enum(['ro', 'rw']),
     }),

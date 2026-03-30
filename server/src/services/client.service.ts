@@ -92,7 +92,7 @@ export const clientService = {
 
     const countMap = new Map<number, number>();
     for (const r of countRows) {
-      countMap.set(r.client_id, Number(r.count));
+      countMap.set(Number(r.client_id), Number(r.count));
     }
 
     // Build tree

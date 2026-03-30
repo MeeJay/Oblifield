@@ -108,8 +108,7 @@ export function InterventionEditPage() {
 
           // Load sites for the selected client
           if (intv.clientId) {
-            const childSites = allClients.filter((c) => c.parentId === intv.clientId);
-            setSites(childSites);
+            setSites(allClients.filter((c) => c.parentId === intv.clientId));
           }
         }
       } catch {
@@ -125,10 +124,6 @@ export function InterventionEditPage() {
   const handleClientChange = (clientId: string) => {
     setForm((f) => ({ ...f, clientId, siteId: '' }));
     if (clientId) {
-      const childSites = clients.length > 0
-        ? [] // We need all clients to filter
-        : [];
-      // Re-fetch or filter from full list
       clientsApi.list().then((allClients) => {
         setSites(allClients.filter((c) => c.parentId === Number(clientId)));
       });

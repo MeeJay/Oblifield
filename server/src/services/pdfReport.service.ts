@@ -36,7 +36,7 @@ function formatTime(iso: string | null): string {
   return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
 }
 
-export function generateInterventionPdf(data: ReportData): PDFDocument {
+export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
   const { intervention, timeline, photos, companyName, supervisorName } = data;
 
   const doc = new PDFDocument({

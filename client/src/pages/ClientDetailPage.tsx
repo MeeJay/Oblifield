@@ -7,7 +7,6 @@ import {
   Mail,
   Clock,
   CheckCircle2,
-  AlertTriangle,
 } from 'lucide-react';
 import type { Client, Intervention, InterventionStatus } from '@oblifield/shared';
 import { INTERVENTION_STATUS_LABELS } from '@oblifield/shared';
