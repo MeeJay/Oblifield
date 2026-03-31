@@ -1,5 +1,5 @@
-import { useState, useEffect, type FormEvent } from 'react';
-import { Shield, Server, Plus, Pencil, Trash2, Wifi, Eye, EyeOff, ArrowLeftRight, Info, Cpu, HardDrive, Database, Clock } from 'lucide-react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
+import { Shield, Server, Plus, Pencil, Trash2, Wifi, Eye, EyeOff, ArrowLeftRight, Info, Cpu, HardDrive, Database, Clock, Upload, X, Image } from 'lucide-react';
 import { SettingsPanel } from '@/components/settings/SettingsPanel';
 import { useAuthStore } from '@/store/authStore';
 import { smtpServerApi, type CreateSmtpServerRequest } from '@/api/smtpServer.api';
@@ -63,6 +63,9 @@ export function SettingsPage() {
   const [configSaving, setConfigSaving] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [companySaving, setCompanySaving] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // ── Obligate SSO Integration ──
   const [obligateCfg,     setObligateCfg]     = useState<ObligateConfig | null>(null);
@@ -82,6 +85,10 @@ export function SettingsPage() {
     appConfigApi.getConfig().then((cfg) => {
       setAppConfig(cfg);
       setCompanyName(cfg.company_name || '');
+      if (cfg.company_logo_path) {
+        const logoFilename = cfg.company_logo_path.split('/').pop();
+        if (logoFilename) setLogoUrl(`/uploads/logos/${logoFilename}`);
+      }
     }).catch(() => {});
     appConfigApi.getObligateConfig().then((cfg) => {
       setObligateCfg(cfg);
@@ -260,6 +267,82 @@ export function SettingsPage() {
               >
                 {t('common.save', 'Enregistrer')}
               </Button>
+            </div>
+
+            {/* Logo upload */}
+            <div className="mt-5 pt-5 border-t border-border">
+              <div className="flex items-center gap-2 mb-2">
+                <Image size={14} className="text-text-secondary" />
+                <label className="text-sm font-medium text-text-secondary">Logo des rapports PDF</label>
+              </div>
+              <p className="text-xs text-text-muted mb-3">
+                Image affichee en haut a gauche des rapports PDF (PNG, JPG ou SVG, max 2 Mo).
+              </p>
+              <div className="flex items-center gap-4">
+                {logoUrl && (
+                  <div className="relative">
+                    <img
+                      src={logoUrl}
+                      alt="Logo"
+                      className="h-12 max-w-[200px] object-contain rounded border border-border bg-white p-1"
+                    />
+                    <button
+                      onClick={async () => {
+                        try {
+                          await appConfigApi.setConfig('company_logo_path', '');
+                          setLogoUrl(null);
+                          toast.success('Logo supprime');
+                        } catch { toast.error('Erreur'); }
+                      }}
+                      className="absolute -top-1.5 -right-1.5 p-0.5 rounded-full bg-red-500 text-white hover:bg-red-600"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                )}
+                <div>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setLogoUploading(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append('logo', file);
+                        const res = await fetch('/api/admin/config/logo', {
+                          method: 'POST',
+                          body: formData,
+                          credentials: 'include',
+                        });
+                        const json = await res.json();
+                        if (json.success && json.data?.path) {
+                          setLogoUrl(json.data.path);
+                          toast.success('Logo mis a jour');
+                        } else {
+                          toast.error(json.error || 'Erreur');
+                        }
+                      } catch { toast.error('Echec de l\'upload'); }
+                      finally {
+                        setLogoUploading(false);
+                        if (logoInputRef.current) logoInputRef.current.value = '';
+                      }
+                    }}
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    loading={logoUploading}
+                    onClick={() => logoInputRef.current?.click()}
+                  >
+                    <Upload size={14} className="mr-1.5" />
+                    {logoUrl ? 'Changer le logo' : 'Uploader un logo'}
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -530,6 +530,7 @@ export interface AppConfig {
   obligate_url: string | null;
   obligate_enabled: boolean;
   company_name: string;
+  company_logo_path: string | null;
 }
 
 // ============================================

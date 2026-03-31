@@ -33,6 +33,7 @@ export const appConfigService = {
       obligate_url:     parseUrl(OBLIGATE_CONFIG_KEY),
       obligate_enabled: map['obligate_enabled'] === 'true',
       company_name: map['company_name'] || 'Oblifield',
+      company_logo_path: map['company_logo_path'] || null,
     };
   },
 
