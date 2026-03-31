@@ -538,7 +538,7 @@ export function InterventionDetailPage() {
                 className="rounded-lg border border-border bg-bg-secondary overflow-hidden"
               >
                 <img
-                  src={`/api/interventions/${intervention.id}/photos/${photo.id}`}
+                  src={`/uploads/photos/${photo.filename}`}
                   alt={photo.originalName}
                   className="w-full h-32 object-cover"
                 />
