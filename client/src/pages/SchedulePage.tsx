@@ -59,12 +59,12 @@ const STATUS_DOT: Record<InterventionStatus, string> = {
 };
 
 const STATUS_LABEL: Record<InterventionStatus, string> = {
-  pending: 'Pending',
-  assigned: 'Assigned',
-  in_progress: 'In Progress',
-  done: 'Done',
-  issue: 'Issue',
-  cancelled: 'Cancelled',
+  pending: 'En attente',
+  assigned: 'Assignee',
+  in_progress: 'En cours',
+  done: 'Terminee',
+  issue: 'Probleme',
+  cancelled: 'Annulee',
 };
 
 // ---------------------------------------------------------------------------

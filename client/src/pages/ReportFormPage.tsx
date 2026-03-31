@@ -116,7 +116,7 @@ export function ReportFormPage() {
           photoFilenames: photos.map(p => p.originalName).join('\n'),
         });
       } catch {
-        toast.error('Failed to load intervention');
+        toast.error('Echec du chargement de l\'intervention');
       } finally {
         setLoading(false);
       }
@@ -145,7 +145,7 @@ export function ReportFormPage() {
 
   const handleGenerate = async () => {
     if (!interventionId) {
-      toast.error('Save the intervention first');
+      toast.error('Enregistrez l\'intervention d\'abord');
       return;
     }
     setGenerating(true);
@@ -162,7 +162,7 @@ export function ReportFormPage() {
 
   const handleGenerateAndClose = async () => {
     if (!interventionId) {
-      toast.error('Save the intervention first');
+      toast.error('Enregistrez l\'intervention d\'abord');
       return;
     }
     setClosingAndGenerating(true);

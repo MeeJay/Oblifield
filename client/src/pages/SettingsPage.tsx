@@ -227,16 +227,16 @@ export function SettingsPage() {
         <div>
           <div className="flex items-center gap-2 mb-4">
             <HardDrive size={18} className="text-accent" />
-            <h2 className="text-lg font-semibold text-text-primary">{t('settings.company', 'Company')}</h2>
+            <h2 className="text-lg font-semibold text-text-primary">{t('settings.company', 'Entreprise')}</h2>
           </div>
           <div className="rounded-lg border border-border bg-bg-secondary p-5">
             <p className="text-sm text-text-muted mb-3">
-              {t('settings.companyDesc', 'Company name displayed on PDF reports and notifications.')}
+              {t('settings.companyDesc', 'Nom de l\'entreprise affiche sur les rapports PDF et les notifications.')}
             </p>
             <div className="flex items-end gap-3">
               <div className="flex-1">
                 <Input
-                  label={t('settings.companyName', 'Company Name')}
+                  label={t('settings.companyName', 'Nom de l\'entreprise')}
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="Oblifield"
@@ -250,15 +250,15 @@ export function SettingsPage() {
                   setCompanySaving(true);
                   try {
                     await appConfigApi.setConfig('company_name', companyName.trim() || 'Oblifield');
-                    toast.success(t('common.saved', 'Saved'));
+                    toast.success(t('common.saved', 'Enregistre'));
                   } catch {
-                    toast.error(t('common.error', 'Error'));
+                    toast.error(t('common.error', 'Erreur'));
                   } finally {
                     setCompanySaving(false);
                   }
                 }}
               >
-                {t('common.save', 'Save')}
+                {t('common.save', 'Enregistrer')}
               </Button>
             </div>
           </div>
@@ -270,11 +270,11 @@ export function SettingsPage() {
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Info size={18} className="text-accent" />
-            <h2 className="text-lg font-semibold text-text-primary">About</h2>
+            <h2 className="text-lg font-semibold text-text-primary">A propos</h2>
           </div>
           <div className="rounded-lg border border-border bg-bg-secondary p-5">
             {systemInfoLoading ? (
-              <p className="text-sm text-text-muted animate-pulse">Loading system information…</p>
+              <p className="text-sm text-text-muted animate-pulse">Chargement des informations systeme...</p>
             ) : systemInfo ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
                 {/* Versions */}
@@ -282,7 +282,7 @@ export function SettingsPage() {
                   <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted mb-3">
                     <Server size={12} /> Versions
                   </p>
-                  <AboutRow label="Server"   value={`v${systemInfo.appVersion}`} />
+                  <AboutRow label="Serveur"  value={`v${systemInfo.appVersion}`} />
                   <AboutRow label="Client"   value={`v${__APP_VERSION__}`} />
                   <AboutRow label="Node.js"  value={systemInfo.nodeVersion} />
                 </div>
@@ -291,19 +291,19 @@ export function SettingsPage() {
                   <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted mb-3">
                     <Clock size={12} /> Instance
                   </p>
-                  <AboutRow label="Uptime"      value={formatUptime(systemInfo.uptimeSeconds)} />
-                  <AboutRow label="Environment" value={systemInfo.environment.isDocker ? 'Docker' : 'Native'} />
-                  <AboutRow label="Platform"    value={systemInfo.environment.platform} />
-                  <AboutRow label="CPU cores"   value={String(systemInfo.cpu.cores)} />
+                  <AboutRow label="Disponibilite" value={formatUptime(systemInfo.uptimeSeconds)} />
+                  <AboutRow label="Environnement" value={systemInfo.environment.isDocker ? 'Docker' : 'Natif'} />
+                  <AboutRow label="Plateforme"    value={systemInfo.environment.platform} />
+                  <AboutRow label="Coeurs CPU"   value={String(systemInfo.cpu.cores)} />
                 </div>
                 {/* Memory */}
                 <div className="space-y-2">
                   <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted mb-3">
-                    <HardDrive size={12} /> Memory
+                    <HardDrive size={12} /> Memoire
                   </p>
-                  <AboutRow label="Process (RSS)" value={`${systemInfo.memory.processRssMb} MB`} />
-                  <AboutRow label="Heap used"     value={`${systemInfo.memory.processHeapMb} MB`} />
-                  <AboutRow label="System free"   value={`${systemInfo.memory.systemFreeMb} / ${systemInfo.memory.systemTotalMb} MB`} />
+                  <AboutRow label="Processus (RSS)" value={`${systemInfo.memory.processRssMb} Mo`} />
+                  <AboutRow label="Tas utilise"     value={`${systemInfo.memory.processHeapMb} Mo`} />
+                  <AboutRow label="Systeme libre"   value={`${systemInfo.memory.systemFreeMb} / ${systemInfo.memory.systemTotalMb} Mo`} />
                 </div>
                 {/* CPU load */}
                 <div className="space-y-2">
@@ -317,7 +317,7 @@ export function SettingsPage() {
                 {/* Database */}
                 <div className="space-y-2">
                   <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-muted mb-3">
-                    <Database size={12} /> Database
+                    <Database size={12} /> Base de donnees
                   </p>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-text-muted">PostgreSQL</span>
@@ -329,20 +329,20 @@ export function SettingsPage() {
                         'h-1.5 w-1.5 rounded-full',
                         systemInfo.environment.dbStatus === 'ok' ? 'bg-status-up' : 'bg-status-down',
                       )} />
-                      {systemInfo.environment.dbStatus === 'ok' ? 'Connected' : 'Error'}
+                      {systemInfo.environment.dbStatus === 'ok' ? 'Connecte' : 'Erreur'}
                     </span>
                   </div>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-text-muted">Could not load system information.</p>
+              <p className="text-sm text-text-muted">Impossible de charger les informations systeme.</p>
             )}
           </div>
         </div>
       )}
 
       {/* ── Default Intervention Settings ── */}
-      <SettingsPanel scope="global" scopeId={null} title={t('settings.defaultInterventionSettings', 'Default Intervention Settings')} />
+      <SettingsPanel scope="global" scopeId={null} title={t('settings.defaultInterventionSettings', 'Parametres d\'intervention par defaut')} />
 
       {admin && (
         <>
@@ -421,17 +421,17 @@ export function SettingsPage() {
             </div>
             <div className="rounded-lg border border-border bg-bg-secondary p-5 space-y-4">
               <p className="text-sm text-text-muted">
-                {t('settings.obligate.description', 'Connect this app to your Obligate SSO gateway for centralized authentication and cross-app navigation. Register this app in Obligate first, then paste the API key here.')}
+{t('settings.obligate.description', 'Connectez cette application a votre passerelle SSO Obligate pour une authentification centralisee et une navigation inter-applications. Enregistrez d\'abord cette application dans Obligate, puis collez la cle API ici.')}
               </p>
               <div className="bg-status-pending-bg border border-status-pending/30 rounded-md p-3 text-sm text-status-pending">
-                {t('settings.obligate.warning', 'When enabled, local authentication is disabled. Users must sign in through the Obligate gateway. If the gateway becomes unreachable, local authentication is automatically restored as a fallback.')}
+{t('settings.obligate.warning', 'Lorsque active, l\'authentification locale est desactivee. Les utilisateurs doivent se connecter via la passerelle Obligate. Si la passerelle devient inaccessible, l\'authentification locale est automatiquement restauree.')}
               </div>
 
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <label className="text-sm font-medium text-text-secondary">{t('settings.obligate.urlLabel')}</label>
                   {obligateCfg?.url && (
-                    <a href={obligateCfg.url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline">Open ↗</a>
+                    <a href={obligateCfg.url} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline">Ouvrir ↗</a>
                   )}
                 </div>
                 <input
@@ -471,8 +471,8 @@ export function SettingsPage() {
                   </div>
                 </div>
                 <p className="mt-1.5 text-xs text-text-muted">
-                  Generate this key in{' '}
-                  <span className="text-text-secondary font-medium">Obligate → Connected Apps → Add App</span>.
+                  Generez cette cle dans{' '}
+                  <span className="text-text-secondary font-medium">Obligate → Applications connectees → Ajouter une application</span>.
                 </p>
               </div>
 
@@ -535,7 +535,7 @@ export function SettingsPage() {
                     <p className="text-xs text-text-muted mt-0.5">
                       {t('settings.security.force2faDesc').split('\n')[0]}
                       {' '}
-                      Bypass via <code className="text-xs font-mono">DISABLE_2FA_FORCE=true</code> in .env.
+                      Contourner via <code className="text-xs font-mono">DISABLE_2FA_FORCE=true</code> dans .env.
                     </p>
                   </div>
                 </div>

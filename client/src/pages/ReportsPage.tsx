@@ -59,7 +59,7 @@ export function ReportsPage() {
       const data = await reportsApi.getSummary(from || undefined, to || undefined);
       setSummary(data);
     } catch {
-      toast.error('Failed to load summary report');
+      toast.error('Echec du chargement du rapport');
     } finally {
       setSummaryLoading(false);
     }
@@ -76,7 +76,7 @@ export function ReportsPage() {
       );
       setTechReport(data);
     } catch {
-      toast.error('Failed to load technician report');
+      toast.error('Echec du chargement du rapport technicien');
     } finally {
       setTechLoading(false);
     }
@@ -93,7 +93,7 @@ export function ReportsPage() {
       );
       setClientReport(data);
     } catch {
-      toast.error('Failed to load client report');
+      toast.error('Echec du chargement du rapport client');
     } finally {
       setClientLoading(false);
     }
@@ -108,9 +108,9 @@ export function ReportsPage() {
   }, [activeTab]);
 
   const tabs: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-    { key: 'summary', label: 'Summary', icon: <BarChart3 size={16} /> },
-    { key: 'technician', label: 'By Technician', icon: <Users size={16} /> },
-    { key: 'client', label: 'By Client', icon: <Building2 size={16} /> },
+    { key: 'summary', label: 'Resume', icon: <BarChart3 size={16} /> },
+    { key: 'technician', label: 'Par technicien', icon: <Users size={16} /> },
+    { key: 'client', label: 'Par client', icon: <Building2 size={16} /> },
   ];
 
   const selectClass =
@@ -119,14 +119,14 @@ export function ReportsPage() {
   return (
     <div className="p-6">
       {/* Header */}
-      <h1 className="text-2xl font-semibold text-text-primary mb-6">Reports</h1>
+      <h1 className="text-2xl font-semibold text-text-primary mb-6">Rapports</h1>
 
       {/* Date Range */}
       <div className="flex flex-wrap items-end gap-4 mb-6">
         <div className="flex items-center gap-2">
           <Calendar size={16} className="text-text-secondary" />
           <Input
-            label="From"
+            label="Du"
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
@@ -134,7 +134,7 @@ export function ReportsPage() {
         </div>
         <div>
           <Input
-            label="To"
+            label="Au"
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
@@ -149,7 +149,7 @@ export function ReportsPage() {
             else loadClientReport();
           }}
         >
-          Apply
+          Appliquer
         </Button>
       </div>
 
@@ -220,7 +220,7 @@ function SummaryTab({
   if (!summary) {
     return (
       <div className="rounded-lg border border-border bg-bg-secondary p-6 text-center">
-        <p className="text-text-secondary">No data available.</p>
+        <p className="text-text-secondary">Aucune donnee disponible.</p>
       </div>
     );
   }
@@ -231,7 +231,7 @@ function SummaryTab({
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border border-border bg-bg-secondary p-4">
           <div className="text-2xl font-bold text-text-primary">{summary.total}</div>
-          <div className="text-sm text-text-secondary">Total Interventions</div>
+          <div className="text-sm text-text-secondary">Total interventions</div>
         </div>
         <div className="rounded-lg border border-border bg-bg-secondary p-4">
           <div className="text-2xl font-bold text-accent">
@@ -239,24 +239,24 @@ function SummaryTab({
               ? `${Math.round(summary.avgDurationMinutes)}m`
               : '-'}
           </div>
-          <div className="text-sm text-text-secondary">Avg Duration</div>
+          <div className="text-sm text-text-secondary">Duree moyenne</div>
         </div>
       </div>
 
       {/* By Status Table */}
       <div>
         <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3">
-          By Status
+          Par statut
         </h3>
         <div className="rounded-lg border border-border overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="bg-bg-tertiary border-b border-border">
                 <th className="text-left px-4 py-2 text-xs font-medium text-text-secondary">
-                  Status
+                  Statut
                 </th>
                 <th className="text-right px-4 py-2 text-xs font-medium text-text-secondary">
-                  Count
+                  Nombre
                 </th>
               </tr>
             </thead>
@@ -279,7 +279,7 @@ function SummaryTab({
       {/* By Type Table */}
       <div>
         <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3">
-          By Type
+          Par type
         </h3>
         <div className="rounded-lg border border-border overflow-hidden">
           <table className="w-full">
@@ -289,7 +289,7 @@ function SummaryTab({
                   Type
                 </th>
                 <th className="text-right px-4 py-2 text-xs font-medium text-text-secondary">
-                  Count
+                  Nombre
                 </th>
               </tr>
             </thead>
@@ -334,14 +334,14 @@ function TechnicianTab({
       <div className="flex items-end gap-3">
         <div className="flex-1 max-w-xs space-y-1">
           <label className="block text-sm font-medium text-text-secondary">
-            Technician
+            Technicien
           </label>
           <select
             value={selectedId}
             onChange={(e) => onSelect(e.target.value)}
             className={selectClass}
           >
-            <option value="">-- Select --</option>
+            <option value="">-- Selectionner --</option>
             {technicians.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.displayName ?? `Tech #${t.id}`}
@@ -355,7 +355,7 @@ function TechnicianTab({
           onClick={onLoad}
           disabled={!selectedId}
         >
-          Load Report
+          Charger le rapport
         </Button>
       </div>
 
@@ -372,7 +372,7 @@ function TechnicianTab({
               <div className="text-2xl font-bold text-text-primary">
                 {report.completedCount}
               </div>
-              <div className="text-sm text-text-secondary">Completed</div>
+              <div className="text-sm text-text-secondary">Terminees</div>
             </div>
             <div className="rounded-lg border border-border bg-bg-secondary p-4 text-center">
               <div className="text-2xl font-bold text-accent">
@@ -380,7 +380,7 @@ function TechnicianTab({
                   ? `${Math.round(report.avgDurationMinutes)}m`
                   : '-'}
               </div>
-              <div className="text-sm text-text-secondary">Avg Duration</div>
+              <div className="text-sm text-text-secondary">Duree moyenne</div>
             </div>
             <div className="rounded-lg border border-border bg-bg-secondary p-4 text-center">
               <div className="text-2xl font-bold text-text-primary">
@@ -388,12 +388,12 @@ function TechnicianTab({
                   ? `${report.totalHours.toFixed(1)}h`
                   : '-'}
               </div>
-              <div className="text-sm text-text-secondary">Total Hours</div>
+              <div className="text-sm text-text-secondary">Heures totales</div>
             </div>
           </div>
           <div className="rounded-lg border border-border bg-bg-secondary p-4">
             <p className="text-sm text-text-secondary">
-              Technician: <span className="text-text-primary font-medium">{report.technicianName}</span>
+              Technicien : <span className="text-text-primary font-medium">{report.technicianName}</span>
             </p>
           </div>
         </div>
@@ -402,7 +402,7 @@ function TechnicianTab({
       {!loading && !report && selectedId && (
         <div className="rounded-lg border border-border bg-bg-secondary p-6 text-center">
           <p className="text-text-secondary">
-            Click &quot;Load Report&quot; to view data.
+            Cliquez sur &quot;Charger le rapport&quot; pour voir les donnees.
           </p>
         </div>
       )}
@@ -439,7 +439,7 @@ function ClientTab({
             onChange={(e) => onSelect(e.target.value)}
             className={selectClass}
           >
-            <option value="">-- Select --</option>
+            <option value="">-- Selectionner --</option>
             {clients.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -453,7 +453,7 @@ function ClientTab({
           onClick={onLoad}
           disabled={!selectedId}
         >
-          Load Report
+          Charger le rapport
         </Button>
       </div>
 
@@ -467,7 +467,7 @@ function ClientTab({
         <div className="space-y-4">
           <div className="rounded-lg border border-border bg-bg-secondary p-4">
             <p className="text-sm text-text-secondary">
-              Client: <span className="text-text-primary font-medium">{report.clientName}</span>
+              Client : <span className="text-text-primary font-medium">{report.clientName}</span>
               {' \u2022 '}
               <span className="text-text-primary">{report.interventions.length} intervention{report.interventions.length !== 1 ? 's' : ''}</span>
             </p>
@@ -482,16 +482,16 @@ function ClientTab({
                       ID
                     </th>
                     <th className="text-left px-4 py-2 text-xs font-medium text-text-secondary">
-                      Title
+                      Titre
                     </th>
                     <th className="text-left px-4 py-2 text-xs font-medium text-text-secondary">
                       Type
                     </th>
                     <th className="text-left px-4 py-2 text-xs font-medium text-text-secondary">
-                      Status
+                      Statut
                     </th>
                     <th className="text-left px-4 py-2 text-xs font-medium text-text-secondary">
-                      Completed
+                      Terminee
                     </th>
                   </tr>
                 </thead>
@@ -529,7 +529,7 @@ function ClientTab({
       {!loading && !report && selectedId && (
         <div className="rounded-lg border border-border bg-bg-secondary p-6 text-center">
           <p className="text-text-secondary">
-            Click &quot;Load Report&quot; to view data.
+            Cliquez sur &quot;Charger le rapport&quot; pour voir les donnees.
           </p>
         </div>
       )}

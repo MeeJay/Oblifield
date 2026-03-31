@@ -3,6 +3,8 @@ import type {
   Intervention,
   InterventionStatus,
   InterventionStep,
+  InterventionSignature,
+  InterventionPart,
   TimelineEvent,
   InterventionPhoto,
   ApiResponse,
@@ -128,6 +130,41 @@ export const interventionsApi = {
   async unvalidateStepSupervisor(interventionId: number, stepId: number): Promise<InterventionStep> {
     const res = await apiClient.delete<ApiResponse<InterventionStep>>(`/interventions/${interventionId}/steps/${stepId}/validate-supervisor`);
     return res.data.data!;
+  },
+
+  // Signatures
+  async getSignatures(interventionId: number): Promise<InterventionSignature[]> {
+    const res = await apiClient.get<ApiResponse<InterventionSignature[]>>(`/interventions/${interventionId}/signatures`);
+    return res.data.data!;
+  },
+
+  async saveSignature(interventionId: number, data: { type: 'technician' | 'supervisor'; signatureData: string; signerName: string }): Promise<InterventionSignature> {
+    const res = await apiClient.post<ApiResponse<InterventionSignature>>(`/interventions/${interventionId}/signatures`, data);
+    return res.data.data!;
+  },
+
+  async deleteSignature(interventionId: number, sigId: number): Promise<void> {
+    await apiClient.delete(`/interventions/${interventionId}/signatures/${sigId}`);
+  },
+
+  // Parts / Materials
+  async getParts(interventionId: number): Promise<InterventionPart[]> {
+    const res = await apiClient.get<ApiResponse<InterventionPart[]>>(`/interventions/${interventionId}/parts`);
+    return res.data.data!;
+  },
+
+  async addPart(interventionId: number, data: { name: string; reference?: string; quantity?: number; unit?: string; unitPrice?: number; notes?: string }): Promise<InterventionPart> {
+    const res = await apiClient.post<ApiResponse<InterventionPart>>(`/interventions/${interventionId}/parts`, data);
+    return res.data.data!;
+  },
+
+  async updatePart(interventionId: number, partId: number, data: Partial<{ name: string; reference: string; quantity: number; unit: string; unitPrice: number; notes: string }>): Promise<InterventionPart> {
+    const res = await apiClient.put<ApiResponse<InterventionPart>>(`/interventions/${interventionId}/parts/${partId}`, data);
+    return res.data.data!;
+  },
+
+  async deletePart(interventionId: number, partId: number): Promise<void> {
+    await apiClient.delete(`/interventions/${interventionId}/parts/${partId}`);
   },
 
   getReportPdfUrl(id: number, supervisor?: string): string {

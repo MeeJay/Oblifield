@@ -141,7 +141,7 @@ export function InterventionEditPage() {
           }
         }
       } catch {
-        toast.error('Failed to load form data');
+        toast.error('Echec du chargement du formulaire');
       } finally {
         setLoading(false);
       }
@@ -194,7 +194,7 @@ export function InterventionEditPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) {
-      toast.error('Title is required');
+      toast.error('Le titre est requis');
       return;
     }
 
@@ -228,14 +228,14 @@ export function InterventionEditPage() {
       let result: Intervention;
       if (isEdit) {
         result = await interventionsApi.update(Number(id), payload);
-        toast.success('Intervention updated');
+        toast.success('Intervention mise a jour');
       } else {
         result = await interventionsApi.create(payload);
-        toast.success('Intervention created');
+        toast.success('Intervention creee');
       }
       navigate(`/intervention/${result.id}`);
     } catch {
-      toast.error(isEdit ? 'Failed to update' : 'Failed to create');
+      toast.error(isEdit ? 'Echec de la mise a jour' : 'Echec de la creation');
     } finally {
       setSaving(false);
     }
@@ -255,17 +255,17 @@ export function InterventionEditPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-semibold text-text-primary mb-6">
-        {isEdit ? 'Edit Intervention' : 'New Intervention'}
+        {isEdit ? 'Modifier l\'intervention' : 'Nouvelle intervention'}
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Title */}
         <Input
-          label="Title *"
+          label="Titre *"
           name="title"
           value={form.title}
           onChange={handleChange}
-          placeholder="Intervention title"
+          placeholder="Titre de l'intervention"
           required
         />
 
@@ -280,7 +280,7 @@ export function InterventionEditPage() {
             onChange={handleChange}
             rows={4}
             className={cn(selectClass, 'resize-y')}
-            placeholder="Detailed description..."
+            placeholder="Description detaillee..."
           />
         </div>
 
@@ -315,7 +315,7 @@ export function InterventionEditPage() {
 
           <div className="space-y-1">
             <label className="block text-sm font-medium text-text-secondary">
-              Priority
+              Priorite
             </label>
             <select
               name="priority"
@@ -364,7 +364,7 @@ export function InterventionEditPage() {
               onChange={handleChange}
               className={selectClass}
             >
-              <option value="">-- None --</option>
+              <option value="">-- Aucun --</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -384,7 +384,7 @@ export function InterventionEditPage() {
               className={selectClass}
               disabled={!form.clientId}
             >
-              <option value="">-- None --</option>
+              <option value="">-- Aucun --</option>
               {sites.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
@@ -467,14 +467,14 @@ export function InterventionEditPage() {
         {/* Dates */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
-            label="Scheduled At"
+            label="Date planifiee"
             type="datetime-local"
             name="scheduledAt"
             value={form.scheduledAt}
             onChange={handleChange}
           />
           <Input
-            label="Due At"
+            label="Date limite"
             type="datetime-local"
             name="dueAt"
             value={form.dueAt}
@@ -484,16 +484,16 @@ export function InterventionEditPage() {
 
         {/* Address */}
         <Input
-          label="Address"
+          label="Adresse"
           name="address"
           value={form.address}
           onChange={handleChange}
-          placeholder="123 Main St, City"
+          placeholder="123 Rue Principale, Ville"
         />
 
         {/* Duration */}
         <Input
-          label="Estimated Duration (minutes)"
+          label="Duree estimee (minutes)"
           name="estimatedDurationMinutes"
           value={form.estimatedDurationMinutes}
           onChange={handleChange}
@@ -535,7 +535,7 @@ export function InterventionEditPage() {
         <div className="flex items-center gap-3 pt-4 border-t border-border">
           <Button type="submit" variant="primary" loading={saving}>
             <Save size={16} className="mr-1.5" />
-            {isEdit ? 'Update' : 'Create'}
+            {isEdit ? 'Mettre a jour' : 'Creer'}
           </Button>
           <Button
             type="button"
@@ -543,7 +543,7 @@ export function InterventionEditPage() {
             onClick={() => navigate(isEdit ? `/intervention/${id}` : '/')}
           >
             <X size={16} className="mr-1.5" />
-            Cancel
+            Annuler
           </Button>
         </div>
       </form>

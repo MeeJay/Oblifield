@@ -93,7 +93,7 @@ export function ClientManagePage() {
       const treeData = await clientsApi.tree();
       setTree(treeData);
     } catch {
-      toast.error(t('common.error', 'Failed to load data'));
+      toast.error(t('common.error', 'Echec du chargement des donnees'));
     } finally {
       setLoading(false);
     }
@@ -110,7 +110,7 @@ export function ClientManagePage() {
       setSelectedClientSites(sites);
       setSelectedClientId(clientId);
     } catch {
-      toast.error(t('common.error', 'Failed to load sites'));
+      toast.error(t('common.error', 'Echec du chargement des sites'));
     } finally {
       setSitesLoading(false);
     }
@@ -148,7 +148,7 @@ export function ClientManagePage() {
   const handleClientSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!clientForm.name.trim()) {
-      toast.error(t('common.required', 'Name is required'));
+      toast.error(t('common.required', 'Le nom est requis'));
       return;
     }
     setSavingClient(true);
@@ -163,32 +163,32 @@ export function ClientManagePage() {
       };
       if (editingClientId) {
         await clientsApi.update(editingClientId, payload);
-        toast.success(t('common.saved', 'Client updated'));
+        toast.success(t('common.saved', 'Client mis a jour'));
       } else {
         await clientsApi.create(payload);
-        toast.success(t('common.saved', 'Client created'));
+        toast.success(t('common.saved', 'Client cree'));
       }
       setClientModalOpen(false);
       await fetchData();
     } catch {
-      toast.error(t('common.error', 'Failed to save'));
+      toast.error(t('common.error', 'Echec de l\'enregistrement'));
     } finally {
       setSavingClient(false);
     }
   };
 
   const handleDeleteClient = async (id: number, name: string) => {
-    if (!confirm(`${t('common.confirm', 'Are you sure?')} "${name}"`)) return;
+    if (!confirm(`${t('common.confirm', 'Etes-vous sur ?')} "${name}"`)) return;
     try {
       await clientsApi.delete(id);
-      toast.success(t('common.deleted', 'Deleted'));
+      toast.success(t('common.deleted', 'Supprime'));
       if (selectedClientId === id) {
         setSelectedClientId(null);
         setSelectedClientSites([]);
       }
       await fetchData();
     } catch {
-      toast.error(t('common.error', 'Failed to delete'));
+      toast.error(t('common.error', 'Echec de la suppression'));
     }
   };
 
@@ -219,7 +219,7 @@ export function ClientManagePage() {
   const handleSiteSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!siteForm.name.trim() || !siteForm.clientId) {
-      toast.error(t('common.required', 'Name and client are required'));
+      toast.error(t('common.required', 'Le nom et le client sont requis'));
       return;
     }
     setSavingSite(true);
@@ -238,10 +238,10 @@ export function ClientManagePage() {
       };
       if (editingSiteId) {
         await sitesApi.update(editingSiteId, payload);
-        toast.success(t('common.saved', 'Site updated'));
+        toast.success(t('common.saved', 'Site mis a jour'));
       } else {
         await sitesApi.create(payload);
-        toast.success(t('common.saved', 'Site created'));
+        toast.success(t('common.saved', 'Site cree'));
       }
       setSiteModalOpen(false);
       if (siteForm.clientId) {
@@ -249,23 +249,23 @@ export function ClientManagePage() {
       }
       await fetchData();
     } catch {
-      toast.error(t('common.error', 'Failed to save'));
+      toast.error(t('common.error', 'Echec de l\'enregistrement'));
     } finally {
       setSavingSite(false);
     }
   };
 
   const handleDeleteSite = async (site: Site) => {
-    if (!confirm(`${t('common.confirm', 'Are you sure?')} "${site.name}"`)) return;
+    if (!confirm(`${t('common.confirm', 'Etes-vous sur ?')} "${site.name}"`)) return;
     try {
       await sitesApi.delete(site.id);
-      toast.success(t('common.deleted', 'Deleted'));
+      toast.success(t('common.deleted', 'Supprime'));
       if (selectedClientId) {
         await loadSitesForClient(selectedClientId);
       }
       await fetchData();
     } catch {
-      toast.error(t('common.error', 'Failed to delete'));
+      toast.error(t('common.error', 'Echec de la suppression'));
     }
   };
 
@@ -284,7 +284,7 @@ export function ClientManagePage() {
         <h1 className="text-2xl font-semibold text-text-primary">{t('nav.clients', 'Clients')}</h1>
         <Button variant="primary" size="sm" onClick={() => openAddClient()}>
           <Plus size={16} className="mr-1.5" />
-          {t('common.add', 'Add')}
+          {t('common.add', 'Ajouter')}
         </Button>
       </div>
 
@@ -295,7 +295,7 @@ export function ClientManagePage() {
             <div className="rounded-lg border border-border bg-bg-secondary p-8 text-center">
               <Building2 size={32} className="mx-auto mb-3 text-text-secondary" />
               <p className="text-text-secondary">
-                {t('client.empty', 'No clients yet. Add your first client.')}
+                {t('client.empty', 'Aucun client. Ajoutez votre premier client.')}
               </p>
             </div>
           ) : (
@@ -336,7 +336,7 @@ export function ClientManagePage() {
               {sitesLoading ? (
                 <LoadingSpinner size="sm" />
               ) : selectedClientSites.length === 0 ? (
-                <p className="text-xs text-text-secondary">{t('site.empty', 'No sites yet')}</p>
+                <p className="text-xs text-text-secondary">{t('site.empty', 'Aucun site')}</p>
               ) : (
                 <div className="space-y-2">
                   {selectedClientSites.map((site) => (
@@ -383,18 +383,18 @@ export function ClientManagePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-bg-primary p-6 shadow-xl">
             <h2 className="text-lg font-semibold text-text-primary mb-4">
-              {editingClientId ? t('common.edit', 'Edit') : t('common.add', 'Add')} {t('nav.clients', 'Client')}
+              {editingClientId ? t('common.edit', 'Modifier') : t('common.add', 'Ajouter')} {t('nav.clients', 'Client')}
             </h2>
             <form onSubmit={handleClientSubmit} className="space-y-4">
               <Input
-                label={`${t('client.name', 'Name')} *`}
+                label={`${t('client.name', 'Nom')} *`}
                 value={clientForm.name}
                 onChange={(e) => setClientForm((f) => ({ ...f, name: e.target.value }))}
                 required
               />
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-text-secondary">
-                  {t('intervention.description', 'Description')}
+                  {t('intervention.description', 'Description')/* same in French */}
                 </label>
                 <textarea
                   value={clientForm.description}
@@ -412,12 +412,12 @@ export function ClientManagePage() {
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <Input
-                    label={t('client.contactName', 'Name')}
+                    label={t('client.contactName', 'Nom')}
                     value={clientForm.contactName}
                     onChange={(e) => setClientForm((f) => ({ ...f, contactName: e.target.value }))}
                   />
                   <Input
-                    label={t('technician.phone', 'Phone')}
+                    label={t('technician.phone', 'Telephone')}
                     value={clientForm.contactPhone}
                     onChange={(e) => setClientForm((f) => ({ ...f, contactPhone: e.target.value }))}
                   />
@@ -431,10 +431,10 @@ export function ClientManagePage() {
 
               <div className="flex items-center gap-3 pt-2">
                 <Button type="submit" variant="primary" loading={savingClient}>
-                  {editingClientId ? t('common.save', 'Save') : t('common.add', 'Create')}
+                  {editingClientId ? t('common.save', 'Enregistrer') : t('common.add', 'Creer')}
                 </Button>
                 <Button type="button" variant="ghost" onClick={() => setClientModalOpen(false)}>
-                  {t('common.cancel', 'Cancel')}
+                  {t('common.cancel', 'Annuler')}
                 </Button>
               </div>
             </form>
@@ -447,11 +447,11 @@ export function ClientManagePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-bg-primary p-6 shadow-xl">
             <h2 className="text-lg font-semibold text-text-primary mb-4">
-              {editingSiteId ? t('common.edit', 'Edit') : t('common.add', 'Add')} {t('site.site', 'Site')}
+              {editingSiteId ? t('common.edit', 'Modifier') : t('common.add', 'Ajouter')} {t('site.site', 'Site')}
             </h2>
             <form onSubmit={handleSiteSubmit} className="space-y-4">
               <Input
-                label={`${t('client.name', 'Name')} *`}
+                label={`${t('client.name', 'Nom')} *`}
                 value={siteForm.name}
                 onChange={(e) => setSiteForm((f) => ({ ...f, name: e.target.value }))}
                 required
@@ -461,32 +461,32 @@ export function ClientManagePage() {
               <div className="border-t border-border pt-4">
                 <h3 className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-1.5">
                   <MapPin size={14} />
-                  {t('client.address', 'Address')}
+                  {t('client.address', 'Adresse')}
                 </h3>
                 <Input
-                  label={t('client.address', 'Address')}
+                  label={t('client.address', 'Adresse')}
                   value={siteForm.address}
                   onChange={(e) => setSiteForm((f) => ({ ...f, address: e.target.value }))}
                   placeholder="123 Rue de l'Exemple"
                 />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
                   <Input
-                    label={t('client.city', 'City')}
+                    label={t('client.city', 'Ville')}
                     value={siteForm.city}
                     onChange={(e) => setSiteForm((f) => ({ ...f, city: e.target.value }))}
                   />
                   <Input
-                    label={t('client.postalCode', 'Postal Code')}
+                    label={t('client.postalCode', 'Code postal')}
                     value={siteForm.postalCode}
                     onChange={(e) => setSiteForm((f) => ({ ...f, postalCode: e.target.value }))}
                   />
                   <Input
-                    label={t('client.region', 'Region')}
+                    label={t('client.region', 'Region')/* same in French */}
                     value={siteForm.region}
                     onChange={(e) => setSiteForm((f) => ({ ...f, region: e.target.value }))}
                   />
                   <Input
-                    label={t('client.country', 'Country')}
+                    label={t('client.country', 'Pays')}
                     value={siteForm.country}
                     onChange={(e) => setSiteForm((f) => ({ ...f, country: e.target.value }))}
                     placeholder="FR"
@@ -498,16 +498,16 @@ export function ClientManagePage() {
               <div className="border-t border-border pt-4">
                 <h3 className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-1.5">
                   <Phone size={14} />
-                  {t('client.contact', 'Contact')}
+                  {t('client.contact', 'Contact')/* same in French */}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <Input
-                    label={t('client.contactName', 'Name')}
+                    label={t('client.contactName', 'Nom')}
                     value={siteForm.contactName}
                     onChange={(e) => setSiteForm((f) => ({ ...f, contactName: e.target.value }))}
                   />
                   <Input
-                    label={t('technician.phone', 'Phone')}
+                    label={t('technician.phone', 'Telephone')}
                     value={siteForm.contactPhone}
                     onChange={(e) => setSiteForm((f) => ({ ...f, contactPhone: e.target.value }))}
                   />
@@ -521,10 +521,10 @@ export function ClientManagePage() {
 
               <div className="flex items-center gap-3 pt-2">
                 <Button type="submit" variant="primary" loading={savingSite}>
-                  {editingSiteId ? t('common.save', 'Save') : t('common.add', 'Create')}
+                  {editingSiteId ? t('common.save', 'Enregistrer') : t('common.add', 'Creer')}
                 </Button>
                 <Button type="button" variant="ghost" onClick={() => setSiteModalOpen(false)}>
-                  {t('common.cancel', 'Cancel')}
+                  {t('common.cancel', 'Annuler')}
                 </Button>
               </div>
             </form>
@@ -593,7 +593,7 @@ function ClientTreeRow({
         <button
           onClick={() => onShowSites(node.id)}
           className="text-xs text-text-secondary whitespace-nowrap hover:text-accent flex items-center gap-1"
-          title="Show sites"
+          title="Afficher les sites"
         >
           <MapPin size={10} />
           {node.siteCount} site{node.siteCount !== 1 ? 's' : ''}
@@ -609,28 +609,28 @@ function ClientTreeRow({
           <button
             onClick={() => onAddSite(node.id)}
             className="p-1 rounded hover:bg-bg-hover text-text-secondary hover:text-accent"
-            title="Add site"
+            title="Ajouter un site"
           >
             <MapPin size={14} />
           </button>
           <button
             onClick={() => onAddChild(node.id)}
             className="p-1 rounded hover:bg-bg-hover text-text-secondary hover:text-accent"
-            title="Add sub-client"
+            title="Ajouter un sous-client"
           >
             <Plus size={14} />
           </button>
           <button
             onClick={() => onEdit(node)}
             className="p-1 rounded hover:bg-bg-hover text-text-secondary hover:text-accent"
-            title="Edit"
+            title="Modifier"
           >
             <Pencil size={14} />
           </button>
           <button
             onClick={() => onDelete(node)}
             className="p-1 rounded hover:bg-bg-hover text-text-secondary hover:text-red-500"
-            title="Delete"
+            title="Supprimer"
           >
             <Trash2 size={14} />
           </button>

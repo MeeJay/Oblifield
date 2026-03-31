@@ -25,6 +25,9 @@ import sitesRoutes from './sites.routes';
 import stepTemplatesRoutes from './stepTemplates.routes';
 import docCategoriesRoutes from './docCategories.routes';
 import documentsRoutes from './documents.routes';
+import searchRoutes from './search.routes';
+import auditLogsRoutes from './auditLogs.routes';
+import recurringSchedulesRoutes from './recurringSchedules.routes';
 
 const router = Router();
 
@@ -59,6 +62,9 @@ tenantRouter.use('/reports', reportsRoutes);
 tenantRouter.use('/step-templates', stepTemplatesRoutes);
 tenantRouter.use('/doc-categories', docCategoriesRoutes);
 tenantRouter.use('/documents', documentsRoutes);
+tenantRouter.use('/search', searchRoutes);
+tenantRouter.use('/audit-logs', auditLogsRoutes);
+tenantRouter.use('/recurring-schedules', recurringSchedulesRoutes);
 tenantRouter.use('/settings', settingsRoutes);
 tenantRouter.use('/notifications', notificationsRoutes);
 tenantRouter.use('/users', usersRoutes);

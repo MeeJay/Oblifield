@@ -31,6 +31,7 @@ interface InterventionRow {
   supervisor_observations: string | null;
   supervisor_id: number | null;
   step_template_id: number | null;
+  recurring_schedule_id: number | null;
   created_by: number | null;
   tenant_id: number;
   created_at: Date;
@@ -87,6 +88,7 @@ function rowToIntervention(row: InterventionRow): Intervention {
     supervisorObservations: row.supervisor_observations,
     supervisorId: row.supervisor_id,
     stepTemplateId: row.step_template_id,
+    recurringScheduleId: row.recurring_schedule_id,
     createdBy: row.created_by,
     tenantId: row.tenant_id,
     createdAt: row.created_at.toISOString(),

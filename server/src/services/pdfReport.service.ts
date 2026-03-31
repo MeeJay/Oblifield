@@ -14,7 +14,7 @@ const VALUE_COLOR = '#1A1A1A';
 const FOOTER_COLOR = '#999999';
 const BORDER_COLOR = '#CCCCCC';
 
-const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads', 'photos');
+const UPLOAD_DIR = path.resolve(__dirname, '../../../uploads/photos');
 
 interface ReportData {
   intervention: Intervention;

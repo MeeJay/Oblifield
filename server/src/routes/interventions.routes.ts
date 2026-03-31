@@ -496,6 +496,105 @@ router.delete('/:id/steps/:stepId/validate-supervisor', async (req, res) => {
   }
 });
 
+// ── Signatures ──────────────────────────────────────────────────────────────
+
+// GET /interventions/:id/signatures
+router.get('/:id/signatures', async (req, res) => {
+  try {
+    const { signatureService } = await import('../services/signature.service');
+    const data = await signatureService.getByIntervention(Number(req.params.id));
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /interventions/:id/signatures
+router.post('/:id/signatures', async (req, res) => {
+  try {
+    const { signatureService } = await import('../services/signature.service');
+    const { type, signatureData, signerName } = req.body;
+    if (!type || !signatureData || !signerName) {
+      return res.status(400).json({ success: false, error: 'type, signatureData, and signerName are required' });
+    }
+    const userId = req.session?.userId ?? null;
+    const data = await signatureService.save({
+      interventionId: Number(req.params.id),
+      type,
+      signatureData,
+      signerName,
+      signedByUserId: type === 'supervisor' ? userId : null,
+      signedByTechnicianId: null,
+    });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /interventions/:id/signatures/:sigId
+router.delete('/:id/signatures/:sigId', async (req, res) => {
+  try {
+    const { signatureService } = await import('../services/signature.service');
+    await signatureService.delete(Number(req.params.sigId));
+    res.json({ success: true, data: null });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ── Parts / Materials ───────────────────────────────────────────────────────
+
+// GET /interventions/:id/parts
+router.get('/:id/parts', async (req, res) => {
+  try {
+    const { interventionPartService } = await import('../services/interventionPart.service');
+    const data = await interventionPartService.getByIntervention(Number(req.params.id));
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /interventions/:id/parts
+router.post('/:id/parts', async (req, res) => {
+  try {
+    const { interventionPartService } = await import('../services/interventionPart.service');
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ success: false, error: 'name is required' });
+    const data = await interventionPartService.create({
+      interventionId: Number(req.params.id),
+      ...req.body,
+    });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PUT /interventions/:id/parts/:partId
+router.put('/:id/parts/:partId', async (req, res) => {
+  try {
+    const { interventionPartService } = await import('../services/interventionPart.service');
+    const data = await interventionPartService.update(Number(req.params.partId), req.body);
+    if (!data) return res.status(404).json({ success: false, error: 'Part not found' });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /interventions/:id/parts/:partId
+router.delete('/:id/parts/:partId', async (req, res) => {
+  try {
+    const { interventionPartService } = await import('../services/interventionPart.service');
+    await interventionPartService.delete(Number(req.params.partId));
+    res.json({ success: true, data: null });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // GET /interventions/:id/report/pdf — generate PDF report
 router.get('/:id/report/pdf', async (req, res) => {
   try {

@@ -84,10 +84,105 @@ export interface Intervention {
   supervisorObservations: string | null;
   supervisorId: number | null;
   stepTemplateId: number | null;
+  recurringScheduleId: number | null;
   createdBy: number | null;
   tenantId: number;
   createdAt: string;
   updatedAt: string;
+}
+
+// ============================================
+// Signature types
+// ============================================
+export interface InterventionSignature {
+  id: number;
+  interventionId: number;
+  type: 'technician' | 'supervisor';
+  signatureData: string;
+  signerName: string;
+  signedByUserId: number | null;
+  signedByTechnicianId: number | null;
+  signedAt: string;
+}
+
+// ============================================
+// Intervention parts / materials
+// ============================================
+export interface InterventionPart {
+  id: number;
+  interventionId: number;
+  name: string;
+  reference: string | null;
+  quantity: number;
+  unit: string | null;
+  unitPrice: number | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+// ============================================
+// Recurring schedule types
+// ============================================
+export type RecurringFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export interface RecurringSchedule {
+  id: number;
+  title: string;
+  description: string | null;
+  type: string;
+  priority: string;
+  clientId: number | null;
+  clientName?: string | null;
+  siteId: number | null;
+  siteName?: string | null;
+  assignedTechnicianId: number | null;
+  assignedTechnicianName?: string | null;
+  stepTemplateId: number | null;
+  frequency: RecurringFrequency;
+  interval: number;
+  dayOfWeek: number | null;
+  dayOfMonth: number | null;
+  monthOfYear: number | null;
+  timeOfDay: string | null;
+  estimatedDurationMinutes: number | null;
+  address: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
+  nextRunAt: string | null;
+  lastRunAt: string | null;
+  isActive: boolean;
+  createdBy: number | null;
+  tenantId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================
+// Audit log types
+// ============================================
+export interface AuditLog {
+  id: number;
+  userId: number | null;
+  username: string | null;
+  action: string;
+  entityType: string;
+  entityId: number | null;
+  entityLabel: string | null;
+  changes: Record<string, { old: unknown; new: unknown }> | null;
+  ipAddress: string | null;
+  tenantId: number;
+  createdAt: string;
+}
+
+// ============================================
+// Search types
+// ============================================
+export interface SearchResult {
+  type: 'intervention' | 'client' | 'site' | 'technician' | 'document';
+  id: number;
+  title: string;
+  subtitle: string | null;
+  url: string;
 }
 
 // ============================================

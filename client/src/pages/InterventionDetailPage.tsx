@@ -49,6 +49,8 @@ import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/common/Button';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { InterventionSteps } from '@/components/interventions/InterventionSteps';
+import { InterventionParts } from '@/components/interventions/InterventionParts';
+import { SignaturePanel } from '@/components/interventions/SignaturePanel';
 import { cn } from '@/utils/cn';
 import toast from 'react-hot-toast';
 
@@ -133,7 +135,7 @@ export function InterventionDetailPage() {
       setSupObs(intv.supervisorObservations ?? '');
       setInternalComments(intv.description ?? '');
     } catch {
-      toast.error('Failed to load intervention');
+      toast.error('Echec du chargement de l\'intervention');
       navigate('/');
     } finally {
       setLoading(false);
@@ -147,7 +149,7 @@ export function InterventionDetailPage() {
   const captureGPS = (): Promise<{ latitude: number; longitude: number; accuracy?: number }> =>
     new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
-        reject(new Error('Geolocation not supported'));
+        reject(new Error('Geolocalisation non supportee'));
         return;
       }
       navigator.geolocation.getCurrentPosition(
@@ -167,10 +169,10 @@ export function InterventionDetailPage() {
     try {
       const gps = await captureGPS().catch(() => undefined);
       await interventionsApi.checkIn(interventionId, gps);
-      toast.success('Checked in successfully');
+      toast.success('Pointage entree effectue');
       await fetchData();
     } catch {
-      toast.error('Check-in failed');
+      toast.error('Echec du pointage entree');
     } finally {
       setActionLoading(false);
     }
@@ -185,10 +187,10 @@ export function InterventionDetailPage() {
         longitude: gps?.longitude,
         accuracy: gps?.accuracy,
       });
-      toast.success('Checked out successfully');
+      toast.success('Pointage sortie effectue');
       await fetchData();
     } catch {
-      toast.error('Check-out failed');
+      toast.error('Echec du pointage sortie');
     } finally {
       setActionLoading(false);
     }
@@ -199,10 +201,10 @@ export function InterventionDetailPage() {
     setActionLoading(true);
     try {
       await interventionsApi.changeStatus(interventionId, status);
-      toast.success(`Status changed to ${INTERVENTION_STATUS_LABELS[status]}`);
+      toast.success(`Statut modifie : ${INTERVENTION_STATUS_LABELS[status]}`);
       await fetchData();
     } catch {
-      toast.error('Failed to change status');
+      toast.error('Echec du changement de statut');
     } finally {
       setActionLoading(false);
     }
@@ -212,10 +214,10 @@ export function InterventionDetailPage() {
     setActionLoading(true);
     try {
       await interventionsApi.changeStatus(interventionId, 'issue');
-      toast.success('Issue signaled');
+      toast.success('Probleme signale');
       await fetchData();
     } catch {
-      toast.error('Failed to signal issue');
+      toast.error('Echec du signalement');
     } finally {
       setActionLoading(false);
     }
@@ -225,10 +227,10 @@ export function InterventionDetailPage() {
     setActionLoading(true);
     try {
       await interventionsApi.changeStatus(interventionId, 'cancelled');
-      toast.success('Intervention cancelled');
+      toast.success('Intervention annulee');
       await fetchData();
     } catch {
-      toast.error('Failed to cancel');
+      toast.error('Echec de l\'annulation');
     } finally {
       setActionLoading(false);
     }
@@ -341,7 +343,7 @@ export function InterventionDetailPage() {
           <Link to={`/intervention/${intervention.id}/edit`}>
             <Button variant="secondary" size="sm">
               <Pencil size={14} className="mr-1.5" />
-              Edit
+              Modifier
             </Button>
           </Link>
         </div>
@@ -415,7 +417,7 @@ export function InterventionDetailPage() {
           disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
         >
           <LogIn size={16} className="mr-1.5" />
-          Check In
+          Pointage entree
         </Button>
         <Button
           variant="secondary"
@@ -425,7 +427,7 @@ export function InterventionDetailPage() {
           disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
         >
           <LogOut size={16} className="mr-1.5" />
-          Check Out
+          Pointage sortie
         </Button>
 
         {/* Signal Issue - available to all */}
@@ -495,6 +497,16 @@ export function InterventionDetailPage() {
           interventionId={interventionId}
           assignedTechnicianId={intervention.assignedTechnicianId}
         />
+      </div>
+
+      {/* Signatures */}
+      <div className="mb-8">
+        <SignaturePanel interventionId={interventionId} />
+      </div>
+
+      {/* Parts / Materials */}
+      <div className="mb-8">
+        <InterventionParts interventionId={interventionId} />
       </div>
 
       {/* Attached Documents */}
@@ -584,12 +596,12 @@ export function InterventionDetailPage() {
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
           <Clock size={18} className="text-accent" />
-          <h2 className="text-lg font-semibold text-text-primary">Timeline</h2>
+          <h2 className="text-lg font-semibold text-text-primary">Chronologie</h2>
         </div>
 
         {timeline.length === 0 ? (
           <div className="rounded-lg border border-border bg-bg-secondary p-6 text-center">
-            <p className="text-text-secondary">No timeline events yet.</p>
+            <p className="text-text-secondary">Aucun evenement dans la chronologie.</p>
           </div>
         ) : (
           <div className="relative ml-4 border-l-2 border-border pl-6 space-y-4">
@@ -602,7 +614,7 @@ export function InterventionDetailPage() {
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-text-primary">
-                        {event.technicianName ?? 'System'}
+                        {event.technicianName ?? 'Systeme'}
                       </span>
                       <span className="text-xs text-text-secondary capitalize">
                         {event.type.replace('_', ' ')}

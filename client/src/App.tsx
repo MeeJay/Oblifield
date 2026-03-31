@@ -25,6 +25,9 @@ import { AdminUsersPage } from '@/pages/AdminUsersPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { ImportExportPage } from '@/pages/ImportExportPage';
 import { StepTemplateManagePage } from '@/pages/StepTemplateManagePage';
+import { RecurringSchedulesPage } from '@/pages/RecurringSchedulesPage';
+import { AuditLogPage } from '@/pages/AuditLogPage';
+import { MapPage } from '@/pages/MapPage';
 import { DocumentationPage } from '@/pages/DocumentationPage';
 import { DocumentEditPage } from '@/pages/DocumentEditPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -54,6 +57,7 @@ export default function App() {
             <Route path="/schedule" element={<SchedulePage />} />
             <Route path="/interventions" element={<InterventionListPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/map" element={<MapPage />} />
             <Route path="/docs" element={<DocumentationPage />} />
             <Route path="/docs/new" element={<DocumentEditPage />} />
             <Route path="/docs/:id" element={<DocumentEditPage />} />
@@ -70,6 +74,8 @@ export default function App() {
               <Route path="/technicians" element={<TechnicianManagePage />} />
               <Route path="/technicians/:id" element={<TechnicianDetailPage />} />
               <Route path="/step-templates" element={<StepTemplateManagePage />} />
+              <Route path="/recurring" element={<RecurringSchedulesPage />} />
+              <Route path="/audit-log" element={<AuditLogPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />

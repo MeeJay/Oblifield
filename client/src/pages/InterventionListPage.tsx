@@ -146,7 +146,7 @@ export function InterventionListPage() {
         <Link to="/intervention/new">
           <Button variant="primary" size="sm">
             <Plus size={16} className="mr-1.5" />
-            New Intervention
+            Nouvelle intervention
           </Button>
         </Link>
       </div>
