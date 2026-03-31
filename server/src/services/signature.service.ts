@@ -16,7 +16,7 @@ function rowToSignature(row: SignatureRow): InterventionSignature {
   return {
     id: row.id,
     interventionId: row.intervention_id,
-    type: row.type as 'technician' | 'supervisor',
+    type: row.type as 'technician' | 'supervisor' | 'client',
     signatureData: row.signature_data,
     signerName: row.signer_name ?? '',
     signedByUserId: row.signed_by_user_id,
@@ -36,7 +36,7 @@ export const signatureService = {
 
   async save(data: {
     interventionId: number;
-    type: 'technician' | 'supervisor';
+    type: 'technician' | 'supervisor' | 'client';
     signatureData: string;
     signerName: string | null;
     signedByUserId?: number | null;

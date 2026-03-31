@@ -138,7 +138,7 @@ export const interventionsApi = {
     return res.data.data!;
   },
 
-  async saveSignature(interventionId: number, data: { type: 'technician' | 'supervisor'; signatureData: string; signerName: string }): Promise<InterventionSignature> {
+  async saveSignature(interventionId: number, data: { type: 'technician' | 'supervisor' | 'client'; signatureData: string; signerName: string }): Promise<InterventionSignature> {
     const res = await apiClient.post<ApiResponse<InterventionSignature>>(`/interventions/${interventionId}/signatures`, data);
     return res.data.data!;
   },

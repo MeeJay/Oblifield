@@ -143,7 +143,7 @@ function SignaturePad({ onSave, onCancel }: SignaturePadProps) {
 
 interface SignatureSectionProps {
   title: string;
-  type: 'technician' | 'supervisor';
+  type: 'technician' | 'supervisor' | 'client';
   signature: InterventionSignature | undefined;
   interventionId: number;
   onRefresh: () => void;
@@ -288,6 +288,7 @@ export function SignaturePanel({ interventionId }: Props) {
 
   const techSignature = signatures.find((s) => s.type === 'technician');
   const supervisorSignature = signatures.find((s) => s.type === 'supervisor');
+  const clientSignature = signatures.find((s) => s.type === 'client');
 
   if (loading) {
     return (
@@ -303,11 +304,18 @@ export function SignaturePanel({ interventionId }: Props) {
         <PenTool className="h-5 w-5 text-accent" />
         Signatures
       </h2>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <SignatureSection
           title="Signature technicien"
           type="technician"
           signature={techSignature}
+          interventionId={interventionId}
+          onRefresh={fetchSignatures}
+        />
+        <SignatureSection
+          title="Signature client"
+          type="client"
+          signature={clientSignature}
           interventionId={interventionId}
           onRefresh={fetchSignatures}
         />

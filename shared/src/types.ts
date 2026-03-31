@@ -97,7 +97,7 @@ export interface Intervention {
 export interface InterventionSignature {
   id: number;
   interventionId: number;
-  type: 'technician' | 'supervisor';
+  type: 'technician' | 'supervisor' | 'client';
   signatureData: string;
   signerName: string;
   signedByUserId: number | null;

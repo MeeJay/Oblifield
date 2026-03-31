@@ -1,6 +1,6 @@
 {
   "name": "@oblifield/server",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "private": true,
   "main": "dist/src/index.js",
   "scripts": {
@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@oblifield/shared": "*",
+    "@types/image-size": "^0.7.0",
     "@types/pdfkit": "^0.17.5",
     "@types/ssh2": "^1.15.5",
     "bcrypt": "^5.1.1",
@@ -26,6 +27,7 @@
     "express-session": "^1.18.0",
     "gamedig": "^5.3.2",
     "helmet": "^7.1.0",
+    "image-size": "^2.0.2",
     "knex": "^3.1.0",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.1",

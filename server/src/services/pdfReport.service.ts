@@ -1,6 +1,7 @@
 import PDFDocument from 'pdfkit';
 import path from 'path';
 import fs from 'fs';
+import imageSize from 'image-size';
 import type { Intervention, TimelineEvent, InterventionPhoto } from '@oblifield/shared';
 
 // ── Color palette (matching Agitel/example convention) ──────────────────────
@@ -157,14 +158,26 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
 
   y += 20;
 
-  // ── Commentaires section ───────────────────────────────────────────────
-  // Combine technician + supervisor observations as one unified block
-  // (matching the example style — no separate labels)
+  // ── Observations Technicien section ─────────────────────────────────────
+  if (intervention.technicianObservations) {
+    y = drawSectionHeader('Observations Technicien', y);
+
+    doc
+      .fontSize(10)
+      .font('Helvetica')
+      .fillColor(VALUE_COLOR);
+
+    doc.text(intervention.technicianObservations, leftMargin + 10, y, {
+      width: contentWidth - 20,
+      lineGap: 5,
+    });
+
+    y = doc.y + 15;
+  }
+
+  // ── Commentaires section (supervisor observations + timeline notes) ────
   const commentParts: string[] = [];
 
-  if (intervention.technicianObservations) {
-    commentParts.push(intervention.technicianObservations);
-  }
   if (intervention.supervisorObservations) {
     commentParts.push(intervention.supervisorObservations);
   }
@@ -197,6 +210,16 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
   // ═══════════════════════════════════════════════════════════════════════════
   // PHOTO ANNEXE PAGES — Grid 3x2 per page (matching examples)
   // ═══════════════════════════════════════════════════════════════════════════
+  // ── Helper: detect if image is landscape ────────────────────────────────
+  function getImageDims(filePath: string): { width: number; height: number } | null {
+    try {
+      const buf = fs.readFileSync(filePath);
+      const dims = imageSize(buf);
+      if (dims.width && dims.height) return { width: dims.width, height: dims.height };
+      return null;
+    } catch { return null; }
+  }
+
   const validPhotos = photos.filter((p) => {
     const filePath = path.join(UPLOAD_DIR, p.filename);
     return fs.existsSync(filePath);
@@ -242,26 +265,60 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
       for (const photo of pagePhotos) {
         const filePath = path.join(UPLOAD_DIR, photo.filename);
         const x = leftMargin + col * (photoWidth + gap);
+        const cellW = photoWidth;
+        const cellH = photoHeight;
+        const innerW = cellW - 4;
+        const innerH = cellH - 4;
 
         // Draw border
         doc
-          .rect(x, rowY, photoWidth, photoHeight)
+          .rect(x, rowY, cellW, cellH)
           .lineWidth(0.5)
           .strokeColor(BORDER_COLOR)
           .stroke();
 
         try {
-          doc.image(filePath, x + 2, rowY + 2, {
-            fit: [photoWidth - 4, photoHeight - 4],
-            align: 'center',
-            valign: 'center',
-          });
+          const dims = getImageDims(filePath);
+          const landscape = dims ? dims.width > dims.height : false;
+
+          if (landscape && dims) {
+            // Rotate landscape photo to portrait:
+            // After 90° rotation, the image's width becomes its height and vice versa.
+            // We fit the rotated image (swapped dims) into the portrait cell.
+            const origW = dims.width;
+            const origH = dims.height;
+            // After rotation: effective dimensions = origH × origW
+            const scale = Math.min(innerW / origH, innerH / origW);
+            const drawW = origW * scale; // rendered height (pre-rotation width)
+            const drawH = origH * scale; // rendered width (pre-rotation height)
+
+            // Center in cell
+            const cx = x + 2 + innerW / 2;
+            const cy = rowY + 2 + innerH / 2;
+
+            doc.save();
+            // Translate to cell center, rotate -90°, then draw centered
+            doc.translate(cx, cy);
+            doc.rotate(-90);
+            // After rotation, draw the image centered at origin
+            doc.image(filePath, -drawW / 2, -drawH / 2, {
+              width: drawW,
+              height: drawH,
+            });
+            doc.restore();
+          } else {
+            doc.image(filePath, x + 2, rowY + 2, {
+              fit: [innerW, innerH],
+              align: 'center',
+              valign: 'center',
+            });
+          }
         } catch {
           doc
             .fontSize(7)
             .fillColor(FOOTER_COLOR)
-            .text(photo.originalName, x + 4, rowY + photoHeight / 2 - 5, {
-              width: photoWidth - 8,
+            .text(photo.originalName, x + 4, rowY + cellH / 2 - 5, {
+              width: cellW - 8,
               align: 'center',
             });
         }
