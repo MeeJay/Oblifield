@@ -148,7 +148,7 @@ export function createApp() {
   app.use('/api', routes);
 
   // Serve uploaded photos (auth-protected)
-  app.use('/uploads', requireAuth, express.static(path.resolve(__dirname, '../../uploads')));
+  app.use('/uploads', requireAuth, express.static(path.resolve('/app/uploads')));
 
   // Health check (public — also used by login page to display server version)
   app.get('/health', (_req, res) => {

@@ -3,7 +3,7 @@ import path from 'path';
 import { randomUUID } from 'crypto';
 import fs from 'fs';
 
-const UPLOAD_DIR = path.resolve(__dirname, '../../../uploads/photos');
+const UPLOAD_DIR = path.resolve('/app/uploads/photos');
 
 // Ensure upload directory exists
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });

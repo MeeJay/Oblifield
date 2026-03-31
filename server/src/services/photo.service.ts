@@ -29,7 +29,7 @@ function rowToPhoto(row: PhotoRow): InterventionPhoto {
   };
 }
 
-const UPLOAD_DIR = path.resolve(__dirname, '../../../uploads/photos');
+const UPLOAD_DIR = path.resolve('/app/uploads/photos');
 
 export const photoService = {
   async getByIntervention(interventionId: number): Promise<InterventionPhoto[]> {
