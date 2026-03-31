@@ -43,6 +43,7 @@ interface FormData {
   contactPhone: string;
   contactEmail: string;
   estimatedDurationMinutes: string;
+  typeOther: string;
   technicianObservations: string;
   supervisorObservations: string;
 }
@@ -63,6 +64,7 @@ const emptyForm: FormData = {
   contactPhone: '',
   contactEmail: '',
   estimatedDurationMinutes: '',
+  typeOther: '',
   technicianObservations: '',
   supervisorObservations: '',
 };
@@ -139,7 +141,7 @@ export function InterventionEditPage() {
   }, [id, isEdit]);
 
   const handleClientChange = (clientId: string) => {
-    setForm((f) => ({ ...f, clientId, siteId: '', contactName: '', contactPhone: '', contactEmail: '' }));
+    setForm((f) => ({ ...f, clientId, siteId: '', address: '', contactName: '', contactPhone: '', contactEmail: '' }));
     if (clientId) {
       sitesApi.list({ clientId: Number(clientId) }).then(setSites);
     } else {
@@ -151,9 +153,11 @@ export function InterventionEditPage() {
     setForm((f) => {
       const site = sites.find((s) => String(s.id) === siteId);
       if (site) {
+        const addressParts = [site.address, site.city, site.postalCode, site.country].filter(Boolean);
         return {
           ...f,
           siteId,
+          address: addressParts.join(', ') || f.address,
           contactName: site.contactName ?? f.contactName,
           contactPhone: site.contactPhone ?? f.contactPhone,
           contactEmail: site.contactEmail ?? f.contactEmail,
@@ -288,6 +292,15 @@ export function InterventionEditPage() {
                 </option>
               ))}
             </select>
+            {form.type === 'other' && (
+              <Input
+                name="typeOther"
+                value={form.typeOther}
+                onChange={handleChange}
+                placeholder="Preciser le type..."
+                className="mt-2"
+              />
+            )}
           </div>
 
           <div className="space-y-1">

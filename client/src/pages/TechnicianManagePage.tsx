@@ -5,6 +5,8 @@ import {
   UserCheck,
   CircleDot,
   Star,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import type { Technician, TechnicianStatus } from '@oblifield/shared';
 import { techniciansApi } from '@/api/technicians.api';
@@ -90,7 +92,8 @@ export function TechnicianManagePage() {
   const navigate = useNavigate();
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [loading, setLoading] = useState(true);
-  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<TechForm>(emptyForm);
   const [saving, setSaving] = useState(false);
 
@@ -116,7 +119,45 @@ export function TechnicianManagePage() {
     setForm((f) => ({ ...f, [name]: value }));
   };
 
-  const handleAdd = async (e: FormEvent) => {
+  const openAdd = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setModalOpen(true);
+  };
+
+  const openEdit = (tech: Technician) => {
+    setEditingId(tech.id);
+    setForm({
+      firstName: tech.firstName,
+      lastName: tech.lastName,
+      company: tech.company ?? '',
+      phone: tech.phone ?? '',
+      email: tech.email ?? '',
+      address: tech.address ?? '',
+      postalCode: tech.postalCode ?? '',
+      city: tech.city ?? '',
+      country: tech.country ?? '',
+      type: tech.type ?? 'electrician',
+      typeOther: tech.typeOther ?? '',
+      actionRadiusKm: tech.actionRadiusKm?.toString() ?? '',
+      rating: tech.rating?.toString() ?? '',
+      specialties: tech.specialties.join(', '),
+    });
+    setModalOpen(true);
+  };
+
+  const handleDelete = async (tech: Technician) => {
+    if (!confirm(`Supprimer ${tech.firstName} ${tech.lastName} ?`)) return;
+    try {
+      await techniciansApi.delete(tech.id);
+      toast.success('Technicien supprime');
+      await fetchData();
+    } catch {
+      toast.error('Echec de la suppression');
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.firstName.trim() || !form.lastName.trim()) {
       toast.error('Le prenom et le nom sont requis');
@@ -124,7 +165,7 @@ export function TechnicianManagePage() {
     }
     setSaving(true);
     try {
-      await techniciansApi.create({
+      const payload = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         company: form.company.trim() || undefined,
@@ -142,13 +183,19 @@ export function TechnicianManagePage() {
           .split(',')
           .map((s) => s.trim())
           .filter(Boolean),
-      });
-      toast.success('Technicien ajoute');
-      setAddModalOpen(false);
+      };
+      if (editingId) {
+        await techniciansApi.update(editingId, payload);
+        toast.success('Technicien modifie');
+      } else {
+        await techniciansApi.create(payload);
+        toast.success('Technicien ajoute');
+      }
+      setModalOpen(false);
       setForm(emptyForm);
       await fetchData();
     } catch {
-      toast.error("Echec de l'ajout");
+      toast.error('Echec de la sauvegarde');
     } finally {
       setSaving(false);
     }
@@ -170,7 +217,7 @@ export function TechnicianManagePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-text-primary">Techniciens</h1>
-        <Button variant="primary" size="sm" onClick={() => setAddModalOpen(true)}>
+        <Button variant="primary" size="sm" onClick={() => openAdd()}>
           <Plus size={16} className="mr-1.5" />
           Ajouter un technicien
         </Button>
@@ -209,6 +256,9 @@ export function TechnicianManagePage() {
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Statut
+                </th>
+                <th className="px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider text-right">
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -252,6 +302,24 @@ export function TechnicianManagePage() {
                         {statusCfg.label}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openEdit(tech); }}
+                          className="p-1.5 rounded hover:bg-bg-hover text-text-secondary hover:text-accent transition-colors"
+                          title="Modifier"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDelete(tech); }}
+                          className="p-1.5 rounded hover:bg-bg-hover text-text-secondary hover:text-red-500 transition-colors"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -261,13 +329,13 @@ export function TechnicianManagePage() {
       )}
 
       {/* Add Modal */}
-      {addModalOpen && (
+      {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg border border-border bg-bg-primary p-6 shadow-xl">
             <h2 className="text-lg font-semibold text-text-primary mb-4">
-              Ajouter un technicien
+              {editingId ? 'Modifier le technicien' : 'Ajouter un technicien'}
             </h2>
-            <form onSubmit={handleAdd} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5">
               {/* Identite */}
               <div>
                 <h3 className="text-sm font-medium text-text-secondary mb-2">Identite</h3>
@@ -406,13 +474,13 @@ export function TechnicianManagePage() {
 
               <div className="flex items-center gap-3 pt-2">
                 <Button type="submit" variant="primary" loading={saving}>
-                  Ajouter
+                  {editingId ? 'Enregistrer' : 'Ajouter'}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={() => {
-                    setAddModalOpen(false);
+                    setModalOpen(false);
                     setForm(emptyForm);
                   }}
                 >
