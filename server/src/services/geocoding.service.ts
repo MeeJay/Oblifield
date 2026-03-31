@@ -32,16 +32,17 @@ export const geocodingService = {
         limit: '1',
       });
 
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?${params}`,
-        {
-          headers: {
-            'User-Agent': 'Oblifield/1.0 (field intervention management)',
-          },
+      const url = `https://nominatim.openstreetmap.org/search?${params}`;
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Oblifield/1.0 (field intervention management)',
         },
-      );
+      });
 
-      if (!response.ok) return null;
+      if (!response.ok) {
+        console.error(`[geocoding] HTTP ${response.status} for "${address}"`);
+        return null;
+      }
 
       const results = await response.json() as Array<{ lat: string; lon: string }>;
       if (!results || results.length === 0) return null;
@@ -50,7 +51,8 @@ export const geocodingService = {
         latitude: parseFloat(results[0].lat),
         longitude: parseFloat(results[0].lon),
       };
-    } catch {
+    } catch (err) {
+      console.error(`[geocoding] Error for "${address}":`, err);
       return null;
     }
   },

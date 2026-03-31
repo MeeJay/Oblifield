@@ -109,8 +109,9 @@ export function MapPage() {
       ]);
       setInterventions(intvs);
       setTechnicians(techs);
-    } catch {
-      toast.error('Echec du geocodage');
+    } catch (err: any) {
+      const msg = err?.response?.data?.error || err?.message || 'Erreur inconnue';
+      toast.error(`Echec du geocodage : ${msg}`);
     } finally {
       setGeocoding(false);
     }

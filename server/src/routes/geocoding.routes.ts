@@ -8,11 +8,13 @@ const router = Router();
 // POST /geocoding/batch — geocode all entities missing coordinates (admin only)
 router.post('/batch', requireAdmin, async (req, res) => {
   try {
+    const tenantId = req.tenantId;
     let geocoded = 0;
     const errors: string[] = [];
 
     // Geocode technicians without coordinates (use any address field available)
     const techs = await db('technicians')
+      .where({ tenant_id: tenantId })
       .where(function () {
         this.whereNull('last_latitude').orWhere('last_latitude', 0);
       })
@@ -41,6 +43,7 @@ router.post('/batch', requireAdmin, async (req, res) => {
 
     // Geocode interventions without coordinates
     const intvs = await db('interventions')
+      .where({ tenant_id: tenantId })
       .where(function () {
         this.whereNull('latitude').orWhere('latitude', 0);
       })
@@ -65,6 +68,7 @@ router.post('/batch', requireAdmin, async (req, res) => {
 
     // Also geocode interventions that have a site but no address/coords
     const siteIntvs = await db('interventions')
+      .where({ 'interventions.tenant_id': tenantId })
       .where(function () {
         this.whereNull('latitude').orWhere('latitude', 0);
       })
