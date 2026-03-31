@@ -23,6 +23,8 @@ import techniciansRoutes from './technicians.routes';
 import reportsRoutes from './reports.routes';
 import sitesRoutes from './sites.routes';
 import stepTemplatesRoutes from './stepTemplates.routes';
+import docCategoriesRoutes from './docCategories.routes';
+import documentsRoutes from './documents.routes';
 
 const router = Router();
 
@@ -55,6 +57,8 @@ tenantRouter.use('/sites', sitesRoutes);
 tenantRouter.use('/technicians', techniciansRoutes);
 tenantRouter.use('/reports', reportsRoutes);
 tenantRouter.use('/step-templates', stepTemplatesRoutes);
+tenantRouter.use('/doc-categories', docCategoriesRoutes);
+tenantRouter.use('/documents', documentsRoutes);
 tenantRouter.use('/settings', settingsRoutes);
 tenantRouter.use('/notifications', notificationsRoutes);
 tenantRouter.use('/users', usersRoutes);

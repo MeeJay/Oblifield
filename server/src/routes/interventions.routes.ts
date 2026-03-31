@@ -3,6 +3,7 @@ import { SOCKET_EVENTS } from '@oblifield/shared';
 import { interventionService } from '../services/intervention.service';
 import { timelineService } from '../services/timeline.service';
 import { interventionStepService } from '../services/interventionStep.service';
+import { interventionDocumentService } from '../services/interventionDocument.service';
 
 const router = Router();
 
@@ -386,6 +387,40 @@ router.post('/:id/photos', async (req, res) => {
 
       res.status(201).json({ success: true, data: photo });
     });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /interventions/:id/documents — list attached documents
+router.get('/:id/documents', async (req, res) => {
+  try {
+    const data = await interventionDocumentService.getByIntervention(Number(req.params.id));
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /interventions/:id/documents — attach a document
+router.post('/:id/documents', async (req, res) => {
+  try {
+    const { documentId } = req.body;
+    if (!documentId) return res.status(400).json({ success: false, error: 'documentId is required' });
+    const userId = req.session?.userId ?? null;
+    await interventionDocumentService.attach(Number(req.params.id), documentId, userId);
+    const data = await interventionDocumentService.getByIntervention(Number(req.params.id));
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /interventions/:id/documents/:docId — detach a document
+router.delete('/:id/documents/:docId', async (req, res) => {
+  try {
+    await interventionDocumentService.detach(Number(req.params.id), Number(req.params.docId));
+    res.json({ success: true, data: null });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }

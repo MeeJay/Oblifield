@@ -25,6 +25,8 @@ import { AdminUsersPage } from '@/pages/AdminUsersPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { ImportExportPage } from '@/pages/ImportExportPage';
 import { StepTemplateManagePage } from '@/pages/StepTemplateManagePage';
+import { DocumentationPage } from '@/pages/DocumentationPage';
+import { DocumentEditPage } from '@/pages/DocumentEditPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import '@/i18n';
 
@@ -52,6 +54,10 @@ export default function App() {
             <Route path="/schedule" element={<SchedulePage />} />
             <Route path="/interventions" element={<InterventionListPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/docs" element={<DocumentationPage />} />
+            <Route path="/docs/new" element={<DocumentEditPage />} />
+            <Route path="/docs/:id" element={<DocumentEditPage />} />
+            <Route path="/docs/:id/edit" element={<DocumentEditPage />} />
             <Route path="/intervention/new" element={<InterventionEditPage />} />
             <Route path="/intervention/:id" element={<InterventionDetailPage />} />
             <Route path="/intervention/:id/edit" element={<InterventionEditPage />} />

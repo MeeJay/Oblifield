@@ -18,6 +18,7 @@ import {
   CalendarDays,
   Clipboard,
   ListChecks,
+  BookOpen,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
@@ -68,6 +69,7 @@ export function Sidebar() {
     { label: t('nav.dashboard', 'Dashboard'), path: '/', icon: <LayoutDashboard size={18} /> },
     { label: t('nav.interventions', 'Interventions'), path: '/interventions', icon: <Clipboard size={18} /> },
     { label: t('nav.schedule', 'Schedule'), path: '/schedule', icon: <CalendarDays size={18} /> },
+    { label: t('nav.documentation', 'Documentation'), path: '/docs', icon: <BookOpen size={18} /> },
   ];
 
   const adminNavItems: NavItem[] = [

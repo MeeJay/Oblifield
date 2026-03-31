@@ -24,13 +24,18 @@ import {
   Lock,
   Upload,
   Shield,
+  FileText,
+  X,
+  Plus,
 } from 'lucide-react';
 import type {
   Intervention,
   InterventionStatus,
   InterventionPhoto,
+  InterventionDocument,
   TimelineEvent,
   TimelineEventType,
+  DocDocument,
 } from '@oblifield/shared';
 import {
   INTERVENTION_STATUS,
@@ -39,6 +44,7 @@ import {
   INTERVENTION_TYPE_LABELS,
 } from '@oblifield/shared';
 import { interventionsApi } from '@/api/interventions.api';
+import { documentsApi } from '@/api/documents.api';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/common/Button';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -102,20 +108,27 @@ export function InterventionDetailPage() {
   const [internalComments, setInternalComments] = useState('');
   const [savingObs, setSavingObs] = useState(false);
 
+  // Documents state
+  const [attachedDocs, setAttachedDocs] = useState<InterventionDocument[]>([]);
+  const [allDocs, setAllDocs] = useState<DocDocument[]>([]);
+  const [docPickerOpen, setDocPickerOpen] = useState(false);
+
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   const interventionId = Number(id);
 
   const fetchData = useCallback(async () => {
     try {
-      const [intv, tl, ph] = await Promise.all([
+      const [intv, tl, ph, docs] = await Promise.all([
         interventionsApi.getById(interventionId),
         interventionsApi.getTimeline(interventionId),
         interventionsApi.getPhotos(interventionId),
+        documentsApi.getInterventionDocs(interventionId),
       ]);
       setIntervention(intv);
       setTimeline(tl);
       setPhotos(ph);
+      setAttachedDocs(docs);
       setTechObs(intv.technicianObservations ?? '');
       setSupObs(intv.supervisorObservations ?? '');
       setInternalComments(intv.description ?? '');
@@ -253,6 +266,37 @@ export function InterventionDetailPage() {
     } finally {
       setUploadingPhotos(false);
       if (photoInputRef.current) photoInputRef.current.value = '';
+    }
+  };
+
+  const openDocPicker = async () => {
+    try {
+      const all = await documentsApi.list();
+      setAllDocs(all);
+      setDocPickerOpen(true);
+    } catch {
+      toast.error('Erreur de chargement des documents');
+    }
+  };
+
+  const handleAttachDoc = async (docId: number) => {
+    try {
+      const docs = await documentsApi.attachToIntervention(interventionId, docId);
+      setAttachedDocs(docs);
+      setDocPickerOpen(false);
+      toast.success('Document attache');
+    } catch {
+      toast.error('Echec');
+    }
+  };
+
+  const handleDetachDoc = async (docId: number) => {
+    try {
+      await documentsApi.detachFromIntervention(interventionId, docId);
+      setAttachedDocs((prev) => prev.filter((d) => d.documentId !== docId));
+      toast.success('Document detache');
+    } catch {
+      toast.error('Echec');
     }
   };
 
@@ -450,9 +494,91 @@ export function InterventionDetailPage() {
         <InterventionSteps
           interventionId={interventionId}
           assignedTechnicianId={intervention.assignedTechnicianId}
-          stepTemplateId={intervention.stepTemplateId}
         />
       </div>
+
+      {/* Attached Documents */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <FileText size={18} className="text-accent" />
+            <h2 className="text-lg font-semibold text-text-primary">Documents</h2>
+          </div>
+          <Button variant="secondary" size="sm" onClick={openDocPicker}>
+            <Plus size={14} className="mr-1" />
+            Attacher un document
+          </Button>
+        </div>
+        {attachedDocs.length === 0 ? (
+          <div className="rounded-lg border border-border bg-bg-secondary p-4 text-center">
+            <p className="text-text-secondary text-sm">Aucun document attache.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {attachedDocs.map((doc) => (
+              <div
+                key={doc.documentId}
+                className="flex items-center justify-between rounded-lg border border-border bg-bg-secondary p-3"
+              >
+                <Link
+                  to={`/docs/${doc.documentId}`}
+                  className="flex items-center gap-2 min-w-0 hover:text-accent transition-colors"
+                >
+                  <FileText size={14} className="text-accent shrink-0" />
+                  <span className="text-sm font-medium text-text-primary truncate">{doc.documentTitle}</span>
+                  {doc.categoryName && (
+                    <span className="text-xs text-text-secondary">({doc.categoryName})</span>
+                  )}
+                </Link>
+                <button
+                  onClick={() => handleDetachDoc(doc.documentId)}
+                  className="p-1 rounded text-text-secondary hover:text-red-500 transition-colors shrink-0 ml-2"
+                  title="Detacher"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Document Picker Modal */}
+      {docPickerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-lg max-h-[80vh] overflow-y-auto rounded-lg border border-border bg-bg-primary p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-text-primary">Attacher un document</h2>
+              <button onClick={() => setDocPickerOpen(false)} className="p-1 rounded text-text-secondary hover:text-text-primary">
+                <X size={16} />
+              </button>
+            </div>
+            {allDocs.length === 0 ? (
+              <p className="text-text-secondary text-sm text-center py-4">Aucun document disponible.</p>
+            ) : (
+              <div className="space-y-1">
+                {allDocs
+                  .filter((d) => !attachedDocs.some((ad) => ad.documentId === d.id))
+                  .map((doc) => (
+                    <button
+                      key={doc.id}
+                      onClick={() => handleAttachDoc(doc.id)}
+                      className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-left hover:bg-bg-tertiary transition-colors"
+                    >
+                      <FileText size={14} className="text-accent shrink-0" />
+                      <div className="min-w-0">
+                        <span className="text-sm text-text-primary">{doc.title}</span>
+                        {doc.categoryName && (
+                          <span className="text-xs text-text-secondary ml-2">({doc.categoryName})</span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Timeline */}
       <div className="mb-8">

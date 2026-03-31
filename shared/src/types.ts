@@ -243,6 +243,52 @@ export interface InterventionPhoto {
 }
 
 // ============================================
+// Documentation types
+// ============================================
+export interface DocCategory {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  parentId: number | null;
+  sortOrder: number;
+  tenantId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DocCategoryTreeNode extends DocCategory {
+  children: DocCategoryTreeNode[];
+  documentCount: number;
+}
+
+export interface DocDocument {
+  id: number;
+  title: string;
+  slug: string;
+  content: string;
+  categoryId: number;
+  categoryName: string | null;
+  sortOrder: number;
+  createdBy: number | null;
+  createdByName: string | null;
+  updatedBy: number | null;
+  updatedByName: string | null;
+  tenantId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InterventionDocument {
+  interventionId: number;
+  documentId: number;
+  documentTitle: string;
+  categoryName: string | null;
+  attachedBy: number | null;
+  attachedAt: string;
+}
+
+// ============================================
 // Notification types
 // ============================================
 export interface NotificationChannel {

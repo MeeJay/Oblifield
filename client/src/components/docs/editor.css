@@ -1,0 +1,121 @@
+.tiptap-editor-content .tiptap {
+  padding: 0.75rem 1rem;
+  min-height: 200px;
+  outline: none;
+  color: rgb(var(--text-primary));
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.tiptap-editor-content .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: rgb(var(--text-muted));
+  pointer-events: none;
+  height: 0;
+}
+
+.tiptap-editor-content .tiptap h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+  color: rgb(var(--text-primary));
+}
+
+.tiptap-editor-content .tiptap h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0.875rem 0 0.375rem;
+  color: rgb(var(--text-primary));
+}
+
+.tiptap-editor-content .tiptap h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.25rem;
+  color: rgb(var(--text-primary));
+}
+
+.tiptap-editor-content .tiptap p {
+  margin: 0.25rem 0;
+}
+
+.tiptap-editor-content .tiptap ul,
+.tiptap-editor-content .tiptap ol {
+  padding-left: 1.5rem;
+  margin: 0.375rem 0;
+}
+
+.tiptap-editor-content .tiptap ul {
+  list-style-type: disc;
+}
+
+.tiptap-editor-content .tiptap ol {
+  list-style-type: decimal;
+}
+
+.tiptap-editor-content .tiptap li {
+  margin: 0.125rem 0;
+}
+
+.tiptap-editor-content .tiptap blockquote {
+  border-left: 3px solid rgb(var(--accent));
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+  color: rgb(var(--text-secondary));
+  font-style: italic;
+}
+
+.tiptap-editor-content .tiptap code {
+  background: rgb(var(--bg-tertiary));
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.8125rem;
+  font-family: ui-monospace, monospace;
+}
+
+.tiptap-editor-content .tiptap pre {
+  background: rgb(var(--bg-tertiary));
+  border-radius: 0.375rem;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+  overflow-x: auto;
+}
+
+.tiptap-editor-content .tiptap pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.8125rem;
+}
+
+.tiptap-editor-content .tiptap hr {
+  border: none;
+  border-top: 1px solid rgb(var(--border));
+  margin: 1rem 0;
+}
+
+.tiptap-editor-content .tiptap a,
+.tiptap-editor-content .tiptap .tiptap-link {
+  color: rgb(var(--accent));
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tiptap-editor-content .tiptap .tiptap-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  margin: 0.5rem 0;
+}
+
+.tiptap-editor-content .tiptap strong {
+  font-weight: 700;
+}
+
+.tiptap-editor-content .tiptap em {
+  font-style: italic;
+}
+
+.tiptap-editor-content .tiptap s {
+  text-decoration: line-through;
+}

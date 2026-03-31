@@ -10,7 +10,6 @@ import toast from 'react-hot-toast';
 interface Props {
   interventionId: number;
   assignedTechnicianId: number | null;
-  stepTemplateId: number | null;
 }
 
 function formatTs(dateStr: string | null): string {
@@ -23,7 +22,7 @@ function formatTs(dateStr: string | null): string {
   });
 }
 
-export function InterventionSteps({ interventionId, assignedTechnicianId, stepTemplateId }: Props) {
+export function InterventionSteps({ interventionId, assignedTechnicianId }: Props) {
   const { isAdmin } = useAuthStore();
   const admin = isAdmin();
 
