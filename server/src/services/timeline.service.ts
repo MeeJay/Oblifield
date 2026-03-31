@@ -38,10 +38,9 @@ function rowToTimelineEvent(row: TimelineEventRow): TimelineEvent {
 function timelineBaseQuery() {
   return db('timeline_events')
     .leftJoin('technicians as t', 'timeline_events.technician_id', 't.id')
-    .leftJoin('users as u', 't.user_id', 'u.id')
     .select(
       'timeline_events.*',
-      'u.display_name as technician_name',
+      db.raw("CONCAT(t.first_name, ' ', t.last_name) as technician_name"),
     );
 }
 

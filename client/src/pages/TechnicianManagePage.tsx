@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Plus,
   UserCheck,
@@ -90,6 +90,7 @@ const emptyForm: TechForm = {
 
 export function TechnicianManagePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -101,16 +102,26 @@ export function TechnicianManagePage() {
     try {
       const techs = await techniciansApi.list();
       setTechnicians(techs);
+      return techs;
     } catch {
       toast.error('Failed to load technicians');
+      return [];
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchData().then((techs) => {
+      const state = location.state as { editId?: number } | null;
+      if (state?.editId) {
+        const tech = techs.find((t) => t.id === state.editId);
+        if (tech) openEdit(tech);
+        // Clear the state so refreshing doesn't re-open
+        navigate(location.pathname, { replace: true });
+      }
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,

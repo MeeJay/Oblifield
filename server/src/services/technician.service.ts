@@ -143,6 +143,7 @@ export const technicianService = {
       type: string | null;
       typeOther: string | null;
       specialties: string[];
+      rating: number | null;
       currentInterventionId: number | null;
     }>,
   ): Promise<Technician | null> {
@@ -161,6 +162,7 @@ export const technicianService = {
     if (data.type !== undefined) updateData.type = data.type;
     if (data.typeOther !== undefined) updateData.type_other = data.typeOther;
     if (data.specialties !== undefined) updateData.specialties = JSON.stringify(data.specialties);
+    if (data.rating !== undefined) updateData.rating = data.rating;
     if (data.currentInterventionId !== undefined) updateData.current_intervention_id = data.currentInterventionId;
 
     const [row] = await db('technicians')

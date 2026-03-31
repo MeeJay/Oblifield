@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   User,
   Phone,
@@ -11,6 +11,7 @@ import {
   MapPin,
   Star,
   Navigation,
+  Pencil,
 } from 'lucide-react';
 import type { Technician, TechnicianStatus, Intervention } from '@oblifield/shared';
 import { INTERVENTION_STATUS_LABELS } from '@oblifield/shared';
@@ -74,6 +75,7 @@ function RatingStars({ rating }: { rating: number | null }) {
 
 export function TechnicianDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const techId = Number(id);
 
   const [technician, setTechnician] = useState<Technician | null>(null);
@@ -160,9 +162,18 @@ export function TechnicianDetailPage() {
             <User size={24} className="text-accent" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-semibold text-text-primary mb-1">
-              {technician.firstName} {technician.lastName}
-            </h1>
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-semibold text-text-primary mb-1">
+                {technician.firstName} {technician.lastName}
+              </h1>
+              <button
+                onClick={() => navigate('/technicians', { state: { editId: technician.id } })}
+                className="flex items-center gap-1.5 rounded-md border border-border bg-bg-tertiary px-3 py-1.5 text-sm text-text-secondary hover:text-accent hover:border-accent transition-colors"
+              >
+                <Pencil size={14} />
+                Modifier
+              </button>
+            </div>
             {technician.company && (
               <p className="text-sm text-text-secondary mb-2">{technician.company}</p>
             )}
