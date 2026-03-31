@@ -110,6 +110,7 @@ export function InterventionEditPage() {
             title: intv.title,
             description: intv.description ?? '',
             type: intv.type,
+            typeOther: '',
             priority: intv.priority,
             clientId: intv.clientId?.toString() ?? '',
             siteId: intv.siteId?.toString() ?? '',
