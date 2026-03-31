@@ -124,7 +124,23 @@ export const technicianService = {
       })
       .returning('*');
 
+    // Geocode address in background
+    this.geocodeAddress(row.id, data).catch(() => {});
+
     return (await this.getById(row.id))!;
+  },
+
+  async geocodeAddress(id: number, data: { address?: string | null; city?: string | null; postalCode?: string | null; country?: string | null }): Promise<void> {
+    const { geocodingService } = await import('./geocoding.service');
+    const addr = geocodingService.buildAddressString([data.address, data.postalCode, data.city, data.country]);
+    if (!addr) return;
+    const result = await geocodingService.geocode(addr);
+    if (result) {
+      await db('technicians').where({ id }).update({
+        last_latitude: result.latitude,
+        last_longitude: result.longitude,
+      });
+    }
   },
 
   async update(
@@ -171,6 +187,15 @@ export const technicianService = {
       .returning('*');
 
     if (!row) return null;
+
+    // Re-geocode if address changed
+    if (data.address !== undefined || data.city !== undefined || data.postalCode !== undefined || data.country !== undefined) {
+      const full = await db('technicians').where({ id }).select('address', 'postal_code', 'city', 'country').first();
+      if (full) {
+        this.geocodeAddress(id, { address: full.address, postalCode: full.postal_code, city: full.city, country: full.country }).catch(() => {});
+      }
+    }
+
     return this.getById(row.id);
   },
 

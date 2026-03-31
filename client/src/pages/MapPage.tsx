@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Filter, Wrench, Clipboard } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapPin, Filter, Wrench, Clipboard, RefreshCw } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { Intervention, InterventionStatus, Technician, TechnicianStatus } from '@oblifield/shared';
 import { INTERVENTION_STATUS_LABELS } from '@oblifield/shared';
 import { interventionsApi } from '@/api/interventions.api';
 import { techniciansApi } from '@/api/technicians.api';
+import apiClient from '@/api/client';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { cn } from '@/utils/cn';
 import toast from 'react-hot-toast';
@@ -74,6 +75,8 @@ export function MapPage() {
   const [loading, setLoading] = useState(true);
   const [layer, setLayer] = useState<ViewLayer>('both');
   const [statusFilter, setStatusFilter] = useState<InterventionStatus | ''>('');
+  const [geocoding, setGeocoding] = useState(false);
+  const [showRadius] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -92,6 +95,26 @@ export function MapPage() {
     };
     load();
   }, []);
+
+  const handleGeocode = async () => {
+    setGeocoding(true);
+    try {
+      const res = await apiClient.post('/geocoding/batch');
+      const count = res.data?.data?.geocoded ?? 0;
+      toast.success(`${count} adresse${count > 1 ? 's' : ''} geocodee${count > 1 ? 's' : ''}`);
+      // Reload data
+      const [intvs, techs] = await Promise.all([
+        interventionsApi.list(),
+        techniciansApi.list(),
+      ]);
+      setInterventions(intvs);
+      setTechnicians(techs);
+    } catch {
+      toast.error('Echec du geocodage');
+    } finally {
+      setGeocoding(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -167,6 +190,15 @@ export function MapPage() {
             </select>
           </div>
         )}
+
+        <button
+          onClick={handleGeocode}
+          disabled={geocoding}
+          className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-text-secondary hover:text-accent hover:border-accent transition-colors disabled:opacity-50 ml-4"
+        >
+          <RefreshCw size={12} className={geocoding ? 'animate-spin' : ''} />
+          Geocoder
+        </button>
 
         <div className="ml-auto text-xs text-text-secondary">
           {showInterventions && `${filteredInterventions.length} intervention${filteredInterventions.length > 1 ? 's' : ''}`}
@@ -266,6 +298,24 @@ export function MapPage() {
               </Popup>
             </Marker>
           ))}
+
+          {/* Technician action radius circles */}
+          {showTechnicians && showRadius && filteredTechnicians
+            .filter((t) => t.actionRadiusKm && t.actionRadiusKm > 0)
+            .map((tech) => (
+              <Circle
+                key={`radius-${tech.id}`}
+                center={[tech.lastLatitude!, tech.lastLongitude!]}
+                radius={tech.actionRadiusKm! * 1000}
+                pathOptions={{
+                  color: TECH_STATUS_COLORS[tech.status],
+                  fillColor: TECH_STATUS_COLORS[tech.status],
+                  fillOpacity: 0.08,
+                  weight: 1,
+                  dashArray: '4 4',
+                }}
+              />
+            ))}
         </MapContainer>
       </div>
     </div>

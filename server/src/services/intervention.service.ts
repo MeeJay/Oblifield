@@ -176,8 +176,24 @@ export const interventionService = {
       })
       .returning('*');
 
+    // Geocode address in background
+    if (data.address && !data.latitude) {
+      this.geocodeAddress(row.id, data.address).catch(() => {});
+    }
+
     // Re-fetch with joins to get display names
     return (await this.getById(row.id))!;
+  },
+
+  async geocodeAddress(id: number, address: string): Promise<void> {
+    const { geocodingService } = await import('./geocoding.service');
+    const result = await geocodingService.geocode(address);
+    if (result) {
+      await db('interventions').where({ id }).update({
+        latitude: result.latitude,
+        longitude: result.longitude,
+      });
+    }
   },
 
   async update(
@@ -238,6 +254,11 @@ export const interventionService = {
       .returning('*');
 
     if (!row) return null;
+
+    // Re-geocode if address changed and no explicit lat/lng
+    if (data.address !== undefined && data.latitude === undefined) {
+      this.geocodeAddress(row.id, row.address || data.address).catch(() => {});
+    }
 
     // Re-fetch with joins to get display names
     return this.getById(row.id);

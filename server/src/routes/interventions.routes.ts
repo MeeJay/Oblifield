@@ -612,6 +612,7 @@ router.get('/:id/report/pdf', async (req, res) => {
     const { generateInterventionPdf } = await import('../services/pdfReport.service');
 
     const companyName = await appConfigService.get('company_name') || 'Oblifield';
+    const logoPath = await appConfigService.get('company_logo_path');
 
     const doc = generateInterventionPdf({
       intervention,
@@ -619,6 +620,7 @@ router.get('/:id/report/pdf', async (req, res) => {
       photos,
       companyName,
       supervisorName: (req.query.supervisor as string) || intervention.supervisorName || undefined,
+      logoPath: logoPath || null,
     });
 
     const safeTitle = intervention.title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);

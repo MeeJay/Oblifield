@@ -3,15 +3,14 @@ import path from 'path';
 import fs from 'fs';
 import type { Intervention, TimelineEvent, InterventionPhoto } from '@oblifield/shared';
 
-// ── Color palette (inspired by sample report) ───────────────────────────────
+// ── Color palette (matching Agitel/example convention) ──────────────────────
 const NAVY = '#2D3561';
-const ACCENT_LINE = '#AEEA00';
-const ACCENT_DARK = '#6B8F00';
+const RED_LINE = '#C62828';
 const SECTION_BG = '#3B4578';
 const SECTION_TEXT = '#FFFFFF';
 const LABEL_COLOR = '#555555';
 const VALUE_COLOR = '#1A1A1A';
-const FOOTER_COLOR = '#999999';
+const FOOTER_COLOR = '#AAAAAA';
 const BORDER_COLOR = '#CCCCCC';
 
 const UPLOAD_DIR = path.resolve('/app/uploads/photos');
@@ -22,22 +21,23 @@ interface ReportData {
   photos: InterventionPhoto[];
   companyName: string;
   supervisorName?: string;
+  logoPath?: string | null;
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '—';
+  if (!iso) return '';
   const d = new Date(iso);
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 function formatTime(iso: string | null): string {
-  if (!iso) return '—';
+  if (!iso) return '';
   const d = new Date(iso);
   return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
 }
 
 export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
-  const { intervention, timeline, photos, companyName, supervisorName } = data;
+  const { intervention, timeline, photos, companyName, supervisorName, logoPath } = data;
 
   const doc = new PDFDocument({
     size: 'A4',
@@ -46,40 +46,37 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
   });
 
   const pageWidth = doc.page.width;
-  const contentWidth = pageWidth - 100; // margins
+  const contentWidth = pageWidth - 100;
   const leftMargin = 50;
   const rightEdge = pageWidth - 50;
 
-  // ── Helper: draw accent line ────────────────────────────────────────────
-  function drawAccentLine(y: number, thickness = 3) {
+  // ── Helper: red accent line ────────────────────────────────────────────
+  function drawRedLine(y: number, thickness = 3) {
     doc
       .moveTo(leftMargin, y)
       .lineTo(rightEdge, y)
       .lineWidth(thickness)
-      .strokeColor(ACCENT_LINE)
+      .strokeColor(RED_LINE)
       .stroke();
   }
 
-  // ── Helper: draw section header ─────────────────────────────────────────
+  // ── Helper: section header (navy blue bar) ─────────────────────────────
   function drawSectionHeader(label: string, y: number): number {
     const h = 24;
-    doc
-      .save()
-      .rect(leftMargin, y, contentWidth, h)
-      .fill(SECTION_BG);
+    doc.save();
+    doc.rect(leftMargin, y, contentWidth, h).fill(SECTION_BG);
     doc
       .fontSize(11)
       .font('Helvetica-Bold')
       .fillColor(SECTION_TEXT)
-      .text(label, leftMargin + 10, y + 6, { width: contentWidth - 20 })
-      .restore();
+      .text(label, leftMargin + 10, y + 6, { width: contentWidth - 20 });
+    doc.restore();
     return y + h + 8;
   }
 
-  // ── Helper: info row ────────────────────────────────────────────────────
+  // ── Helper: info table row ─────────────────────────────────────────────
   function drawInfoRow(label: string, value: string, y: number): number {
     const rowH = 22;
-    // Light border bottom
     doc
       .moveTo(leftMargin, y + rowH)
       .lineTo(rightEdge, y + rowH)
@@ -94,178 +91,188 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
     doc
       .font('Helvetica')
       .fillColor(VALUE_COLOR)
-      .text(value, leftMargin + 130, y + 5, { width: contentWidth - 140 });
+      .text(value || '\u2014', leftMargin + 130, y + 5, { width: contentWidth - 140 });
     return y + rowH;
   }
 
-  // ── Helper: check if we need a page break ───────────────────────────────
-  function ensureSpace(needed: number) {
-    if (doc.y + needed > doc.page.height - 80) {
-      doc.addPage();
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PAGE 1 — Main report
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Company logo or name (top left)
+  if (logoPath && fs.existsSync(logoPath)) {
+    try {
+      doc.image(logoPath, leftMargin, 30, { fit: [150, 50] });
+    } catch {
+      doc.fontSize(22).font('Helvetica-Bold').fillColor(NAVY)
+        .text(companyName, leftMargin, 40, { width: 200 });
     }
+  } else {
+    doc.fontSize(22).font('Helvetica-Bold').fillColor(NAVY)
+      .text(companyName, leftMargin, 40, { width: 200 });
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // PAGE 1 — Header
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  // Company name (top left)
+  // "RAPPORT D'INTERVENTION" (top right, large)
   doc
-    .fontSize(18)
+    .fontSize(20)
     .font('Helvetica-Bold')
     .fillColor(NAVY)
-    .text(companyName, leftMargin, 40, { width: 200 });
+    .text("RAPPORT D'INTERVENTION", 250, 35, {
+      width: contentWidth - 200,
+      align: 'right',
+    });
 
-  // Title block (top right)
+  // Subtitle: intervention title (smaller, under the main title)
   doc
-    .fontSize(22)
-    .font('Helvetica-Bold')
-    .fillColor(NAVY)
-    .text("RAPPORT D'INTERVENTION", 250, 40, { width: contentWidth - 200, align: 'right' });
-
-  // Subtitle (intervention type + title)
-  const subtitle = [intervention.title].filter(Boolean).join(' — ');
-  doc
-    .fontSize(10)
+    .fontSize(9)
     .font('Helvetica')
-    .fillColor(ACCENT_DARK)
-    .text(subtitle, 250, 66, { width: contentWidth - 200, align: 'right' });
+    .fillColor(LABEL_COLOR)
+    .text(intervention.title, 250, 58, {
+      width: contentWidth - 200,
+      align: 'right',
+    });
 
-  // Accent line
-  drawAccentLine(88);
+  // Red accent line under header
+  drawRedLine(78);
 
-  // ── Info table ──────────────────────────────────────────────────────────
-  let y = 100;
-  y = drawInfoRow('Client :', intervention.clientName ?? '—', y);
-  y = drawInfoRow('Site :', intervention.siteName ?? '—', y);
-  y = drawInfoRow('Date :', formatDate(intervention.startedAt ?? intervention.scheduledAt ?? intervention.createdAt), y);
+  // ── Info table (only essential fields like the examples) ───────────────
+  let y = 92;
+  y = drawInfoRow('Client :', intervention.clientName ?? '', y);
+  y = drawInfoRow('Site :', intervention.siteName ?? '', y);
+
+  const dateStr = formatDate(intervention.startedAt ?? intervention.scheduledAt ?? intervention.createdAt);
+  y = drawInfoRow('Date :', dateStr, y);
 
   const startTime = formatTime(intervention.startedAt);
   const endTime = formatTime(intervention.completedAt);
-  const timeRange = intervention.startedAt ? `${startTime} → ${endTime}` : '—';
-  y = drawInfoRow('Début / Fin :', timeRange, y);
+  const timeRange = startTime ? `${startTime} \u2192 ${endTime || '\u2014'}` : '\u2014';
+  y = drawInfoRow('D\u00e9but / Fin :', timeRange, y);
 
-  y = drawInfoRow('Technicien :', intervention.assignedTechnicianName ?? '—', y);
+  y = drawInfoRow('Technicien :', intervention.assignedTechnicianName ?? '', y);
 
-  if (supervisorName) {
-    y = drawInfoRow('Superviseur :', supervisorName, y);
+  const supName = supervisorName ?? intervention.supervisorName ?? '';
+  if (supName) {
+    y = drawInfoRow('Superviseur :', supName, y);
   }
 
-  y = drawInfoRow('Statut :', intervention.status.toUpperCase().replace('_', ' '), y);
-  y = drawInfoRow('Priorité :', intervention.priority.toUpperCase(), y);
+  y += 20;
 
-  if (intervention.ticketReference) {
-    y = drawInfoRow('Ticket :', intervention.ticketReference, y);
-  }
-
-  if (intervention.address) {
-    y = drawInfoRow('Adresse :', intervention.address, y);
-  }
-
-  y += 15;
-
-  // ── Commentaires ────────────────────────────────────────────────────────
-  // Gather all notes from timeline
-  const notes = timeline
-    .filter((e) => e.type === 'note' || e.type === 'check_in' || e.type === 'check_out')
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-
+  // ── Commentaires section ───────────────────────────────────────────────
+  // Combine technician + supervisor observations as one unified block
+  // (matching the example style — no separate labels)
   const commentParts: string[] = [];
+
   if (intervention.technicianObservations) {
-    commentParts.push(`Observations technicien : ${intervention.technicianObservations}`);
+    commentParts.push(intervention.technicianObservations);
   }
   if (intervention.supervisorObservations) {
-    commentParts.push(`Observations superviseur : ${intervention.supervisorObservations}`);
+    commentParts.push(intervention.supervisorObservations);
   }
+
+  // Also include timeline notes
+  const notes = timeline
+    .filter((e) => e.type === 'note' && e.message)
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   for (const note of notes) {
-    if (note.message) {
-      const prefix = note.type === 'check_in'
-        ? `[Arrivée ${formatTime(note.createdAt)}] `
-        : note.type === 'check_out'
-          ? `[Départ ${formatTime(note.createdAt)}] `
-          : '';
-      commentParts.push(`${prefix}${note.message}`);
-    }
+    if (note.message) commentParts.push(note.message);
   }
 
   if (commentParts.length > 0) {
-    ensureSpace(80);
-    y = drawSectionHeader('Commentaires', doc.y);
+    y = drawSectionHeader('Commentaires', y);
 
     doc
       .fontSize(10)
       .font('Helvetica')
       .fillColor(VALUE_COLOR);
 
-    for (const part of commentParts) {
-      ensureSpace(30);
-      doc.text(part, leftMargin + 10, doc.y, {
-        width: contentWidth - 20,
-        lineGap: 4,
-      });
-      doc.moveDown(0.5);
-    }
+    const commentText = commentParts.join('\n');
+    doc.text(commentText, leftMargin + 10, y, {
+      width: contentWidth - 20,
+      lineGap: 5,
+    });
 
-    y = doc.y + 10;
+    y = doc.y + 15;
   }
 
-  // ── Photos ──────────────────────────────────────────────────────────────
-  if (photos.length > 0) {
-    ensureSpace(60);
-    doc.y = Math.max(doc.y, y);
-    drawSectionHeader('Photos', doc.y);
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PHOTO ANNEXE PAGES — Grid 3x2 per page (matching examples)
+  // ═══════════════════════════════════════════════════════════════════════════
+  const validPhotos = photos.filter((p) => {
+    const filePath = path.join(UPLOAD_DIR, p.filename);
+    return fs.existsSync(filePath);
+  });
 
-    const photoWidth = (contentWidth - 20) / 2; // 2 columns with gap
-    const photoHeight = 200;
-    let col = 0;
-    let rowY = doc.y;
+  if (validPhotos.length > 0) {
+    const PHOTOS_PER_PAGE = 6; // 3 columns × 2 rows
+    const totalPhotoPages = Math.ceil(validPhotos.length / PHOTOS_PER_PAGE);
+    const colCount = 3;
+    const gap = 8;
+    const photoWidth = (contentWidth - gap * (colCount - 1)) / colCount;
+    const photoHeight = 280; // tall enough for portrait photos
+    const startY = 60;
 
-    for (const photo of photos) {
-      const filePath = path.join(UPLOAD_DIR, photo.filename);
+    for (let page = 0; page < totalPhotoPages; page++) {
+      doc.addPage();
 
-      // Check if file exists
-      if (!fs.existsSync(filePath)) continue;
+      // Page title
+      doc
+        .fontSize(12)
+        .font('Helvetica-Bold')
+        .fillColor(NAVY)
+        .text(
+          `Annexe photos \u2014 page ${page + 1}/${totalPhotoPages}`,
+          leftMargin,
+          35,
+          { width: contentWidth },
+        );
 
-      // Check if we need a new page
-      if (rowY + photoHeight + 20 > doc.page.height - 80) {
-        doc.addPage();
-        rowY = doc.y;
-        col = 0;
-      }
+      // Thin line under title
+      doc
+        .moveTo(leftMargin, 52)
+        .lineTo(rightEdge, 52)
+        .lineWidth(1)
+        .strokeColor(NAVY)
+        .stroke();
 
-      const x = leftMargin + 5 + col * (photoWidth + 10);
+      // Draw photo grid
+      const pagePhotos = validPhotos.slice(page * PHOTOS_PER_PAGE, (page + 1) * PHOTOS_PER_PAGE);
+      let col = 0;
+      let rowY = startY;
 
-      try {
-        doc.image(filePath, x, rowY, {
-          fit: [photoWidth, photoHeight],
-          align: 'center',
-          valign: 'center',
-        });
-      } catch {
-        // If image can't be loaded, draw a placeholder
+      for (const photo of pagePhotos) {
+        const filePath = path.join(UPLOAD_DIR, photo.filename);
+        const x = leftMargin + col * (photoWidth + gap);
+
+        // Draw border
         doc
           .rect(x, rowY, photoWidth, photoHeight)
+          .lineWidth(0.5)
           .strokeColor(BORDER_COLOR)
           .stroke();
-        doc
-          .fontSize(8)
-          .fillColor(FOOTER_COLOR)
-          .text(photo.originalName, x + 5, rowY + photoHeight / 2 - 5, {
-            width: photoWidth - 10,
-            align: 'center',
-          });
-      }
 
-      col++;
-      if (col >= 2) {
-        col = 0;
-        rowY += photoHeight + 15;
+        try {
+          doc.image(filePath, x + 2, rowY + 2, {
+            fit: [photoWidth - 4, photoHeight - 4],
+            align: 'center',
+            valign: 'center',
+          });
+        } catch {
+          doc
+            .fontSize(7)
+            .fillColor(FOOTER_COLOR)
+            .text(photo.originalName, x + 4, rowY + photoHeight / 2 - 5, {
+              width: photoWidth - 8,
+              align: 'center',
+            });
+        }
+
+        col++;
+        if (col >= colCount) {
+          col = 0;
+          rowY += photoHeight + gap;
+        }
       }
     }
-
-    // Move doc.y past the photos
-    if (col > 0) rowY += photoHeight + 15;
-    doc.y = rowY;
   }
 
   // ── Footer on every page ────────────────────────────────────────────────
@@ -275,12 +282,12 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
 
     const footerY = doc.page.height - 45;
 
-    // Accent line
+    // Red line
     doc
       .moveTo(leftMargin, footerY)
       .lineTo(rightEdge, footerY)
-      .lineWidth(2)
-      .strokeColor(ACCENT_LINE)
+      .lineWidth(1.5)
+      .strokeColor(RED_LINE)
       .stroke();
 
     // Footer text
@@ -289,7 +296,7 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
       .font('Helvetica')
       .fillColor(FOOTER_COLOR)
       .text(
-        `${companyName} — Document confidentiel`,
+        `${companyName.toUpperCase()} \u2014 Document confidentiel`,
         leftMargin,
         footerY + 8,
         { width: contentWidth, align: 'center' },

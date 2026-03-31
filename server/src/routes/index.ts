@@ -28,6 +28,7 @@ import documentsRoutes from './documents.routes';
 import searchRoutes from './search.routes';
 import auditLogsRoutes from './auditLogs.routes';
 import recurringSchedulesRoutes from './recurringSchedules.routes';
+import geocodingRoutes from './geocoding.routes';
 
 const router = Router();
 
@@ -65,6 +66,7 @@ tenantRouter.use('/documents', documentsRoutes);
 tenantRouter.use('/search', searchRoutes);
 tenantRouter.use('/audit-logs', auditLogsRoutes);
 tenantRouter.use('/recurring-schedules', recurringSchedulesRoutes);
+tenantRouter.use('/geocoding', geocodingRoutes);
 tenantRouter.use('/settings', settingsRoutes);
 tenantRouter.use('/notifications', notificationsRoutes);
 tenantRouter.use('/users', usersRoutes);
