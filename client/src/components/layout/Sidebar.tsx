@@ -17,6 +17,7 @@ import {
   PanelLeftClose,
   CalendarDays,
   Clipboard,
+  ListChecks,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
@@ -72,6 +73,7 @@ export function Sidebar() {
   const adminNavItems: NavItem[] = [
     { label: t('nav.clients', 'Clients'),           path: '/clients',              icon: <Building size={18} />,    adminOnly: true },
     { label: t('nav.technicians', 'Technicians'),   path: '/technicians',          icon: <Wrench size={18} />,      adminOnly: true },
+    { label: t('nav.stepTemplates', 'Step Templates'), path: '/step-templates',       icon: <ListChecks size={18} />,  adminOnly: true },
     { label: t('nav.reports', 'Reports'),            path: '/reports',              icon: <BarChart3 size={18} />,   adminOnly: true },
     { label: t('nav.notifications', 'Notifications'), path: '/notifications',      icon: <Bell size={18} />,        adminOnly: true },
     { label: t('nav.users', 'Users'),                path: '/admin/users',          icon: <Users size={18} />,       adminOnly: true },

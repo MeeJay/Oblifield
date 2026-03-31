@@ -83,6 +83,7 @@ export interface Intervention {
   technicianObservations: string | null;
   supervisorObservations: string | null;
   supervisorId: number | null;
+  stepTemplateId: number | null;
   createdBy: number | null;
   tenantId: number;
   createdAt: string;
@@ -183,6 +184,47 @@ export interface Technician {
   tenantId: number;
   createdAt: string;
   updatedAt: string;
+}
+
+// ============================================
+// Step Template types
+// ============================================
+export interface StepTemplate {
+  id: number;
+  name: string;
+  description: string | null;
+  items: StepTemplateItem[];
+  tenantId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StepTemplateItem {
+  id: number;
+  templateId: number;
+  sortOrder: number;
+  label: string;
+  description: string | null;
+  createdAt: string;
+}
+
+// ============================================
+// Intervention Step types
+// ============================================
+export interface InterventionStep {
+  id: number;
+  interventionId: number;
+  templateItemId: number | null;
+  sortOrder: number;
+  label: string;
+  description: string | null;
+  technicianValidatedAt: string | null;
+  technicianValidatedBy: number | null;
+  technicianValidatedByName: string | null;
+  supervisorValidatedAt: string | null;
+  supervisorValidatedBy: number | null;
+  supervisorValidatedByName: string | null;
+  createdAt: string;
 }
 
 // ============================================

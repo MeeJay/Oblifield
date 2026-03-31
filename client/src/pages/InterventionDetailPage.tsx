@@ -42,6 +42,7 @@ import { interventionsApi } from '@/api/interventions.api';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/common/Button';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { InterventionSteps } from '@/components/interventions/InterventionSteps';
 import { cn } from '@/utils/cn';
 import toast from 'react-hot-toast';
 
@@ -442,6 +443,15 @@ export function InterventionDetailPage() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Steps Checklist */}
+      <div className="mb-8">
+        <InterventionSteps
+          interventionId={interventionId}
+          assignedTechnicianId={intervention.assignedTechnicianId}
+          stepTemplateId={intervention.stepTemplateId}
+        />
       </div>
 
       {/* Timeline */}

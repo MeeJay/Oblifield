@@ -30,6 +30,7 @@ interface InterventionRow {
   technician_observations: string | null;
   supervisor_observations: string | null;
   supervisor_id: number | null;
+  step_template_id: number | null;
   created_by: number | null;
   tenant_id: number;
   created_at: Date;
@@ -85,6 +86,7 @@ function rowToIntervention(row: InterventionRow): Intervention {
     technicianObservations: row.technician_observations,
     supervisorObservations: row.supervisor_observations,
     supervisorId: row.supervisor_id,
+    stepTemplateId: row.step_template_id,
     createdBy: row.created_by,
     tenantId: row.tenant_id,
     createdAt: row.created_at.toISOString(),
@@ -135,6 +137,7 @@ export const interventionService = {
       technicianObservations?: string | null;
       supervisorObservations?: string | null;
       supervisorId?: number | null;
+      stepTemplateId?: number | null;
     },
     tenantId: number,
     createdBy: number,
@@ -165,6 +168,7 @@ export const interventionService = {
         technician_observations: data.technicianObservations ?? null,
         supervisor_observations: data.supervisorObservations ?? null,
         supervisor_id: data.supervisorId ?? null,
+        step_template_id: data.stepTemplateId ?? null,
         created_by: createdBy,
         tenant_id: tenantId,
       })
@@ -198,6 +202,7 @@ export const interventionService = {
       technicianObservations: string | null;
       supervisorObservations: string | null;
       supervisorId: number | null;
+      stepTemplateId: number | null;
     }>,
   ): Promise<Intervention | null> {
     const updateData: Record<string, unknown> = { updated_at: new Date() };
@@ -223,6 +228,7 @@ export const interventionService = {
     if (data.technicianObservations !== undefined) updateData.technician_observations = data.technicianObservations;
     if (data.supervisorObservations !== undefined) updateData.supervisor_observations = data.supervisorObservations;
     if (data.supervisorId !== undefined) updateData.supervisor_id = data.supervisorId;
+    if (data.stepTemplateId !== undefined) updateData.step_template_id = data.stepTemplateId;
 
     const [row] = await db('interventions')
       .where({ id })

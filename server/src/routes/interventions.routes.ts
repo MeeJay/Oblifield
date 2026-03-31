@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { SOCKET_EVENTS } from '@oblifield/shared';
 import { interventionService } from '../services/intervention.service';
 import { timelineService } from '../services/timeline.service';
+import { interventionStepService } from '../services/interventionStep.service';
 
 const router = Router();
 
@@ -86,6 +87,7 @@ router.post('/', async (req, res) => {
       contactName, contactPhone, contactEmail,
       estimatedDurationMinutes, description,
       supervisorId, technicianObservations, supervisorObservations,
+      stepTemplateId,
     } = req.body;
 
     if (!title) {
@@ -99,7 +101,14 @@ router.post('/', async (req, res) => {
       contactName, contactPhone, contactEmail,
       estimatedDurationMinutes, description,
       supervisorId, technicianObservations, supervisorObservations,
+      stepTemplateId,
     }, tenantId, userId);
+
+    // Instantiate steps from template if provided
+    if (stepTemplateId) {
+      await interventionStepService.instantiateFromTemplate(data.id, stepTemplateId);
+    }
+
     res.status(201).json({ success: true, data });
 
     const io = req.app.get('io');
@@ -377,6 +386,76 @@ router.post('/:id/photos', async (req, res) => {
 
       res.status(201).json({ success: true, data: photo });
     });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /interventions/:id/steps — list steps
+router.get('/:id/steps', async (req, res) => {
+  try {
+    const data = await interventionStepService.getByIntervention(Number(req.params.id));
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /interventions/:id/steps/instantiate — instantiate steps from template
+router.post('/:id/steps/instantiate', async (req, res) => {
+  try {
+    const { templateId } = req.body;
+    if (!templateId) return res.status(400).json({ success: false, error: 'templateId is required' });
+    const data = await interventionStepService.instantiateFromTemplate(Number(req.params.id), templateId);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /interventions/:id/steps/:stepId/validate-technician
+router.post('/:id/steps/:stepId/validate-technician', async (req, res) => {
+  try {
+    const { technicianId } = req.body;
+    if (!technicianId) return res.status(400).json({ success: false, error: 'technicianId is required' });
+    const data = await interventionStepService.validateTechnician(Number(req.params.stepId), technicianId);
+    if (!data) return res.status(404).json({ success: false, error: 'Step not found' });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /interventions/:id/steps/:stepId/validate-technician
+router.delete('/:id/steps/:stepId/validate-technician', async (req, res) => {
+  try {
+    const data = await interventionStepService.unvalidateTechnician(Number(req.params.stepId));
+    if (!data) return res.status(404).json({ success: false, error: 'Step not found' });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /interventions/:id/steps/:stepId/validate-supervisor
+router.post('/:id/steps/:stepId/validate-supervisor', async (req, res) => {
+  try {
+    const userId = req.session?.userId;
+    if (!userId) return res.status(401).json({ success: false, error: 'Not authenticated' });
+    const data = await interventionStepService.validateSupervisor(Number(req.params.stepId), userId);
+    if (!data) return res.status(404).json({ success: false, error: 'Step not found' });
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /interventions/:id/steps/:stepId/validate-supervisor
+router.delete('/:id/steps/:stepId/validate-supervisor', async (req, res) => {
+  try {
+    const data = await interventionStepService.unvalidateSupervisor(Number(req.params.stepId));
+    if (!data) return res.status(404).json({ success: false, error: 'Step not found' });
+    res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }

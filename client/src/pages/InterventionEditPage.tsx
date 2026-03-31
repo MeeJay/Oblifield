@@ -9,6 +9,7 @@ import type {
   Site,
   Technician,
   User,
+  StepTemplate,
 } from '@oblifield/shared';
 import {
   INTERVENTION_TYPES,
@@ -21,6 +22,7 @@ import { clientsApi } from '@/api/clients.api';
 import { sitesApi } from '@/api/sites.api';
 import { techniciansApi } from '@/api/technicians.api';
 import { usersApi } from '@/api/users.api';
+import { stepTemplatesApi } from '@/api/stepTemplates.api';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -46,6 +48,7 @@ interface FormData {
   typeOther: string;
   technicianObservations: string;
   supervisorObservations: string;
+  stepTemplateId: string;
 }
 
 const emptyForm: FormData = {
@@ -67,6 +70,7 @@ const emptyForm: FormData = {
   typeOther: '',
   technicianObservations: '',
   supervisorObservations: '',
+  stepTemplateId: '',
 };
 
 function toDatetimeLocal(dateStr: string | null): string {
@@ -86,6 +90,7 @@ export function InterventionEditPage() {
   const [sites, setSites] = useState<Site[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [stepTemplates, setStepTemplates] = useState<StepTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -95,14 +100,16 @@ export function InterventionEditPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [allClients, allTechs, allUsers] = await Promise.all([
+        const [allClients, allTechs, allUsers, allTemplates] = await Promise.all([
           clientsApi.list(),
           techniciansApi.list(),
           usersApi.list(),
+          stepTemplatesApi.list(),
         ]);
         setClients(allClients);
         setTechnicians(allTechs);
         setUsers(allUsers);
+        setStepTemplates(allTemplates);
 
         if (isEdit) {
           const intv = await interventionsApi.getById(Number(id));
@@ -125,6 +132,7 @@ export function InterventionEditPage() {
             estimatedDurationMinutes: intv.estimatedDurationMinutes?.toString() ?? '',
             technicianObservations: intv.technicianObservations ?? '',
             supervisorObservations: intv.supervisorObservations ?? '',
+            stepTemplateId: intv.stepTemplateId?.toString() ?? '',
           });
 
           if (intv.clientId) {
@@ -214,6 +222,7 @@ export function InterventionEditPage() {
           : null,
         technicianObservations: form.technicianObservations.trim() || null,
         supervisorObservations: form.supervisorObservations.trim() || null,
+        stepTemplateId: form.stepTemplateId ? Number(form.stepTemplateId) : null,
       };
 
       let result: Intervention;
@@ -321,6 +330,26 @@ export function InterventionEditPage() {
               ))}
             </select>
           </div>
+        </div>
+
+        {/* Step Template */}
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-text-secondary">
+            Template d'etapes
+          </label>
+          <select
+            name="stepTemplateId"
+            value={form.stepTemplateId}
+            onChange={handleChange}
+            className={selectClass}
+          >
+            <option value="">-- Aucun --</option>
+            {stepTemplates.map((tpl) => (
+              <option key={tpl.id} value={tpl.id}>
+                {tpl.name} ({tpl.items.length} etapes)
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Client + Site */}

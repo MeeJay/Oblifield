@@ -24,6 +24,7 @@ import { NotificationsPage } from '@/pages/NotificationsPage';
 import { AdminUsersPage } from '@/pages/AdminUsersPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { ImportExportPage } from '@/pages/ImportExportPage';
+import { StepTemplateManagePage } from '@/pages/StepTemplateManagePage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import '@/i18n';
 
@@ -62,6 +63,7 @@ export default function App() {
               <Route path="/clients" element={<ClientManagePage />} />
               <Route path="/technicians" element={<TechnicianManagePage />} />
               <Route path="/technicians/:id" element={<TechnicianDetailPage />} />
+              <Route path="/step-templates" element={<StepTemplateManagePage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />

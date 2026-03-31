@@ -22,6 +22,7 @@ import clientsRoutes from './clients.routes';
 import techniciansRoutes from './technicians.routes';
 import reportsRoutes from './reports.routes';
 import sitesRoutes from './sites.routes';
+import stepTemplatesRoutes from './stepTemplates.routes';
 
 const router = Router();
 
@@ -53,6 +54,7 @@ tenantRouter.use('/clients', clientsRoutes);
 tenantRouter.use('/sites', sitesRoutes);
 tenantRouter.use('/technicians', techniciansRoutes);
 tenantRouter.use('/reports', reportsRoutes);
+tenantRouter.use('/step-templates', stepTemplatesRoutes);
 tenantRouter.use('/settings', settingsRoutes);
 tenantRouter.use('/notifications', notificationsRoutes);
 tenantRouter.use('/users', usersRoutes);

@@ -2,6 +2,7 @@ import apiClient from './client';
 import type {
   Intervention,
   InterventionStatus,
+  InterventionStep,
   TimelineEvent,
   InterventionPhoto,
   ApiResponse,
@@ -96,6 +97,36 @@ export const interventionsApi = {
 
   async getScheduleRange(from: string, to: string): Promise<Intervention[]> {
     const res = await apiClient.get<ApiResponse<Intervention[]>>('/interventions/schedule-range', { params: { from, to } });
+    return res.data.data!;
+  },
+
+  async getSteps(interventionId: number): Promise<InterventionStep[]> {
+    const res = await apiClient.get<ApiResponse<InterventionStep[]>>(`/interventions/${interventionId}/steps`);
+    return res.data.data!;
+  },
+
+  async instantiateSteps(interventionId: number, templateId: number): Promise<InterventionStep[]> {
+    const res = await apiClient.post<ApiResponse<InterventionStep[]>>(`/interventions/${interventionId}/steps/instantiate`, { templateId });
+    return res.data.data!;
+  },
+
+  async validateStepTechnician(interventionId: number, stepId: number, technicianId: number): Promise<InterventionStep> {
+    const res = await apiClient.post<ApiResponse<InterventionStep>>(`/interventions/${interventionId}/steps/${stepId}/validate-technician`, { technicianId });
+    return res.data.data!;
+  },
+
+  async unvalidateStepTechnician(interventionId: number, stepId: number): Promise<InterventionStep> {
+    const res = await apiClient.delete<ApiResponse<InterventionStep>>(`/interventions/${interventionId}/steps/${stepId}/validate-technician`);
+    return res.data.data!;
+  },
+
+  async validateStepSupervisor(interventionId: number, stepId: number): Promise<InterventionStep> {
+    const res = await apiClient.post<ApiResponse<InterventionStep>>(`/interventions/${interventionId}/steps/${stepId}/validate-supervisor`);
+    return res.data.data!;
+  },
+
+  async unvalidateStepSupervisor(interventionId: number, stepId: number): Promise<InterventionStep> {
+    const res = await apiClient.delete<ApiResponse<InterventionStep>>(`/interventions/${interventionId}/steps/${stepId}/validate-supervisor`);
     return res.data.data!;
   },
 
