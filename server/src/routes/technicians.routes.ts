@@ -44,11 +44,17 @@ router.get('/:id', async (req, res) => {
 router.post('/', requireAdmin, async (req, res) => {
   try {
     const tenantId = (req as any).tenantId;
-    const { userId, phone, specialties } = req.body;
-    if (!userId) {
-      return res.status(400).json({ success: false, error: 'userId is required' });
+    const {
+      firstName, lastName, company, address, postalCode, city, country,
+      phone, email, actionRadiusKm, type, typeOther, specialties,
+    } = req.body;
+    if (!firstName && !lastName) {
+      return res.status(400).json({ success: false, error: 'firstName or lastName is required' });
     }
-    const data = await technicianService.create({ userId, phone, specialties }, tenantId);
+    const data = await technicianService.create({
+      firstName, lastName, company, address, postalCode, city, country,
+      phone, email, actionRadiusKm, type, typeOther, specialties,
+    }, tenantId);
     res.status(201).json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

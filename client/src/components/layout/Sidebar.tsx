@@ -16,6 +16,7 @@ import {
   PanelLeft,
   PanelLeftClose,
   CalendarDays,
+  Clipboard,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/utils/cn';
@@ -64,6 +65,7 @@ export function Sidebar() {
 
   const topNavItems: NavItem[] = [
     { label: t('nav.dashboard', 'Dashboard'), path: '/', icon: <LayoutDashboard size={18} /> },
+    { label: t('nav.interventions', 'Interventions'), path: '/interventions', icon: <Clipboard size={18} /> },
     { label: t('nav.schedule', 'Schedule'), path: '/schedule', icon: <CalendarDays size={18} /> },
   ];
 

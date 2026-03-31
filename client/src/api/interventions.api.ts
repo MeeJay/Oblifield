@@ -94,6 +94,11 @@ export const interventionsApi = {
     return res.data.data!;
   },
 
+  async getScheduleRange(from: string, to: string): Promise<Intervention[]> {
+    const res = await apiClient.get<ApiResponse<Intervention[]>>('/interventions/schedule-range', { params: { from, to } });
+    return res.data.data!;
+  },
+
   getReportPdfUrl(id: number, supervisor?: string): string {
     const params = supervisor ? `?supervisor=${encodeURIComponent(supervisor)}` : '';
     return `/api/interventions/${id}/report/pdf${params}`;

@@ -170,10 +170,12 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
     .filter((e) => e.type === 'note' || e.type === 'check_in' || e.type === 'check_out')
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
-  // Also include intervention description
   const commentParts: string[] = [];
-  if (intervention.description) {
-    commentParts.push(intervention.description);
+  if (intervention.technicianObservations) {
+    commentParts.push(`Observations technicien : ${intervention.technicianObservations}`);
+  }
+  if (intervention.supervisorObservations) {
+    commentParts.push(`Observations superviseur : ${intervention.supervisorObservations}`);
   }
   for (const note of notes) {
     if (note.message) {

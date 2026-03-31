@@ -12,6 +12,7 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { SchedulePage } from '@/pages/SchedulePage';
 import { InterventionDetailPage } from '@/pages/InterventionDetailPage';
 import { InterventionEditPage } from '@/pages/InterventionEditPage';
+import { InterventionListPage } from '@/pages/InterventionListPage';
 import { ClientManagePage } from '@/pages/ClientManagePage';
 import { ClientDetailPage } from '@/pages/ClientDetailPage';
 import { TechnicianManagePage } from '@/pages/TechnicianManagePage';
@@ -48,6 +49,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/schedule" element={<SchedulePage />} />
+            <Route path="/interventions" element={<InterventionListPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/intervention/new" element={<InterventionEditPage />} />
             <Route path="/intervention/:id" element={<InterventionDetailPage />} />

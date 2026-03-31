@@ -1,4 +1,4 @@
-import type { InterventionType, InterventionStatus, InterventionPriority, TechnicianStatus, TimelineEventType, UserRole } from './interventionTypes';
+import type { InterventionType, InterventionStatus, InterventionPriority, TechnicianStatus, TechnicianType, TimelineEventType, UserRole } from './interventionTypes';
 import type { SettingsKey } from './settingsDefaults';
 
 // ============================================
@@ -80,6 +80,9 @@ export interface Intervention {
   estimatedDurationMinutes: number | null;
   supervisorName: string | null;
   ticketReference: string | null;
+  technicianObservations: string | null;
+  supervisorObservations: string | null;
+  supervisorId: number | null;
   createdBy: number | null;
   tenantId: number;
   createdAt: string;
@@ -157,15 +160,25 @@ export interface Site {
 // ============================================
 export interface Technician {
   id: number;
-  userId: number;
-  username: string | null;
-  displayName: string | null;
+  firstName: string;
+  lastName: string;
+  displayName: string;  // computed: firstName + ' ' + lastName
+  company: string | null;
+  address: string | null;
+  postalCode: string | null;
+  city: string | null;
+  country: string | null;
+  phone: string | null;
+  email: string | null;
+  actionRadiusKm: number | null;
+  type: TechnicianType | null;
+  typeOther: string | null;
+  rating: number | null;
   status: TechnicianStatus;
   currentInterventionId: number | null;
   lastLatitude: number | null;
   lastLongitude: number | null;
   lastLocationAt: string | null;
-  phone: string | null;
   specialties: string[];
   tenantId: number;
   createdAt: string;

@@ -27,6 +27,9 @@ interface InterventionRow {
   estimated_duration_minutes: number | null;
   supervisor_name: string | null;
   ticket_reference: string | null;
+  technician_observations: string | null;
+  supervisor_observations: string | null;
+  supervisor_id: number | null;
   created_by: number | null;
   tenant_id: number;
   created_at: Date;
@@ -36,14 +39,15 @@ interface InterventionRow {
 function interventionBaseQuery(tenantId?: number) {
   const q = db('interventions')
     .leftJoin('technicians as t', 'interventions.assigned_technician_id', 't.id')
-    .leftJoin('users as u', 't.user_id', 'u.id')
     .leftJoin('clients as c', 'interventions.client_id', 'c.id')
     .leftJoin('sites as s', 'interventions.site_id', 's.id')
+    .leftJoin('users as su', 'interventions.supervisor_id', 'su.id')
     .select(
       'interventions.*',
-      'u.display_name as assigned_technician_name',
+      db.raw("CONCAT(t.first_name, ' ', t.last_name) as assigned_technician_name"),
       'c.name as client_name',
       's.name as site_name',
+      'su.display_name as supervisor_name',
     );
   if (tenantId !== undefined) {
     q.where('interventions.tenant_id', tenantId);
@@ -78,6 +82,9 @@ function rowToIntervention(row: InterventionRow): Intervention {
     estimatedDurationMinutes: row.estimated_duration_minutes,
     supervisorName: row.supervisor_name,
     ticketReference: row.ticket_reference,
+    technicianObservations: row.technician_observations,
+    supervisorObservations: row.supervisor_observations,
+    supervisorId: row.supervisor_id,
     createdBy: row.created_by,
     tenantId: row.tenant_id,
     createdAt: row.created_at.toISOString(),
@@ -125,6 +132,9 @@ export const interventionService = {
       estimatedDurationMinutes?: number | null;
       supervisorName?: string | null;
       ticketReference?: string | null;
+      technicianObservations?: string | null;
+      supervisorObservations?: string | null;
+      supervisorId?: number | null;
     },
     tenantId: number,
     createdBy: number,
@@ -152,6 +162,9 @@ export const interventionService = {
         estimated_duration_minutes: data.estimatedDurationMinutes ?? null,
         supervisor_name: data.supervisorName ?? null,
         ticket_reference: data.ticketReference ?? null,
+        technician_observations: data.technicianObservations ?? null,
+        supervisor_observations: data.supervisorObservations ?? null,
+        supervisor_id: data.supervisorId ?? null,
         created_by: createdBy,
         tenant_id: tenantId,
       })
@@ -182,6 +195,9 @@ export const interventionService = {
       estimatedDurationMinutes: number | null;
       supervisorName: string | null;
       ticketReference: string | null;
+      technicianObservations: string | null;
+      supervisorObservations: string | null;
+      supervisorId: number | null;
     }>,
   ): Promise<Intervention | null> {
     const updateData: Record<string, unknown> = { updated_at: new Date() };
@@ -204,6 +220,9 @@ export const interventionService = {
     if (data.estimatedDurationMinutes !== undefined) updateData.estimated_duration_minutes = data.estimatedDurationMinutes;
     if (data.supervisorName !== undefined) updateData.supervisor_name = data.supervisorName;
     if (data.ticketReference !== undefined) updateData.ticket_reference = data.ticketReference;
+    if (data.technicianObservations !== undefined) updateData.technician_observations = data.technicianObservations;
+    if (data.supervisorObservations !== undefined) updateData.supervisor_observations = data.supervisorObservations;
+    if (data.supervisorId !== undefined) updateData.supervisor_id = data.supervisorId;
 
     const [row] = await db('interventions')
       .where({ id })
@@ -285,6 +304,16 @@ export const interventionService = {
     }
 
     return summary as Record<InterventionStatus, number>;
+  },
+
+  async getScheduleForRange(tenantId: number, from: string, to: string): Promise<Intervention[]> {
+    const rows = await interventionBaseQuery(tenantId)
+      .where(function() {
+        this.whereBetween('interventions.scheduled_at', [from, to + ' 23:59:59'])
+          .orWhereBetween('interventions.started_at', [from, to + ' 23:59:59']);
+      })
+      .orderBy('interventions.scheduled_at');
+    return rows.map(rowToIntervention);
   },
 
   async getScheduleForDay(tenantId: number, date: string): Promise<Intervention[]> {

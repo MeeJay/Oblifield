@@ -1,17 +1,26 @@
 import { db } from '../db';
-import type { Technician, TechnicianStatus } from '@oblifield/shared';
+import type { Technician, TechnicianStatus, TechnicianType } from '@oblifield/shared';
 
 interface TechnicianRow {
   id: number;
-  user_id: number;
-  username: string | null;
-  display_name: string | null;
+  first_name: string;
+  last_name: string;
+  company: string | null;
+  address: string | null;
+  postal_code: string | null;
+  city: string | null;
+  country: string | null;
+  phone: string | null;
+  email: string | null;
+  action_radius_km: number | null;
+  type: string | null;
+  type_other: string | null;
+  rating: number | null;
   status: string;
   current_intervention_id: number | null;
   last_latitude: number | null;
   last_longitude: number | null;
   last_location_at: Date | null;
-  phone: string | null;
   specialties: string[] | string | null;
   tenant_id: number;
   created_at: Date;
@@ -19,13 +28,7 @@ interface TechnicianRow {
 }
 
 function technicianBaseQuery(tenantId?: number) {
-  const q = db('technicians')
-    .leftJoin('users as u', 'technicians.user_id', 'u.id')
-    .select(
-      'technicians.*',
-      'u.username',
-      'u.display_name',
-    );
+  const q = db('technicians').select('technicians.*');
   if (tenantId !== undefined) {
     q.where('technicians.tenant_id', tenantId);
   }
@@ -43,17 +46,29 @@ function parseSpecialties(val: string[] | string | null): string[] {
 }
 
 function rowToTechnician(row: TechnicianRow): Technician {
+  const firstName = row.first_name ?? '';
+  const lastName = row.last_name ?? '';
   return {
     id: row.id,
-    userId: row.user_id,
-    username: row.username ?? null,
-    displayName: row.display_name ?? null,
+    firstName,
+    lastName,
+    displayName: (firstName + ' ' + lastName).trim(),
+    company: row.company,
+    address: row.address,
+    postalCode: row.postal_code,
+    city: row.city,
+    country: row.country,
+    phone: row.phone,
+    email: row.email,
+    actionRadiusKm: row.action_radius_km,
+    type: row.type as TechnicianType | null,
+    typeOther: row.type_other,
+    rating: row.rating != null ? Number(row.rating) : null,
     status: row.status as TechnicianStatus,
     currentInterventionId: row.current_intervention_id,
     lastLatitude: row.last_latitude,
     lastLongitude: row.last_longitude,
     lastLocationAt: row.last_location_at ? row.last_location_at.toISOString() : null,
-    phone: row.phone,
     specialties: parseSpecialties(row.specialties),
     tenantId: row.tenant_id,
     createdAt: row.created_at.toISOString(),
@@ -63,7 +78,7 @@ function rowToTechnician(row: TechnicianRow): Technician {
 
 export const technicianService = {
   async getAll(tenantId: number): Promise<Technician[]> {
-    const rows = await technicianBaseQuery(tenantId).orderBy('u.display_name');
+    const rows = await technicianBaseQuery(tenantId).orderBy('technicians.first_name');
     return rows.map(rowToTechnician);
   },
 
@@ -72,41 +87,79 @@ export const technicianService = {
     return row ? rowToTechnician(row) : null;
   },
 
-  async getByUserId(userId: number, tenantId: number): Promise<Technician | null> {
-    const row = await technicianBaseQuery(tenantId)
-      .where('technicians.user_id', userId)
-      .first();
-    return row ? rowToTechnician(row) : null;
-  },
-
   async create(
     data: {
-      userId: number;
+      firstName: string;
+      lastName: string;
+      company?: string | null;
+      address?: string | null;
+      postalCode?: string | null;
+      city?: string | null;
+      country?: string | null;
       phone?: string | null;
+      email?: string | null;
+      actionRadiusKm?: number | null;
+      type?: string | null;
+      typeOther?: string | null;
       specialties?: string[];
     },
     tenantId: number,
   ): Promise<Technician> {
     const [row] = await db('technicians')
       .insert({
-        user_id: data.userId,
+        first_name: data.firstName,
+        last_name: data.lastName,
+        company: data.company ?? null,
+        address: data.address ?? null,
+        postal_code: data.postalCode ?? null,
+        city: data.city ?? null,
+        country: data.country ?? null,
         phone: data.phone ?? null,
+        email: data.email ?? null,
+        action_radius_km: data.actionRadiusKm ?? null,
+        type: data.type ?? null,
+        type_other: data.typeOther ?? null,
         specialties: JSON.stringify(data.specialties ?? []),
         tenant_id: tenantId,
       })
       .returning('*');
 
-    // Re-fetch with joins to get user info
     return (await this.getById(row.id))!;
   },
 
   async update(
     id: number,
-    data: Partial<{ phone: string | null; specialties: string[]; currentInterventionId: number | null }>,
+    data: Partial<{
+      firstName: string;
+      lastName: string;
+      company: string | null;
+      address: string | null;
+      postalCode: string | null;
+      city: string | null;
+      country: string | null;
+      phone: string | null;
+      email: string | null;
+      actionRadiusKm: number | null;
+      type: string | null;
+      typeOther: string | null;
+      specialties: string[];
+      currentInterventionId: number | null;
+    }>,
   ): Promise<Technician | null> {
     const updateData: Record<string, unknown> = { updated_at: new Date() };
 
+    if (data.firstName !== undefined) updateData.first_name = data.firstName;
+    if (data.lastName !== undefined) updateData.last_name = data.lastName;
+    if (data.company !== undefined) updateData.company = data.company;
+    if (data.address !== undefined) updateData.address = data.address;
+    if (data.postalCode !== undefined) updateData.postal_code = data.postalCode;
+    if (data.city !== undefined) updateData.city = data.city;
+    if (data.country !== undefined) updateData.country = data.country;
     if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.actionRadiusKm !== undefined) updateData.action_radius_km = data.actionRadiusKm;
+    if (data.type !== undefined) updateData.type = data.type;
+    if (data.typeOther !== undefined) updateData.type_other = data.typeOther;
     if (data.specialties !== undefined) updateData.specialties = JSON.stringify(data.specialties);
     if (data.currentInterventionId !== undefined) updateData.current_intervention_id = data.currentInterventionId;
 
@@ -147,7 +200,7 @@ export const technicianService = {
   async getAvailable(tenantId: number): Promise<Technician[]> {
     const rows = await technicianBaseQuery(tenantId)
       .where('technicians.status', 'available')
-      .orderBy('u.display_name');
+      .orderBy('technicians.first_name');
     return rows.map(rowToTechnician);
   },
 };

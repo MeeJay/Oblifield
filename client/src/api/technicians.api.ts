@@ -17,12 +17,42 @@ export const techniciansApi = {
     return res.data.data!;
   },
 
-  async create(data: { userId: number; phone?: string; specialties?: string[] }): Promise<Technician> {
+  async create(data: {
+    firstName: string;
+    lastName: string;
+    company?: string;
+    address?: string;
+    postalCode?: string;
+    city?: string;
+    country?: string;
+    phone?: string;
+    email?: string;
+    actionRadiusKm?: number;
+    type?: string;
+    typeOther?: string;
+    rating?: number;
+    specialties?: string[];
+  }): Promise<Technician> {
     const res = await apiClient.post<ApiResponse<Technician>>('/technicians', data);
     return res.data.data!;
   },
 
-  async update(id: number, data: Partial<{ phone: string; specialties: string[] }>): Promise<Technician> {
+  async update(id: number, data: Partial<{
+    firstName: string;
+    lastName: string;
+    company: string;
+    address: string;
+    postalCode: string;
+    city: string;
+    country: string;
+    phone: string;
+    email: string;
+    actionRadiusKm: number;
+    type: string;
+    typeOther: string;
+    rating: number;
+    specialties: string[];
+  }>): Promise<Technician> {
     const res = await apiClient.put<ApiResponse<Technician>>(`/technicians/${id}`, data);
     return res.data.data!;
   },

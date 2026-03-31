@@ -68,5 +68,14 @@ export const INTERVENTION_PRIORITY_LABELS: Record<InterventionPriority, string> 
   urgent: 'Urgent',
 };
 
+export const TECHNICIAN_TYPES = ['electrician', 'it', 'other'] as const;
+export type TechnicianType = (typeof TECHNICIAN_TYPES)[number];
+
+export const TECHNICIAN_TYPE_LABELS: Record<TechnicianType, string> = {
+  electrician: 'Electrician',
+  it: 'IT',
+  other: 'Other',
+};
+
 export const USER_ROLES = ['admin', 'user'] as const;
 export type UserRole = (typeof USER_ROLES)[number];

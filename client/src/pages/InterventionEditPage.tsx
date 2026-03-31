@@ -8,6 +8,7 @@ import type {
   Client,
   Site,
   Technician,
+  User,
 } from '@oblifield/shared';
 import {
   INTERVENTION_TYPES,
@@ -19,6 +20,7 @@ import { interventionsApi } from '@/api/interventions.api';
 import { clientsApi } from '@/api/clients.api';
 import { sitesApi } from '@/api/sites.api';
 import { techniciansApi } from '@/api/technicians.api';
+import { usersApi } from '@/api/users.api';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -33,6 +35,7 @@ interface FormData {
   clientId: string;
   siteId: string;
   assignedTechnicianId: string;
+  supervisorId: string;
   scheduledAt: string;
   dueAt: string;
   address: string;
@@ -40,6 +43,8 @@ interface FormData {
   contactPhone: string;
   contactEmail: string;
   estimatedDurationMinutes: string;
+  technicianObservations: string;
+  supervisorObservations: string;
 }
 
 const emptyForm: FormData = {
@@ -50,6 +55,7 @@ const emptyForm: FormData = {
   clientId: '',
   siteId: '',
   assignedTechnicianId: '',
+  supervisorId: '',
   scheduledAt: '',
   dueAt: '',
   address: '',
@@ -57,12 +63,13 @@ const emptyForm: FormData = {
   contactPhone: '',
   contactEmail: '',
   estimatedDurationMinutes: '',
+  technicianObservations: '',
+  supervisorObservations: '',
 };
 
 function toDatetimeLocal(dateStr: string | null): string {
   if (!dateStr) return '';
   const d = new Date(dateStr);
-  // Format as YYYY-MM-DDTHH:MM for datetime-local input
   const pad = (n: number) => n.toString().padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
@@ -76,18 +83,24 @@ export function InterventionEditPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Derived: selected technician phone
+  const selectedTech = technicians.find((t) => String(t.id) === form.assignedTechnicianId);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [allClients, allTechs] = await Promise.all([
+        const [allClients, allTechs, allUsers] = await Promise.all([
           clientsApi.list(),
           techniciansApi.list(),
+          usersApi.list(),
         ]);
         setClients(allClients);
         setTechnicians(allTechs);
+        setUsers(allUsers);
 
         if (isEdit) {
           const intv = await interventionsApi.getById(Number(id));
@@ -99,6 +112,7 @@ export function InterventionEditPage() {
             clientId: intv.clientId?.toString() ?? '',
             siteId: intv.siteId?.toString() ?? '',
             assignedTechnicianId: intv.assignedTechnicianId?.toString() ?? '',
+            supervisorId: intv.supervisorId?.toString() ?? '',
             scheduledAt: toDatetimeLocal(intv.scheduledAt),
             dueAt: toDatetimeLocal(intv.dueAt),
             address: intv.address ?? '',
@@ -106,9 +120,10 @@ export function InterventionEditPage() {
             contactPhone: intv.contactPhone ?? '',
             contactEmail: intv.contactEmail ?? '',
             estimatedDurationMinutes: intv.estimatedDurationMinutes?.toString() ?? '',
+            technicianObservations: intv.technicianObservations ?? '',
+            supervisorObservations: intv.supervisorObservations ?? '',
           });
 
-          // Load sites for the selected client
           if (intv.clientId) {
             const clientSites = await sitesApi.list({ clientId: intv.clientId });
             setSites(clientSites);
@@ -123,14 +138,29 @@ export function InterventionEditPage() {
     load();
   }, [id, isEdit]);
 
-  // When client changes, update sites list
   const handleClientChange = (clientId: string) => {
-    setForm((f) => ({ ...f, clientId, siteId: '' }));
+    setForm((f) => ({ ...f, clientId, siteId: '', contactName: '', contactPhone: '', contactEmail: '' }));
     if (clientId) {
       sitesApi.list({ clientId: Number(clientId) }).then(setSites);
     } else {
       setSites([]);
     }
+  };
+
+  const handleSiteChange = (siteId: string) => {
+    setForm((f) => {
+      const site = sites.find((s) => String(s.id) === siteId);
+      if (site) {
+        return {
+          ...f,
+          siteId,
+          contactName: site.contactName ?? f.contactName,
+          contactPhone: site.contactPhone ?? f.contactPhone,
+          contactEmail: site.contactEmail ?? f.contactEmail,
+        };
+      }
+      return { ...f, siteId };
+    });
   };
 
   const handleChange = (
@@ -139,6 +169,10 @@ export function InterventionEditPage() {
     const { name, value } = e.target;
     if (name === 'clientId') {
       handleClientChange(value);
+      return;
+    }
+    if (name === 'siteId') {
+      handleSiteChange(value);
       return;
     }
     setForm((f) => ({ ...f, [name]: value }));
@@ -163,6 +197,7 @@ export function InterventionEditPage() {
         assignedTechnicianId: form.assignedTechnicianId
           ? Number(form.assignedTechnicianId)
           : null,
+        supervisorId: form.supervisorId ? Number(form.supervisorId) : null,
         scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null,
         dueAt: form.dueAt ? new Date(form.dueAt).toISOString() : null,
         address: form.address.trim() || null,
@@ -172,6 +207,8 @@ export function InterventionEditPage() {
         estimatedDurationMinutes: form.estimatedDurationMinutes
           ? Number(form.estimatedDurationMinutes)
           : null,
+        technicianObservations: form.technicianObservations.trim() || null,
+        supervisorObservations: form.supervisorObservations.trim() || null,
       };
 
       let result: Intervention;
@@ -314,24 +351,74 @@ export function InterventionEditPage() {
           </div>
         </div>
 
-        {/* Technician */}
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-text-secondary">
-            Assigned Technician
-          </label>
-          <select
-            name="assignedTechnicianId"
-            value={form.assignedTechnicianId}
+        {/* Site contact info (auto-filled) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Input
+            label="Contact site"
+            name="contactName"
+            value={form.contactName}
             onChange={handleChange}
-            className={selectClass}
-          >
-            <option value="">-- Unassigned --</option>
-            {technicians.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.displayName ?? t.username ?? `Tech #${t.id}`}
-              </option>
-            ))}
-          </select>
+          />
+          <Input
+            label="Tel. site"
+            name="contactPhone"
+            value={form.contactPhone}
+            onChange={handleChange}
+            type="tel"
+          />
+          <Input
+            label="Email site"
+            name="contactEmail"
+            value={form.contactEmail}
+            onChange={handleChange}
+            type="email"
+          />
+        </div>
+
+        {/* Technician + Supervisor */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-text-secondary">
+              Technicien assigne
+            </label>
+            <select
+              name="assignedTechnicianId"
+              value={form.assignedTechnicianId}
+              onChange={handleChange}
+              className={selectClass}
+            >
+              <option value="">-- Non assigne --</option>
+              {technicians.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.firstName} {t.lastName}
+                </option>
+              ))}
+            </select>
+            {selectedTech?.phone && (
+              <p className="text-xs text-text-secondary mt-1">
+                Tel. technicien : {selectedTech.phone}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-text-secondary">
+              Superviseur
+            </label>
+            <select
+              name="supervisorId"
+              value={form.supervisorId}
+              onChange={handleChange}
+              className={selectClass}
+            >
+              <option value="">-- Aucun --</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.displayName ?? u.username}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Dates */}
@@ -352,7 +439,7 @@ export function InterventionEditPage() {
           />
         </div>
 
-        {/* Address + Contact */}
+        {/* Address */}
         <Input
           label="Address"
           name="address"
@@ -360,29 +447,6 @@ export function InterventionEditPage() {
           onChange={handleChange}
           placeholder="123 Main St, City"
         />
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Input
-            label="Contact Name"
-            name="contactName"
-            value={form.contactName}
-            onChange={handleChange}
-          />
-          <Input
-            label="Contact Phone"
-            name="contactPhone"
-            value={form.contactPhone}
-            onChange={handleChange}
-            type="tel"
-          />
-          <Input
-            label="Contact Email"
-            name="contactEmail"
-            value={form.contactEmail}
-            onChange={handleChange}
-            type="email"
-          />
-        </div>
 
         {/* Duration */}
         <Input
@@ -393,6 +457,36 @@ export function InterventionEditPage() {
           type="number"
           min="1"
         />
+
+        {/* Observations */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-text-secondary">
+              Observations technicien
+            </label>
+            <textarea
+              name="technicianObservations"
+              value={form.technicianObservations}
+              onChange={handleChange}
+              rows={3}
+              className={cn(selectClass, 'resize-y')}
+              placeholder="Observations du technicien..."
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-text-secondary">
+              Observations superviseur
+            </label>
+            <textarea
+              name="supervisorObservations"
+              value={form.supervisorObservations}
+              onChange={handleChange}
+              rows={3}
+              className={cn(selectClass, 'resize-y')}
+              placeholder="Observations du superviseur..."
+            />
+          </div>
+        </div>
 
         {/* Actions */}
         <div className="flex items-center gap-3 pt-4 border-t border-border">

@@ -45,6 +45,21 @@ router.get('/schedule', async (req, res) => {
   }
 });
 
+// GET /interventions/schedule-range — interventions in a date range
+router.get('/schedule-range', async (req, res) => {
+  try {
+    const tenantId = (req as any).tenantId;
+    const { from, to } = req.query;
+    if (!from || !to) {
+      return res.status(400).json({ success: false, error: 'from and to query params required' });
+    }
+    const data = await interventionService.getScheduleForRange(tenantId, from as string, to as string);
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // GET /interventions/:id — detail
 router.get('/:id', async (req, res) => {
   try {
@@ -70,6 +85,7 @@ router.post('/', async (req, res) => {
       address, latitude, longitude,
       contactName, contactPhone, contactEmail,
       estimatedDurationMinutes, description,
+      supervisorId, technicianObservations, supervisorObservations,
     } = req.body;
 
     if (!title) {
@@ -82,6 +98,7 @@ router.post('/', async (req, res) => {
       address, latitude, longitude,
       contactName, contactPhone, contactEmail,
       estimatedDurationMinutes, description,
+      supervisorId, technicianObservations, supervisorObservations,
     }, tenantId, userId);
     res.status(201).json({ success: true, data });
 

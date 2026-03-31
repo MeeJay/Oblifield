@@ -3,10 +3,15 @@ import { useParams, Link } from 'react-router-dom';
 import {
   User,
   Phone,
+  Mail,
   CircleDot,
   Wrench,
   CheckCircle2,
   Timer,
+  MapPin,
+  Star,
+  Building2,
+  Navigation,
 } from 'lucide-react';
 import type { Technician, TechnicianStatus, Intervention } from '@oblifield/shared';
 import { INTERVENTION_STATUS_LABELS } from '@oblifield/shared';
@@ -17,11 +22,17 @@ import { cn } from '@/utils/cn';
 import toast from 'react-hot-toast';
 
 const STATUS_CONFIG: Record<TechnicianStatus, { label: string; color: string }> = {
-  available: { label: 'Available', color: 'bg-green-500/10 text-green-500' },
-  on_site: { label: 'On Site', color: 'bg-accent/10 text-accent' },
-  travelling: { label: 'Travelling', color: 'bg-blue-500/10 text-blue-500' },
-  offline: { label: 'Offline', color: 'bg-gray-500/10 text-gray-500' },
-  on_break: { label: 'On Break', color: 'bg-yellow-500/10 text-yellow-500' },
+  available: { label: 'Disponible', color: 'bg-green-500/10 text-green-500' },
+  on_site: { label: 'Sur site', color: 'bg-accent/10 text-accent' },
+  travelling: { label: 'En route', color: 'bg-blue-500/10 text-blue-500' },
+  offline: { label: 'Hors ligne', color: 'bg-gray-500/10 text-gray-500' },
+  on_break: { label: 'En pause', color: 'bg-yellow-500/10 text-yellow-500' },
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  electrician: 'Electricien',
+  it: 'Informatique',
+  other: 'Autre',
 };
 
 const STATUS_BADGE: Record<string, string> = {
@@ -32,6 +43,35 @@ const STATUS_BADGE: Record<string, string> = {
   issue: 'bg-red-500/10 text-red-500',
   cancelled: 'bg-gray-500/10 text-gray-500',
 };
+
+function RatingStars({ rating }: { rating: number | null }) {
+  if (rating == null) return <span className="text-sm text-text-secondary">-</span>;
+  const full = Math.floor(rating);
+  const half = rating % 1 >= 0.5;
+  const stars = [];
+  for (let i = 0; i < 5; i++) {
+    if (i < full) {
+      stars.push(<Star key={i} size={16} className="fill-yellow-400 text-yellow-400" />);
+    } else if (i === full && half) {
+      stars.push(
+        <span key={i} className="relative inline-block">
+          <Star size={16} className="text-gray-500" />
+          <span className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
+            <Star size={16} className="fill-yellow-400 text-yellow-400" />
+          </span>
+        </span>,
+      );
+    } else {
+      stars.push(<Star key={i} size={16} className="text-gray-500" />);
+    }
+  }
+  return (
+    <span className="inline-flex items-center gap-0.5">
+      {stars}
+      <span className="ml-1 text-sm text-text-secondary">({rating})</span>
+    </span>
+  );
+}
 
 export function TechnicianDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -83,16 +123,21 @@ export function TechnicianDetailPage() {
   }
 
   const statusCfg = STATUS_CONFIG[technician.status];
+  const typeLabel = technician.type
+    ? technician.type === 'other' && technician.typeOther
+      ? technician.typeOther
+      : TYPE_LABELS[technician.type] ?? technician.type
+    : null;
+
   const completedInterventions = interventions.filter((i) => i.status === 'done');
   const completedCount = completedInterventions.length;
 
-  // Calculate average duration from completed interventions
   const durations = completedInterventions
     .filter((i) => i.startedAt && i.completedAt)
     .map((i) => {
       const start = new Date(i.startedAt!).getTime();
       const end = new Date(i.completedAt!).getTime();
-      return (end - start) / 60000; // minutes
+      return (end - start) / 60000;
     });
   const avgDuration =
     durations.length > 0
@@ -102,6 +147,10 @@ export function TechnicianDetailPage() {
   const pastInterventions = interventions.filter(
     (i) => i.status === 'done' || i.status === 'cancelled' || i.status === 'issue',
   );
+
+  const addressStr = [technician.address, technician.postalCode, technician.city, technician.country]
+    .filter(Boolean)
+    .join(', ');
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -113,8 +162,11 @@ export function TechnicianDetailPage() {
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-semibold text-text-primary mb-1">
-              {technician.displayName ?? technician.username ?? `Technician #${technician.id}`}
+              {technician.firstName} {technician.lastName}
             </h1>
+            {technician.company && (
+              <p className="text-sm text-text-secondary mb-2">{technician.company}</p>
+            )}
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <span
                 className={cn(
@@ -125,10 +177,9 @@ export function TechnicianDetailPage() {
                 <CircleDot size={10} />
                 {statusCfg.label}
               </span>
-              {technician.phone && (
-                <span className="flex items-center gap-1 text-text-secondary">
-                  <Phone size={14} />
-                  {technician.phone}
+              {typeLabel && (
+                <span className="inline-flex items-center rounded-full bg-bg-tertiary px-2.5 py-0.5 text-xs font-medium text-text-secondary">
+                  {typeLabel}
                 </span>
               )}
             </div>
@@ -148,6 +199,39 @@ export function TechnicianDetailPage() {
         </div>
       </div>
 
+      {/* Info cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <InfoCard
+          icon={<MapPin size={16} />}
+          label="Adresse"
+          value={addressStr || '-'}
+        />
+        <InfoCard
+          icon={<Phone size={16} />}
+          label="Telephone"
+          value={technician.phone ?? '-'}
+        />
+        <InfoCard
+          icon={<Mail size={16} />}
+          label="Email"
+          value={technician.email ?? '-'}
+        />
+        <InfoCard
+          icon={<Navigation size={16} />}
+          label="Rayon d'action"
+          value={technician.actionRadiusKm ? `${technician.actionRadiusKm} km` : '-'}
+        />
+      </div>
+
+      {/* Rating card */}
+      <div className="rounded-lg border border-border bg-bg-secondary p-4 mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Star size={16} className="text-text-secondary" />
+          <span className="text-xs text-text-secondary">Note</span>
+        </div>
+        <RatingStars rating={technician.rating} />
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="rounded-lg border border-border bg-bg-secondary p-4 text-center">
@@ -155,7 +239,7 @@ export function TechnicianDetailPage() {
             <CheckCircle2 size={18} className="text-green-500" />
             <span className="text-2xl font-bold text-green-500">{completedCount}</span>
           </div>
-          <div className="text-sm text-text-secondary">Completed</div>
+          <div className="text-sm text-text-secondary">Terminees</div>
         </div>
         <div className="rounded-lg border border-border bg-bg-secondary p-4 text-center">
           <div className="flex items-center justify-center gap-1.5">
@@ -164,7 +248,7 @@ export function TechnicianDetailPage() {
               {avgDuration != null ? `${avgDuration}m` : '-'}
             </span>
           </div>
-          <div className="text-sm text-text-secondary">Avg Duration</div>
+          <div className="text-sm text-text-secondary">Duree moyenne</div>
         </div>
         <div className="rounded-lg border border-border bg-bg-secondary p-4 text-center">
           <div className="flex items-center justify-center gap-1.5">
@@ -181,7 +265,7 @@ export function TechnicianDetailPage() {
       {currentIntervention && (
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-text-primary mb-3">
-            Current Intervention
+            Intervention en cours
           </h2>
           <Link
             to={`/intervention/${currentIntervention.id}`}
@@ -193,7 +277,7 @@ export function TechnicianDetailPage() {
                   {currentIntervention.title}
                 </div>
                 <div className="text-xs text-text-secondary mt-0.5">
-                  {currentIntervention.clientName ?? 'No client'}
+                  {currentIntervention.clientName ?? 'Pas de client'}
                   {currentIntervention.scheduledAt &&
                     ` \u2022 ${new Date(currentIntervention.scheduledAt).toLocaleString()}`}
                 </div>
@@ -214,11 +298,11 @@ export function TechnicianDetailPage() {
       {/* Intervention History */}
       <div>
         <h2 className="text-lg font-semibold text-text-primary mb-3">
-          Intervention History
+          Historique des interventions
         </h2>
         {pastInterventions.length === 0 ? (
           <div className="rounded-lg border border-border bg-bg-secondary p-6 text-center">
-            <p className="text-text-secondary">No past interventions.</p>
+            <p className="text-text-secondary">Aucune intervention passee.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -234,9 +318,9 @@ export function TechnicianDetailPage() {
                       {intv.title}
                     </div>
                     <div className="text-xs text-text-secondary mt-0.5">
-                      {intv.clientName ?? 'No client'}
+                      {intv.clientName ?? 'Pas de client'}
                       {intv.completedAt &&
-                        ` \u2022 Completed ${new Date(intv.completedAt).toLocaleDateString()}`}
+                        ` \u2022 Termine le ${new Date(intv.completedAt).toLocaleDateString()}`}
                     </div>
                   </div>
                   <span
@@ -253,6 +337,26 @@ export function TechnicianDetailPage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function InfoCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-bg-secondary p-3">
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-text-secondary">{icon}</span>
+        <span className="text-xs text-text-secondary">{label}</span>
+      </div>
+      <p className="text-sm font-medium text-text-primary">{value}</p>
     </div>
   );
 }
