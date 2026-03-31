@@ -10,7 +10,6 @@ import {
   Timer,
   MapPin,
   Star,
-  Building2,
   Navigation,
 } from 'lucide-react';
 import type { Technician, TechnicianStatus, Intervention } from '@oblifield/shared';

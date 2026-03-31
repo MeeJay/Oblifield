@@ -133,10 +133,6 @@ function getDayShort(dateStr: string): string {
   return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
 }
 
-function isSameDay(dateStr: string, iso: string): boolean {
-  return iso.startsWith(dateStr);
-}
-
 type ViewMode = 'day' | 'week' | 'month';
 
 // ---------------------------------------------------------------------------

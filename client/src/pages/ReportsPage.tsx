@@ -344,7 +344,7 @@ function TechnicianTab({
             <option value="">-- Select --</option>
             {technicians.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.displayName ?? t.username ?? `Tech #${t.id}`}
+                {t.displayName ?? `Tech #${t.id}`}
               </option>
             ))}
           </select>
