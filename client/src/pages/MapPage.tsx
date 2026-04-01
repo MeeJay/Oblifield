@@ -97,16 +97,41 @@ export function MapPage() {
   }, []);
 
   // Client-side geocoding via Nominatim (browser has internet access, Docker may not)
-  async function nominatimGeocode(address: string): Promise<{ lat: number; lng: number } | null> {
+  // Uses structured search for best results, falls back to free-form query
+  async function nominatimGeocode(
+    parts: { street?: string | null; city?: string | null; postalcode?: string | null; country?: string | null },
+  ): Promise<{ lat: number; lng: number } | null> {
     try {
-      const params = new URLSearchParams({ q: address, format: 'json', limit: '1' });
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+      // Try structured search first (much more reliable)
+      const structured: Record<string, string> = { format: 'json', limit: '1' };
+      if (parts.street) structured.street = parts.street;
+      if (parts.city) structured.city = parts.city;
+      if (parts.postalcode) structured.postalcode = parts.postalcode;
+      if (parts.country) structured.country = parts.country;
+
+      const params = new URLSearchParams(structured);
+      let res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+        headers: { 'User-Agent': 'Oblifield/1.0' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.length > 0) {
+          return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+        }
+      }
+
+      // Fallback: free-form query with all parts joined
+      const freeForm = [parts.street, parts.postalcode, parts.city, parts.country].filter(Boolean).join(', ');
+      if (!freeForm) return null;
+      await new Promise((r) => setTimeout(r, 1100)); // rate limit
+      const params2 = new URLSearchParams({ q: freeForm, format: 'json', limit: '1' });
+      res = await fetch(`https://nominatim.openstreetmap.org/search?${params2}`, {
         headers: { 'User-Agent': 'Oblifield/1.0' },
       });
       if (!res.ok) return null;
-      const data = await res.json();
-      if (!data || data.length === 0) return null;
-      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+      const data2 = await res.json();
+      if (!data2 || data2.length === 0) return null;
+      return { lat: parseFloat(data2[0].lat), lng: parseFloat(data2[0].lon) };
     } catch { return null; }
   }
 
@@ -121,16 +146,18 @@ export function MapPage() {
         (t) => (!t.lastLatitude || !t.lastLongitude) && (t.address || t.city || t.postalCode || t.country),
       );
       for (const t of techsToGeocode) {
-        const addr = [t.address, t.postalCode, t.city, t.country].filter(Boolean).join(', ');
-        if (!addr) continue;
-        const result = await nominatimGeocode(addr);
+        const result = await nominatimGeocode({
+          street: t.address,
+          city: t.city,
+          postalcode: t.postalCode,
+          country: t.country,
+        });
         if (result) {
           await apiClient.post(`/technicians/${t.id}/location`, { latitude: result.lat, longitude: result.lng });
           geocoded++;
         } else {
           errors.push(`Technicien ${t.firstName} ${t.lastName}`);
         }
-        // Nominatim rate limit: 1 req/sec
         await new Promise((r) => setTimeout(r, 1100));
       }
 
@@ -139,7 +166,8 @@ export function MapPage() {
         (i) => (!i.latitude || !i.longitude) && i.address,
       );
       for (const i of intvsToGeocode) {
-        const result = await nominatimGeocode(i.address!);
+        // Intervention address is a single string — use free-form
+        const result = await nominatimGeocode({ street: i.address });
         if (result) {
           await apiClient.put(`/interventions/${i.id}/geocode`, { latitude: result.lat, longitude: result.lng });
           geocoded++;
@@ -152,7 +180,9 @@ export function MapPage() {
       if (errors.length > 0) {
         toast.error(`${errors.length} adresse(s) non trouvee(s)`);
       }
-      toast.success(`${geocoded} adresse${geocoded > 1 ? 's' : ''} geocodee${geocoded > 1 ? 's' : ''}`);
+      if (geocoded > 0) {
+        toast.success(`${geocoded} adresse${geocoded > 1 ? 's' : ''} geocodee${geocoded > 1 ? 's' : ''}`);
+      }
 
       // Reload data
       const [intvs, techs] = await Promise.all([
