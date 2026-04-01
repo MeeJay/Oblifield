@@ -119,6 +119,23 @@ router.post('/', async (req, res) => {
   }
 });
 
+// PUT /interventions/:id/geocode — set coordinates from client-side geocoding
+router.put('/:id/geocode', async (req, res) => {
+  try {
+    const { latitude, longitude } = req.body;
+    if (latitude == null || longitude == null) {
+      return res.status(400).json({ success: false, error: 'latitude and longitude are required' });
+    }
+    const data = await interventionService.update(Number(req.params.id), { latitude, longitude });
+    if (!data) {
+      return res.status(404).json({ success: false, error: 'Intervention not found' });
+    }
+    res.json({ success: true, data });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // PUT /interventions/:id — update
 router.put('/:id', async (req, res) => {
   try {
