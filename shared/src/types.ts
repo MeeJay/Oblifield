@@ -66,6 +66,7 @@ export interface Intervention {
   siteId: number | null;
   assignedTechnicianId: number | null;
   assignedTechnicianName: string | null;
+  assignedTechnicianPhone: string | null;
   clientName: string | null;
   siteName: string | null;
   scheduledAt: string | null;

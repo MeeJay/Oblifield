@@ -365,8 +365,8 @@ export function InterventionDetailPage() {
             {intervention.assignedTechnicianName ? (
               <p className="text-sm font-medium text-text-primary mt-1">
                 {intervention.assignedTechnicianName}
-                {(intervention as any).technicianPhone && (
-                  <span className="text-text-muted font-normal"> ({(intervention as any).technicianPhone})</span>
+                {intervention.assignedTechnicianPhone && (
+                  <span className="text-text-muted font-normal"> ({intervention.assignedTechnicianPhone})</span>
                 )}
               </p>
             ) : (

@@ -35,6 +35,7 @@ interface InterventionRow {
   site_id: number | null;
   assigned_technician_id: number | null;
   assigned_technician_name: string | null;
+  assigned_technician_phone: string | null;
   client_name: string | null;
   site_name: string | null;
   scheduled_at: Date | null;
@@ -70,6 +71,7 @@ function interventionBaseQuery(tenantId?: number) {
     .select(
       'interventions.*',
       db.raw("CONCAT(t.first_name, ' ', t.last_name) as assigned_technician_name"),
+      't.phone as assigned_technician_phone',
       'c.name as client_name',
       's.name as site_name',
       'su.display_name as supervisor_name',
@@ -93,6 +95,7 @@ function rowToIntervention(row: InterventionRow): Intervention {
     siteId: row.site_id,
     assignedTechnicianId: row.assigned_technician_id,
     assignedTechnicianName: row.assigned_technician_name ?? null,
+    assignedTechnicianPhone: row.assigned_technician_phone ?? null,
     clientName: row.client_name ?? null,
     siteName: row.site_name ?? null,
     scheduledAt: row.scheduled_at ? row.scheduled_at.toISOString() : null,
