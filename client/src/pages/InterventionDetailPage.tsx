@@ -27,6 +27,8 @@ import {
   FileText,
   X,
   Plus,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import type {
   Intervention,
@@ -99,7 +101,7 @@ export function InterventionDetailPage() {
   const [intervention, setIntervention] = useState<Intervention | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [photos, setPhotos] = useState<InterventionPhoto[]>([]);
-  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -685,7 +687,7 @@ export function InterventionDetailPage() {
               <div
                 key={photo.id}
                 className="rounded-lg border border-border bg-bg-secondary overflow-hidden cursor-pointer hover:border-accent transition-colors"
-                onClick={() => setLightboxPhoto(`/uploads/photos/${photo.filename}`)}
+                onClick={() => setLightboxIndex(photos.indexOf(photo))}
               >
                 <img
                   src={`/uploads/photos/${photo.filename}`}
@@ -704,17 +706,58 @@ export function InterventionDetailPage() {
       </div>
 
       {/* Photo lightbox */}
-      {lightboxPhoto && (
+      {lightboxIndex !== null && photos[lightboxIndex] && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm cursor-pointer"
-          onClick={() => setLightboxPhoto(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm"
+          onClick={() => setLightboxIndex(null)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setLightboxIndex(null);
+            if (e.key === 'ArrowLeft' && lightboxIndex > 0) setLightboxIndex(lightboxIndex - 1);
+            if (e.key === 'ArrowRight' && lightboxIndex < photos.length - 1) setLightboxIndex(lightboxIndex + 1);
+          }}
+          tabIndex={0}
+          ref={(el) => el?.focus()}
         >
+          {/* Close button */}
+          <button
+            onClick={() => setLightboxIndex(null)}
+            className="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white/80 hover:text-white hover:bg-black/70 transition-colors z-10"
+          >
+            <X size={24} />
+          </button>
+
+          {/* Previous */}
+          {lightboxIndex > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex - 1); }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white/80 hover:text-white hover:bg-black/70 transition-colors z-10"
+            >
+              <ChevronLeft size={28} />
+            </button>
+          )}
+
+          {/* Image */}
           <img
-            src={lightboxPhoto}
-            alt=""
-            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            src={`/uploads/photos/${photos[lightboxIndex].filename}`}
+            alt={photos[lightboxIndex].originalName}
+            className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
+
+          {/* Next */}
+          {lightboxIndex < photos.length - 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex + 1); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white/80 hover:text-white hover:bg-black/70 transition-colors z-10"
+            >
+              <ChevronRight size={28} />
+            </button>
+          )}
+
+          {/* Counter */}
+          <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-sm text-white/60 bg-black/50 px-3 py-1 rounded-full">
+            {lightboxIndex + 1} / {photos.length}
+          </span>
         </div>
       )}
     </div>
