@@ -33,9 +33,9 @@ server {
     }
 }
 
-# ── Main application (catch-all) ────────────────────────────────────────────
+# ── Main application (catch-all, default server) ────────────────────────────
 server {
-    listen 80;
+    listen 80 default_server;
     server_name _;
     root /usr/share/nginx/html;
     index index.html;
