@@ -363,17 +363,12 @@ export function InterventionDetailPage() {
           <div>
             <span className="text-[11px] uppercase tracking-wide text-text-muted">Technicien assigne</span>
             {intervention.assignedTechnicianName ? (
-              <div className="flex items-center gap-2.5 mt-1.5">
-                <div className="w-8 h-8 rounded-full bg-blue-500/15 flex items-center justify-center text-xs font-semibold text-blue-400 shrink-0">
-                  {intervention.assignedTechnicianName.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2)}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-text-primary">{intervention.assignedTechnicianName}</p>
-                  {(intervention as any).technicianPhone && (
-                    <span className="text-xs text-text-muted">{(intervention as any).technicianPhone}</span>
-                  )}
-                </div>
-              </div>
+              <p className="text-sm font-medium text-text-primary mt-1">
+                {intervention.assignedTechnicianName}
+                {(intervention as any).technicianPhone && (
+                  <span className="text-text-muted font-normal"> ({(intervention as any).technicianPhone})</span>
+                )}
+              </p>
             ) : (
               <p className="text-sm text-text-muted mt-1">Non assigne</p>
             )}
@@ -399,7 +394,7 @@ export function InterventionDetailPage() {
             />
           </div>
           <div className="flex justify-end px-4 py-2 border-t border-border">
-            <Button variant="primary" size="sm" className="!bg-amber-600 hover:!bg-amber-700" onClick={handleSaveObservations} loading={savingObs}>
+            <Button variant="primary" size="sm" className="!bg-green-600 hover:!bg-green-700" onClick={handleSaveObservations} loading={savingObs}>
               Enregistrer
             </Button>
           </div>
@@ -419,7 +414,7 @@ export function InterventionDetailPage() {
               <textarea
                 value={techObs}
                 onChange={(e) => setTechObs(e.target.value)}
-                rows={5}
+                rows={8}
                 className="w-full bg-transparent text-sm text-text-primary leading-relaxed focus:outline-none resize-y placeholder:text-text-muted"
                 placeholder="Observations du technicien..."
               />
@@ -429,7 +424,7 @@ export function InterventionDetailPage() {
           </div>
           {admin && (
             <div className="flex justify-end px-4 py-2 border-t border-border">
-              <Button variant="secondary" size="sm" onClick={handleSaveObservations} loading={savingObs}>
+              <Button variant="primary" size="sm" className="!bg-green-600 hover:!bg-green-700" onClick={handleSaveObservations} loading={savingObs}>
                 Enregistrer
               </Button>
             </div>
@@ -446,13 +441,13 @@ export function InterventionDetailPage() {
             <textarea
               value={supObs}
               onChange={(e) => setSupObs(e.target.value)}
-              rows={5}
+              rows={8}
               className="w-full bg-transparent text-sm text-text-primary leading-relaxed focus:outline-none resize-y placeholder:text-text-muted"
               placeholder="Saisir vos observations..."
             />
           </div>
           <div className="flex justify-end px-4 py-2 border-t border-border">
-            <Button variant="primary" size="sm" onClick={handleSaveObservations} loading={savingObs}>
+            <Button variant="primary" size="sm" className="!bg-green-600 hover:!bg-green-700" onClick={handleSaveObservations} loading={savingObs}>
               Enregistrer
             </Button>
           </div>
@@ -520,7 +515,7 @@ export function InterventionDetailPage() {
               <ChevronDown size={14} className="ml-1.5" />
             </Button>
             {statusMenuOpen && (
-              <div className="absolute z-10 mt-1 w-44 rounded-lg border border-border bg-bg-secondary shadow-lg">
+              <div className="absolute z-50 bottom-full mb-1 w-44 rounded-lg border border-border bg-bg-secondary shadow-lg">
                 {INTERVENTION_STATUS.map((s) => (
                   <button
                     key={s}
