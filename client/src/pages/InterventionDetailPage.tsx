@@ -10,20 +10,13 @@ import {
   LogOut,
   Clock,
   User,
-  Building2,
-  Phone,
-  Mail,
-  CalendarDays,
-  Timer,
   ChevronDown,
   ImageIcon,
   FileDown,
   AlertTriangle,
   XCircle,
   CheckCircle2,
-  Lock,
   Upload,
-  Shield,
   FileText,
   X,
   Plus,
@@ -352,74 +345,131 @@ export function InterventionDetailPage() {
         </div>
       </div>
 
-      {/* Info Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <InfoCard icon={<Building2 size={16} />} label="Type" value={INTERVENTION_TYPE_LABELS[intervention.type]} />
-        <InfoCard icon={<Building2 size={16} />} label="Client" value={intervention.clientName ?? '-'} />
-        <InfoCard icon={<Building2 size={16} />} label="Site" value={intervention.siteName ?? '-'} />
-        <InfoCard icon={<User size={16} />} label="Technicien" value={intervention.assignedTechnicianName ?? 'Non assigne'} />
-        <InfoCard icon={<Phone size={16} />} label="Tel. technicien" value={(intervention as any).technicianPhone ?? '-'} />
-        <InfoCard icon={<Shield size={16} />} label="Superviseur" value={intervention.supervisorName ?? '-'} />
-        <InfoCard icon={<CalendarDays size={16} />} label="Planifie" value={formatDateTime(intervention.scheduledAt)} />
-        <InfoCard icon={<CalendarDays size={16} />} label="Echeance" value={formatDateTime(intervention.dueAt)} />
-        <InfoCard icon={<MapPin size={16} />} label="Adresse" value={intervention.address ?? '-'} />
-        <InfoCard icon={<Phone size={16} />} label="Contact" value={intervention.contactName ? `${intervention.contactName} ${intervention.contactPhone ?? ''}` : '-'} />
-        <InfoCard icon={<Mail size={16} />} label="Email" value={intervention.contactEmail ?? '-'} />
-        <InfoCard icon={<Timer size={16} />} label="Duree est." value={intervention.estimatedDurationMinutes ? `${intervention.estimatedDurationMinutes} min` : '-'} />
+      {/* Row 1 : Fiche infos + Commentaires internes (50/50) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 mb-2.5">
+        {/* Fiche infos */}
+        <div className="rounded-lg border border-border bg-bg-secondary p-4 flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+            <FieldItem label="Type" value={INTERVENTION_TYPE_LABELS[intervention.type]} />
+            <FieldItem label="Client" value={intervention.clientName ?? '-'} />
+            <FieldItem label="Site" value={intervention.siteName ?? '-'} />
+            <FieldItem label="Superviseur" value={intervention.supervisorName ?? '-'} />
+            <FieldItem label="Planifie" value={formatDateTime(intervention.scheduledAt)} />
+            <FieldItem label="Echeance" value={formatDateTime(intervention.dueAt)} />
+            <FieldItem label="Contact" value={intervention.contactName ?? '-'} />
+            <FieldItem label="Duree est." value={intervention.estimatedDurationMinutes ? `${intervention.estimatedDurationMinutes} min` : '-'} />
+          </div>
+          <hr className="border-border" />
+          <div>
+            <span className="text-[11px] uppercase tracking-wide text-text-muted">Technicien assigne</span>
+            {intervention.assignedTechnicianName ? (
+              <div className="flex items-center gap-2.5 mt-1.5">
+                <div className="w-8 h-8 rounded-full bg-blue-500/15 flex items-center justify-center text-xs font-semibold text-blue-400 shrink-0">
+                  {intervention.assignedTechnicianName.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2)}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-text-primary">{intervention.assignedTechnicianName}</p>
+                  {(intervention as any).technicianPhone && (
+                    <span className="text-xs text-text-muted">{(intervention as any).technicianPhone}</span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-text-muted mt-1">Non assigne</p>
+            )}
+          </div>
+          <hr className="border-border" />
+          <FieldItem label="Adresse" value={intervention.address ?? '-'} />
+        </div>
+
+        {/* Commentaires internes */}
+        <div className="rounded-lg border border-border border-l-[3px] border-l-amber-500 bg-bg-secondary flex flex-col">
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border">
+            <AlertTriangle size={14} className="text-amber-500 shrink-0" />
+            <span className="text-xs font-medium uppercase tracking-wide text-text-muted">Commentaires internes</span>
+            <span className="ml-auto text-[11px] text-text-muted">Non visible dans le rapport</span>
+          </div>
+          <div className="flex-1 p-4">
+            <textarea
+              value={internalComments}
+              onChange={(e) => setInternalComments(e.target.value)}
+              rows={8}
+              className="w-full bg-transparent text-sm text-text-primary leading-relaxed focus:outline-none resize-y placeholder:text-text-muted"
+              placeholder="Note interne..."
+            />
+          </div>
+          <div className="flex justify-end px-4 py-2 border-t border-border">
+            <Button variant="primary" size="sm" className="!bg-amber-600 hover:!bg-amber-700" onClick={handleSaveObservations} loading={savingObs}>
+              Enregistrer
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Observations */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="rounded-lg border border-border bg-bg-secondary p-4">
-          <h3 className="text-sm font-medium text-text-secondary mb-2">Observations technicien</h3>
-          <textarea
-            value={techObs}
-            onChange={(e) => setTechObs(e.target.value)}
-            rows={4}
-            className="w-full rounded-md border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent resize-y"
-            placeholder="Observations du technicien..."
-          />
+      {/* Row 2 : Observations technicien + superviseur (50/50) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 mb-2.5">
+        {/* Observations technicien (lecture seule, editable admin) */}
+        <div className="rounded-lg border border-border bg-bg-secondary flex flex-col">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+            <span className="text-xs font-medium uppercase tracking-wide text-text-muted">Observations technicien</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-bg-tertiary text-text-muted">{admin ? 'modifiable' : 'lecture seule'}</span>
+          </div>
+          <div className="flex-1 p-4">
+            {admin ? (
+              <textarea
+                value={techObs}
+                onChange={(e) => setTechObs(e.target.value)}
+                rows={5}
+                className="w-full bg-transparent text-sm text-text-primary leading-relaxed focus:outline-none resize-y placeholder:text-text-muted"
+                placeholder="Observations du technicien..."
+              />
+            ) : (
+              <p className="text-sm leading-relaxed text-text-secondary">{techObs || 'Aucune observation.'}</p>
+            )}
+          </div>
+          {admin && (
+            <div className="flex justify-end px-4 py-2 border-t border-border">
+              <Button variant="secondary" size="sm" onClick={handleSaveObservations} loading={savingObs}>
+                Enregistrer
+              </Button>
+            </div>
+          )}
         </div>
-        <div className="rounded-lg border border-border bg-bg-secondary p-4">
-          <h3 className="text-sm font-medium text-text-secondary mb-2">Observations superviseur</h3>
-          <textarea
-            value={supObs}
-            onChange={(e) => setSupObs(e.target.value)}
-            rows={4}
-            className="w-full rounded-md border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent resize-y"
-            placeholder="Observations du superviseur..."
-          />
+
+        {/* Observations superviseur (modifiable) */}
+        <div className="rounded-lg border border-border bg-bg-secondary flex flex-col">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+            <span className="text-xs font-medium uppercase tracking-wide text-text-muted">Observations superviseur</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-bg-tertiary text-text-muted">modifiable</span>
+          </div>
+          <div className="flex-1 p-4">
+            <textarea
+              value={supObs}
+              onChange={(e) => setSupObs(e.target.value)}
+              rows={5}
+              className="w-full bg-transparent text-sm text-text-primary leading-relaxed focus:outline-none resize-y placeholder:text-text-muted"
+              placeholder="Saisir vos observations..."
+            />
+          </div>
+          <div className="flex justify-end px-4 py-2 border-t border-border">
+            <Button variant="primary" size="sm" onClick={handleSaveObservations} loading={savingObs}>
+              Enregistrer
+            </Button>
+          </div>
         </div>
-        <div className="rounded-lg border border-border bg-bg-secondary p-4">
-          <h3 className="text-sm font-medium text-text-secondary mb-2 flex items-center gap-1.5">
-            <Lock size={14} />
-            Commentaires internes
-          </h3>
-          <textarea
-            value={internalComments}
-            onChange={(e) => setInternalComments(e.target.value)}
-            rows={4}
-            className="w-full rounded-md border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent resize-y"
-            placeholder="Commentaires internes (non visibles dans le rapport)..."
-          />
-        </div>
-      </div>
-      <div className="mb-8">
-        <Button variant="secondary" size="sm" onClick={handleSaveObservations} loading={savingObs}>
-          Enregistrer les observations
-        </Button>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap items-center gap-3 mb-8">
+      {/* Row 3 : Action buttons — single line */}
+      <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-1">
         <Button
           variant="primary"
           size="sm"
           onClick={handleCheckIn}
           loading={actionLoading}
           disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
+          className="whitespace-nowrap"
         >
-          <LogIn size={16} className="mr-1.5" />
+          <LogIn size={14} className="mr-1.5" />
           Pointage entree
         </Button>
         <Button
@@ -428,25 +478,22 @@ export function InterventionDetailPage() {
           onClick={handleCheckOut}
           loading={actionLoading}
           disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
+          className="whitespace-nowrap"
         >
-          <LogOut size={16} className="mr-1.5" />
+          <LogOut size={14} className="mr-1.5" />
           Pointage sortie
         </Button>
-
-        {/* Signal Issue - available to all */}
         <Button
           variant="secondary"
           size="sm"
-          className="!bg-orange-500/10 !text-orange-500 hover:!bg-orange-500/20 !border-orange-500/30"
+          className="!border-red-500/30 !text-red-400 hover:!bg-red-500/10 whitespace-nowrap"
           onClick={handleSignalIssue}
           loading={actionLoading}
           disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
         >
-          <AlertTriangle size={16} className="mr-1.5" />
+          <AlertTriangle size={14} className="mr-1.5" />
           Signaler un probleme
         </Button>
-
-        {/* Cancel - admin only */}
         {admin && (
           <Button
             variant="ghost"
@@ -454,13 +501,12 @@ export function InterventionDetailPage() {
             onClick={handleCancel}
             loading={actionLoading}
             disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
+            className="whitespace-nowrap"
           >
-            <XCircle size={16} className="mr-1.5" />
+            <XCircle size={14} className="mr-1.5" />
             Annuler
           </Button>
         )}
-
-        {/* Status Dropdown - admin only */}
         {admin && (
           <div className="relative">
             <Button
@@ -468,6 +514,7 @@ export function InterventionDetailPage() {
               size="sm"
               onClick={() => setStatusMenuOpen(!statusMenuOpen)}
               disabled={actionLoading}
+              className="whitespace-nowrap"
             >
               Changer le statut
               <ChevronDown size={14} className="ml-1.5" />
@@ -595,6 +642,61 @@ export function InterventionDetailPage() {
         </div>
       )}
 
+      {/* Photo Gallery */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <ImageIcon size={18} className="text-accent" />
+            <h2 className="text-lg font-semibold text-text-primary">Photos</h2>
+          </div>
+          <div>
+            <input
+              ref={photoInputRef}
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoUpload}
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => photoInputRef.current?.click()}
+              loading={uploadingPhotos}
+            >
+              <Upload size={14} className="mr-1.5" />
+              Ajouter des photos
+            </Button>
+          </div>
+        </div>
+        {photos.length === 0 ? (
+          <div className="rounded-lg border border-border bg-bg-secondary p-6 text-center">
+            <p className="text-text-secondary">Aucune photo.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {photos.map((photo) => (
+              <div
+                key={photo.id}
+                className="rounded-lg border border-border bg-bg-secondary overflow-hidden cursor-pointer hover:border-accent transition-colors"
+                onClick={() => setLightboxIndex(photos.indexOf(photo))}
+              >
+                <img
+                  src={`/uploads/photos/${photo.filename}`}
+                  alt={photo.originalName}
+                  className="w-full h-32 object-cover"
+                />
+                <div className="p-2">
+                  <p className="text-xs text-text-secondary truncate">
+                    {photo.originalName}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Timeline */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
@@ -643,61 +745,6 @@ export function InterventionDetailPage() {
                       {event.accuracy != null && ` (\u00b1${Math.round(event.accuracy)}m)`}
                     </p>
                   )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Photo Gallery */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <ImageIcon size={18} className="text-accent" />
-            <h2 className="text-lg font-semibold text-text-primary">Photos</h2>
-          </div>
-          <div>
-            <input
-              ref={photoInputRef}
-              type="file"
-              multiple
-              accept="image/*"
-              className="hidden"
-              onChange={handlePhotoUpload}
-            />
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => photoInputRef.current?.click()}
-              loading={uploadingPhotos}
-            >
-              <Upload size={14} className="mr-1.5" />
-              Ajouter des photos
-            </Button>
-          </div>
-        </div>
-        {photos.length === 0 ? (
-          <div className="rounded-lg border border-border bg-bg-secondary p-6 text-center">
-            <p className="text-text-secondary">Aucune photo.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {photos.map((photo) => (
-              <div
-                key={photo.id}
-                className="rounded-lg border border-border bg-bg-secondary overflow-hidden cursor-pointer hover:border-accent transition-colors"
-                onClick={() => setLightboxIndex(photos.indexOf(photo))}
-              >
-                <img
-                  src={`/uploads/photos/${photo.filename}`}
-                  alt={photo.originalName}
-                  className="w-full h-32 object-cover"
-                />
-                <div className="p-2">
-                  <p className="text-xs text-text-secondary truncate">
-                    {photo.originalName}
-                  </p>
                 </div>
               </div>
             ))}
@@ -764,21 +811,10 @@ export function InterventionDetailPage() {
   );
 }
 
-function InfoCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
+function FieldItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-border bg-bg-secondary p-3">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-text-secondary">{icon}</span>
-        <span className="text-xs text-text-secondary">{label}</span>
-      </div>
+    <div>
+      <span className="text-[11px] uppercase tracking-wide text-text-muted">{label}</span>
       <p className="text-sm font-medium text-text-primary">{value}</p>
     </div>
   );
