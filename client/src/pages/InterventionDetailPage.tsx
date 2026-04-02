@@ -99,6 +99,7 @@ export function InterventionDetailPage() {
   const [intervention, setIntervention] = useState<Intervention | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [photos, setPhotos] = useState<InterventionPhoto[]>([]);
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -683,7 +684,8 @@ export function InterventionDetailPage() {
             {photos.map((photo) => (
               <div
                 key={photo.id}
-                className="rounded-lg border border-border bg-bg-secondary overflow-hidden"
+                className="rounded-lg border border-border bg-bg-secondary overflow-hidden cursor-pointer hover:border-accent transition-colors"
+                onClick={() => setLightboxPhoto(`/uploads/photos/${photo.filename}`)}
               >
                 <img
                   src={`/uploads/photos/${photo.filename}`}
@@ -700,6 +702,21 @@ export function InterventionDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Photo lightbox */}
+      {lightboxPhoto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm cursor-pointer"
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <img
+            src={lightboxPhoto}
+            alt=""
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
