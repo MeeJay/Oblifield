@@ -29,8 +29,12 @@ import searchRoutes from './search.routes';
 import auditLogsRoutes from './auditLogs.routes';
 import recurringSchedulesRoutes from './recurringSchedules.routes';
 import geocodingRoutes from './geocoding.routes';
+import techPanelRoutes from './techPanel.routes';
 
 const router = Router();
+
+// ── TechPanel (no auth, no tenant — must be before tenantRouter) ───────────
+router.use('/tech-panel', techPanelRoutes);
 
 // ── Global (no tenant required) ────────────────────────────────────────────
 router.use('/auth', authRoutes);

@@ -140,6 +140,11 @@ export const interventionService = {
     return row ? rowToIntervention(row) : null;
   },
 
+  async getByUid(uid: string): Promise<Intervention | null> {
+    const row = await interventionBaseQuery().where('interventions.uid', uid).first();
+    return row ? rowToIntervention(row) : null;
+  },
+
   async create(
     data: {
       title: string;

@@ -31,6 +31,8 @@ import { MapPage } from '@/pages/MapPage';
 import { DocumentationPage } from '@/pages/DocumentationPage';
 import { DocumentEditPage } from '@/pages/DocumentEditPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { TechPanelEntryPage } from '@/pages/TechPanelEntryPage';
+import { TechPanelPage } from '@/pages/TechPanelPage';
 import '@/i18n';
 
 export default function App() {
@@ -47,6 +49,10 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        {/* TechPanel — public, accessed via separate subdomain */}
+        <Route path="/tech" element={<TechPanelEntryPage />} />
+        <Route path="/tech/:uid" element={<TechPanelPage />} />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>

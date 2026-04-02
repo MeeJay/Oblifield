@@ -24,7 +24,7 @@ FROM nginx:alpine AS production
 RUN apk add --no-cache curl
 
 COPY --from=builder /app/client/dist/ /usr/share/nginx/html/
-COPY client/nginx.conf /etc/nginx/conf.d/default.conf
+COPY client/nginx.conf.template /etc/nginx/templates/default.conf.template
 
 EXPOSE 80
 

@@ -106,7 +106,7 @@ export function SettingsPage() {
       // Load PDF colors
       const colors: Record<string, string> = {};
       for (const f of PDF_COLOR_FIELDS) {
-        const val = (cfg as Record<string, unknown>)[f.key];
+        const val = (cfg as unknown as Record<string, unknown>)[f.key];
         colors[f.key] = typeof val === 'string' && val ? val : f.defaultVal;
       }
       setPdfColors(colors);
