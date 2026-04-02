@@ -5,6 +5,9 @@ import { AppError } from '../middleware/errorHandler';
 const ALLOWED_KEYS = [
   'allow_2fa', 'force_2fa', 'otp_smtp_server_id',
   'obligate_enabled', 'company_name', 'company_logo_path',
+  'pdf_color_primary', 'pdf_color_accent_line', 'pdf_color_section_bg',
+  'pdf_color_section_text', 'pdf_color_label', 'pdf_color_value',
+  'pdf_color_footer', 'pdf_color_border',
 ] as const;
 
 export const appConfigController = {

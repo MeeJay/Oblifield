@@ -34,6 +34,14 @@ export const appConfigService = {
       obligate_enabled: map['obligate_enabled'] === 'true',
       company_name: map['company_name'] || 'Oblifield',
       company_logo_path: map['company_logo_path'] || null,
+      pdf_color_primary: map['pdf_color_primary'] || null,
+      pdf_color_accent_line: map['pdf_color_accent_line'] || null,
+      pdf_color_section_bg: map['pdf_color_section_bg'] || null,
+      pdf_color_section_text: map['pdf_color_section_text'] || null,
+      pdf_color_label: map['pdf_color_label'] || null,
+      pdf_color_value: map['pdf_color_value'] || null,
+      pdf_color_footer: map['pdf_color_footer'] || null,
+      pdf_color_border: map['pdf_color_border'] || null,
     };
   },
 

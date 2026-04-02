@@ -56,6 +56,7 @@ export interface UserWithPassword extends User {
 // ============================================
 export interface Intervention {
   id: number;
+  uid: string;
   title: string;
   description: string | null;
   type: InterventionType;
@@ -531,6 +532,15 @@ export interface AppConfig {
   obligate_enabled: boolean;
   company_name: string;
   company_logo_path: string | null;
+  // PDF report colors
+  pdf_color_primary: string | null;
+  pdf_color_accent_line: string | null;
+  pdf_color_section_bg: string | null;
+  pdf_color_section_text: string | null;
+  pdf_color_label: string | null;
+  pdf_color_value: string | null;
+  pdf_color_footer: string | null;
+  pdf_color_border: string | null;
 }
 
 // ============================================

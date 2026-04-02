@@ -1,8 +1,31 @@
+import crypto from 'crypto';
 import { db } from '../db';
 import type { Intervention, InterventionStatus, InterventionType, InterventionPriority } from '@oblifield/shared';
 
+function generateUid(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let uid = '';
+  const bytes = crypto.randomBytes(8);
+  for (let i = 0; i < 8; i++) {
+    uid += chars[bytes[i] % chars.length];
+  }
+  return uid;
+}
+
+async function uniqueUid(): Promise<string> {
+  let uid: string;
+  let exists = true;
+  do {
+    uid = generateUid();
+    const dup = await db('interventions').where({ uid }).first('id');
+    exists = !!dup;
+  } while (exists);
+  return uid;
+}
+
 interface InterventionRow {
   id: number;
+  uid: string;
   title: string;
   description: string | null;
   type: string;
@@ -60,6 +83,7 @@ function interventionBaseQuery(tenantId?: number) {
 function rowToIntervention(row: InterventionRow): Intervention {
   return {
     id: row.id,
+    uid: row.uid,
     title: row.title,
     description: row.description,
     type: row.type as InterventionType,
@@ -145,9 +169,11 @@ export const interventionService = {
     createdBy: number,
   ): Promise<Intervention> {
     const status: InterventionStatus = data.assignedTechnicianId ? 'assigned' : 'pending';
+    const uid = await uniqueUid();
 
     const [row] = await db('interventions')
       .insert({
+        uid,
         title: data.title,
         description: data.description ?? null,
         type: data.type ?? 'other',

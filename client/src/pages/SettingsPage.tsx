@@ -67,6 +67,20 @@ export function SettingsPage() {
   const [logoUploading, setLogoUploading] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
+  // ── PDF Report Colors ──
+  const PDF_COLOR_FIELDS = [
+    { key: 'pdf_color_primary', label: 'Couleur principale (titres, logo texte)', defaultVal: '#2D3561' },
+    { key: 'pdf_color_accent_line', label: 'Ligne d\'accent (filets rouges)', defaultVal: '#C62828' },
+    { key: 'pdf_color_section_bg', label: 'Fond des sections', defaultVal: '#3B4578' },
+    { key: 'pdf_color_section_text', label: 'Texte des sections', defaultVal: '#FFFFFF' },
+    { key: 'pdf_color_label', label: 'Labels (champs)', defaultVal: '#555555' },
+    { key: 'pdf_color_value', label: 'Valeurs (donnees)', defaultVal: '#1A1A1A' },
+    { key: 'pdf_color_footer', label: 'Pied de page', defaultVal: '#AAAAAA' },
+    { key: 'pdf_color_border', label: 'Bordures / separateurs', defaultVal: '#CCCCCC' },
+  ] as const;
+  const [pdfColors, setPdfColors] = useState<Record<string, string>>({});
+  const [pdfColorsSaving, setPdfColorsSaving] = useState(false);
+
   // ── Obligate SSO Integration ──
   const [obligateCfg,     setObligateCfg]     = useState<ObligateConfig | null>(null);
   const [obligateUrl,     setObligateUrl]     = useState('');
@@ -89,6 +103,13 @@ export function SettingsPage() {
         const logoFilename = cfg.company_logo_path.split('/').pop();
         if (logoFilename) setLogoUrl(`/uploads/logos/${logoFilename}`);
       }
+      // Load PDF colors
+      const colors: Record<string, string> = {};
+      for (const f of PDF_COLOR_FIELDS) {
+        const val = (cfg as Record<string, unknown>)[f.key];
+        colors[f.key] = typeof val === 'string' && val ? val : f.defaultVal;
+      }
+      setPdfColors(colors);
     }).catch(() => {});
     appConfigApi.getObligateConfig().then((cfg) => {
       setObligateCfg(cfg);
@@ -342,6 +363,67 @@ export function SettingsPage() {
                     {logoUrl ? 'Changer le logo' : 'Uploader un logo'}
                   </Button>
                 </div>
+              </div>
+            </div>
+
+            {/* PDF Report Colors */}
+            <div className="mt-5 pt-5 border-t border-border">
+              <div className="flex items-center gap-2 mb-2">
+                <Pencil size={14} className="text-text-secondary" />
+                <label className="text-sm font-medium text-text-secondary">Couleurs des rapports PDF</label>
+              </div>
+              <p className="text-xs text-text-muted mb-4">
+                Personnalisez les couleurs utilisees dans les rapports PDF generes.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {PDF_COLOR_FIELDS.map((f) => (
+                  <div key={f.key} className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={pdfColors[f.key] || f.defaultVal}
+                      onChange={(e) => setPdfColors((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                      className="w-8 h-8 rounded border border-border cursor-pointer bg-transparent shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs text-text-primary block truncate">{f.label}</span>
+                      <span className="text-[10px] text-text-muted font-mono">{pdfColors[f.key] || f.defaultVal}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-4">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  loading={pdfColorsSaving}
+                  onClick={async () => {
+                    setPdfColorsSaving(true);
+                    try {
+                      for (const f of PDF_COLOR_FIELDS) {
+                        const val = pdfColors[f.key] || f.defaultVal;
+                        await appConfigApi.setConfig(f.key, val);
+                      }
+                      toast.success('Couleurs enregistrees');
+                    } catch {
+                      toast.error('Erreur');
+                    } finally {
+                      setPdfColorsSaving(false);
+                    }
+                  }}
+                >
+                  Enregistrer les couleurs
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    const defaults: Record<string, string> = {};
+                    for (const f of PDF_COLOR_FIELDS) defaults[f.key] = f.defaultVal;
+                    setPdfColors(defaults);
+                  }}
+                >
+                  Reinitialiser
+                </Button>
               </div>
             </div>
           </div>

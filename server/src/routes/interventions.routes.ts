@@ -631,6 +631,21 @@ router.get('/:id/report/pdf', async (req, res) => {
     const companyName = await appConfigService.get('company_name') || 'Oblifield';
     const logoPath = await appConfigService.get('company_logo_path');
 
+    // Load custom PDF colors
+    const colorKeys = [
+      'pdf_color_primary', 'pdf_color_accent_line', 'pdf_color_section_bg',
+      'pdf_color_section_text', 'pdf_color_label', 'pdf_color_value',
+      'pdf_color_footer', 'pdf_color_border',
+    ] as const;
+    const colors: Record<string, string> = {};
+    for (const k of colorKeys) {
+      const v = await appConfigService.get(k);
+      if (v) {
+        const camel = k.replace('pdf_color_', '').replace(/_([a-z])/g, (_, l) => l.toUpperCase());
+        colors[camel] = v;
+      }
+    }
+
     const doc = generateInterventionPdf({
       intervention,
       timeline,
@@ -638,6 +653,7 @@ router.get('/:id/report/pdf', async (req, res) => {
       companyName,
       supervisorName: (req.query.supervisor as string) || intervention.supervisorName || undefined,
       logoPath: logoPath || null,
+      colors,
     });
 
     const safeTitle = intervention.title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);

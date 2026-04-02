@@ -4,17 +4,30 @@ import fs from 'fs';
 import imageSize from 'image-size';
 import type { Intervention, TimelineEvent, InterventionPhoto } from '@oblifield/shared';
 
-// ── Color palette (matching Agitel/example convention) ──────────────────────
-const NAVY = '#2D3561';
-const RED_LINE = '#C62828';
-const SECTION_BG = '#3B4578';
-const SECTION_TEXT = '#FFFFFF';
-const LABEL_COLOR = '#555555';
-const VALUE_COLOR = '#1A1A1A';
-const FOOTER_COLOR = '#AAAAAA';
-const BORDER_COLOR = '#CCCCCC';
+// ── Default color palette ────────────────────────────────────────────────────
+const DEFAULTS = {
+  primary:     '#2D3561',
+  accentLine:  '#C62828',
+  sectionBg:   '#3B4578',
+  sectionText: '#FFFFFF',
+  label:       '#555555',
+  value:       '#1A1A1A',
+  footer:      '#AAAAAA',
+  border:      '#CCCCCC',
+};
 
 const UPLOAD_DIR = path.resolve('/app/uploads/photos');
+
+export interface PdfColors {
+  primary: string;
+  accentLine: string;
+  sectionBg: string;
+  sectionText: string;
+  label: string;
+  value: string;
+  footer: string;
+  border: string;
+}
 
 interface ReportData {
   intervention: Intervention;
@@ -23,6 +36,7 @@ interface ReportData {
   companyName: string;
   supervisorName?: string;
   logoPath?: string | null;
+  colors?: Partial<PdfColors>;
 }
 
 function formatDate(iso: string | null): string {
@@ -38,7 +52,16 @@ function formatTime(iso: string | null): string {
 }
 
 export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
-  const { intervention, timeline, photos, companyName, supervisorName, logoPath } = data;
+  const { intervention, timeline, photos, companyName, supervisorName, logoPath, colors: c } = data;
+
+  const NAVY = c?.primary ?? DEFAULTS.primary;
+  const RED_LINE = c?.accentLine ?? DEFAULTS.accentLine;
+  const SECTION_BG = c?.sectionBg ?? DEFAULTS.sectionBg;
+  const SECTION_TEXT = c?.sectionText ?? DEFAULTS.sectionText;
+  const LABEL_COLOR = c?.label ?? DEFAULTS.label;
+  const VALUE_COLOR = c?.value ?? DEFAULTS.value;
+  const FOOTER_COLOR = c?.footer ?? DEFAULTS.footer;
+  const BORDER_COLOR = c?.border ?? DEFAULTS.border;
 
   const doc = new PDFDocument({
     size: 'A4',
@@ -356,7 +379,7 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
         `${companyName.toUpperCase()} \u2014 Document confidentiel`,
         leftMargin,
         footerY + 8,
-        { width: contentWidth, align: 'center' },
+        { width: contentWidth, align: 'center', lineBreak: false },
       );
   }
 
