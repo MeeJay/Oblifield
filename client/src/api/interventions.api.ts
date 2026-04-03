@@ -70,14 +70,14 @@ export const interventionsApi = {
     return res.data.data!;
   },
 
-  async checkIn(id: number, gps?: { latitude: number; longitude: number; accuracy?: number }): Promise<Intervention> {
-    const res = await apiClient.post<ApiResponse<Intervention>>(`/interventions/${id}/check-in`, gps);
+  async checkIn(id: number, gps?: { latitude: number; longitude: number; accuracy?: number }, customTimestamp?: string): Promise<Intervention> {
+    const res = await apiClient.post<ApiResponse<Intervention>>(`/interventions/${id}/check-in`, { ...gps, customTimestamp });
     return res.data.data!;
   },
 
   async checkOut(
     id: number,
-    data: { latitude?: number; longitude?: number; accuracy?: number; status?: 'done' | 'issue' },
+    data: { latitude?: number; longitude?: number; accuracy?: number; status?: 'done' | 'issue'; customTimestamp?: string },
   ): Promise<Intervention> {
     const res = await apiClient.post<ApiResponse<Intervention>>(`/interventions/${id}/check-out`, data);
     return res.data.data!;

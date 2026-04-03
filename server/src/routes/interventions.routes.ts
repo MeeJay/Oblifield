@@ -254,27 +254,27 @@ router.post('/:id/check-in', async (req, res) => {
     const tenantId = (req as any).tenantId;
     const userId = req.session.userId;
     const interventionId = Number(req.params.id);
-    const { latitude, longitude, accuracy } = req.body;
+    const { latitude, longitude, accuracy, customTimestamp } = req.body;
 
     // 1. Create timeline event
     await timelineService.create({
       interventionId,
       technicianId: userId,
       type: 'check_in',
-      message: null,
+      message: customTimestamp ? `Pointage manuel : ${new Date(customTimestamp).toLocaleString('fr-FR')}` : null,
       latitude,
       longitude,
       accuracy,
+      createdAt: customTimestamp || null,
     });
 
-    // 2. Update intervention status to in_progress and set startedAt if null
+    // 2. Update intervention status to in_progress and set startedAt
     const intervention = await interventionService.getById(interventionId);
     if (!intervention) {
       return res.status(404).json({ success: false, error: 'Intervention not found' });
     }
 
-    // Use changeStatus for the status change (it also sets started_at for in_progress)
-    const updated = await interventionService.changeStatus(interventionId, 'in_progress');
+    const updated = await interventionService.changeStatus(interventionId, 'in_progress', customTimestamp || null);
 
     // 3. Update technician status
     if (intervention.assignedTechnicianId) {
@@ -307,7 +307,7 @@ router.post('/:id/check-out', async (req, res) => {
     const tenantId = (req as any).tenantId;
     const userId = req.session.userId;
     const interventionId = Number(req.params.id);
-    const { latitude, longitude, accuracy, status } = req.body;
+    const { latitude, longitude, accuracy, status, customTimestamp } = req.body;
 
     const finalStatus = status === 'issue' ? 'issue' : 'done';
 
@@ -316,10 +316,11 @@ router.post('/:id/check-out', async (req, res) => {
       interventionId,
       technicianId: userId,
       type: 'check_out',
-      message: null,
+      message: customTimestamp ? `Pointage manuel : ${new Date(customTimestamp).toLocaleString('fr-FR')}` : null,
       latitude,
       longitude,
       accuracy,
+      createdAt: customTimestamp || null,
     });
 
     // 2. Update intervention status and set completedAt
@@ -328,8 +329,7 @@ router.post('/:id/check-out', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Intervention not found' });
     }
 
-    // Use changeStatus for the status change (it also sets completed_at for 'done')
-    const updated = await interventionService.changeStatus(interventionId, finalStatus);
+    const updated = await interventionService.changeStatus(interventionId, finalStatus, customTimestamp || null);
 
     // 3. Update technician status
     if (intervention.assignedTechnicianId) {

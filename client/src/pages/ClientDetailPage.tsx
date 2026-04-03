@@ -7,6 +7,8 @@ import {
   Mail,
   Clock,
   CheckCircle2,
+  Plus,
+  X,
 } from 'lucide-react';
 import type { Client, Site, Intervention, InterventionStatus } from '@oblifield/shared';
 import { INTERVENTION_STATUS_LABELS } from '@oblifield/shared';
@@ -34,6 +36,11 @@ export function ClientDetailPage() {
   const [sites, setSites] = useState<Site[]>([]);
   const [interventions, setInterventions] = useState<Intervention[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Add site form
+  const [showSiteForm, setShowSiteForm] = useState(false);
+  const [siteForm, setSiteForm] = useState({ name: '', address: '', city: '', postalCode: '', country: '', contactName: '', contactPhone: '', contactEmail: '' });
+  const [siteSaving, setSiteSaving] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -127,12 +134,105 @@ export function ClientDetailPage() {
       </div>
 
       {/* Sites */}
-      {sites.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
             <MapPin size={18} />
             Sites ({sites.length})
           </h2>
+          <button
+            onClick={() => setShowSiteForm(!showSiteForm)}
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-bg-secondary px-3 py-1.5 text-sm text-text-primary hover:bg-bg-tertiary transition-colors"
+          >
+            {showSiteForm ? <X size={14} /> : <Plus size={14} />}
+            {showSiteForm ? 'Annuler' : 'Ajouter un site'}
+          </button>
+        </div>
+
+        {/* Add site form */}
+        {showSiteForm && (
+          <div className="rounded-lg border border-border bg-bg-secondary p-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <input
+                type="text" placeholder="Nom du site *" value={siteForm.name}
+                onChange={(e) => setSiteForm((f) => ({ ...f, name: e.target.value }))}
+                className="rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+              <input
+                type="text" placeholder="Adresse" value={siteForm.address}
+                onChange={(e) => setSiteForm((f) => ({ ...f, address: e.target.value }))}
+                className="rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+              <input
+                type="text" placeholder="Ville" value={siteForm.city}
+                onChange={(e) => setSiteForm((f) => ({ ...f, city: e.target.value }))}
+                className="rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+              <input
+                type="text" placeholder="Code postal" value={siteForm.postalCode}
+                onChange={(e) => setSiteForm((f) => ({ ...f, postalCode: e.target.value }))}
+                className="rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+              <input
+                type="text" placeholder="Pays" value={siteForm.country}
+                onChange={(e) => setSiteForm((f) => ({ ...f, country: e.target.value }))}
+                className="rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+              <input
+                type="text" placeholder="Nom du contact" value={siteForm.contactName}
+                onChange={(e) => setSiteForm((f) => ({ ...f, contactName: e.target.value }))}
+                className="rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+              <input
+                type="text" placeholder="Tel. contact" value={siteForm.contactPhone}
+                onChange={(e) => setSiteForm((f) => ({ ...f, contactPhone: e.target.value }))}
+                className="rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+              <input
+                type="email" placeholder="Email contact" value={siteForm.contactEmail}
+                onChange={(e) => setSiteForm((f) => ({ ...f, contactEmail: e.target.value }))}
+                className="rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+              />
+            </div>
+            <button
+              disabled={!siteForm.name.trim() || siteSaving}
+              onClick={async () => {
+                setSiteSaving(true);
+                try {
+                  await sitesApi.create({
+                    clientId,
+                    name: siteForm.name.trim(),
+                    address: siteForm.address.trim() || null,
+                    city: siteForm.city.trim() || null,
+                    postalCode: siteForm.postalCode.trim() || null,
+                    country: siteForm.country.trim() || null,
+                    contactName: siteForm.contactName.trim() || null,
+                    contactPhone: siteForm.contactPhone.trim() || null,
+                    contactEmail: siteForm.contactEmail.trim() || null,
+                  });
+                  toast.success('Site cree');
+                  setShowSiteForm(false);
+                  setSiteForm({ name: '', address: '', city: '', postalCode: '', country: '', contactName: '', contactPhone: '', contactEmail: '' });
+                  const updated = await sitesApi.list({ clientId });
+                  setSites(updated);
+                } catch {
+                  toast.error('Erreur lors de la creation du site');
+                } finally {
+                  setSiteSaving(false);
+                }
+              }}
+              className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+            >
+              {siteSaving ? 'Creation...' : 'Creer le site'}
+            </button>
+          </div>
+        )}
+
+        {sites.length === 0 && !showSiteForm ? (
+          <div className="rounded-lg border border-border bg-bg-secondary p-6 text-center">
+            <p className="text-text-secondary text-sm">Aucun site pour ce client.</p>
+          </div>
+        ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {sites.map((site) => (
               <div
@@ -151,8 +251,8 @@ export function ClientDetailPage() {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Interventions */}
       <div>

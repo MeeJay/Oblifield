@@ -302,16 +302,17 @@ export const interventionService = {
     await db('interventions').where({ id }).del();
   },
 
-  async changeStatus(id: number, newStatus: InterventionStatus): Promise<Intervention | null> {
+  async changeStatus(id: number, newStatus: InterventionStatus, customTimestamp?: string | null): Promise<Intervention | null> {
+    const ts = customTimestamp ? new Date(customTimestamp) : new Date();
     const updateData: Record<string, unknown> = {
       status: newStatus,
-      updated_at: new Date(),
+      updated_at: ts,
     };
 
     if (newStatus === 'in_progress') {
-      updateData.started_at = new Date();
+      updateData.started_at = ts;
     } else if (newStatus === 'done') {
-      updateData.completed_at = new Date();
+      updateData.completed_at = ts;
     }
 
     const [row] = await db('interventions')

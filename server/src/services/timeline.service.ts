@@ -68,20 +68,23 @@ export const timelineService = {
     photoUrl?: string | null;
     previousStatus?: string | null;
     newStatus?: string | null;
+    createdAt?: string | null;
   }): Promise<TimelineEvent> {
+    const insertData: Record<string, unknown> = {
+      intervention_id: data.interventionId,
+      type: data.type,
+      technician_id: data.technicianId ?? null,
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
+      accuracy: data.accuracy ?? null,
+      message: data.message ?? null,
+      photo_url: data.photoUrl ?? null,
+      previous_status: data.previousStatus ?? null,
+      new_status: data.newStatus ?? null,
+    };
+    if (data.createdAt) insertData.created_at = new Date(data.createdAt);
     const [row] = await db('timeline_events')
-      .insert({
-        intervention_id: data.interventionId,
-        type: data.type,
-        technician_id: data.technicianId ?? null,
-        latitude: data.latitude ?? null,
-        longitude: data.longitude ?? null,
-        accuracy: data.accuracy ?? null,
-        message: data.message ?? null,
-        photo_url: data.photoUrl ?? null,
-        previous_status: data.previousStatus ?? null,
-        new_status: data.newStatus ?? null,
-      })
+      .insert(insertData)
       .returning('*');
 
     // Re-fetch with joins to get technician name

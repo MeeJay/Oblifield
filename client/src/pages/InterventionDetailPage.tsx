@@ -106,6 +106,10 @@ export function InterventionDetailPage() {
   const [internalComments, setInternalComments] = useState('');
   const [savingObs, setSavingObs] = useState(false);
 
+  // Admin custom timestamps
+  const [customCheckInTime, setCustomCheckInTime] = useState('');
+  const [customCheckOutTime, setCustomCheckOutTime] = useState('');
+
   // Documents state
   const [attachedDocs, setAttachedDocs] = useState<InterventionDocument[]>([]);
   const [allDocs, setAllDocs] = useState<DocDocument[]>([]);
@@ -163,9 +167,10 @@ export function InterventionDetailPage() {
   const handleCheckIn = async () => {
     setActionLoading(true);
     try {
-      const gps = await captureGPS().catch(() => undefined);
-      await interventionsApi.checkIn(interventionId, gps);
-      toast.success('Pointage entree effectue');
+      const gps = customCheckInTime ? undefined : await captureGPS().catch(() => undefined);
+      await interventionsApi.checkIn(interventionId, gps, customCheckInTime || undefined);
+      toast.success(customCheckInTime ? 'Pointage entree manuel effectue' : 'Pointage entree effectue');
+      setCustomCheckInTime('');
       await fetchData();
     } catch {
       toast.error('Echec du pointage entree');
@@ -177,13 +182,15 @@ export function InterventionDetailPage() {
   const handleCheckOut = async () => {
     setActionLoading(true);
     try {
-      const gps = await captureGPS().catch(() => undefined);
+      const gps = customCheckOutTime ? undefined : await captureGPS().catch(() => undefined);
       await interventionsApi.checkOut(interventionId, {
         latitude: gps?.latitude,
         longitude: gps?.longitude,
         accuracy: gps?.accuracy,
+        customTimestamp: customCheckOutTime || undefined,
       });
-      toast.success('Pointage sortie effectue');
+      toast.success(customCheckOutTime ? 'Pointage sortie manuel effectue' : 'Pointage sortie effectue');
+      setCustomCheckOutTime('');
       await fetchData();
     } catch {
       toast.error('Echec du pointage sortie');
@@ -456,28 +463,50 @@ export function InterventionDetailPage() {
 
       {/* Row 3 : Action buttons — single line */}
       <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-1">
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={handleCheckIn}
-          loading={actionLoading}
-          disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
-          className="whitespace-nowrap"
-        >
-          <LogIn size={14} className="mr-1.5" />
-          Pointage entree
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleCheckOut}
-          loading={actionLoading}
-          disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
-          className="whitespace-nowrap"
-        >
-          <LogOut size={14} className="mr-1.5" />
-          Pointage sortie
-        </Button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {admin && (
+            <input
+              type="datetime-local"
+              value={customCheckInTime}
+              onChange={(e) => setCustomCheckInTime(e.target.value)}
+              className="rounded-lg border border-border bg-bg-tertiary px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent w-[170px]"
+              title="Heure custom (admin)"
+            />
+          )}
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleCheckIn}
+            loading={actionLoading}
+            disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
+            className="whitespace-nowrap"
+          >
+            <LogIn size={14} className="mr-1.5" />
+            Pointage entree
+          </Button>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {admin && (
+            <input
+              type="datetime-local"
+              value={customCheckOutTime}
+              onChange={(e) => setCustomCheckOutTime(e.target.value)}
+              className="rounded-lg border border-border bg-bg-tertiary px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent w-[170px]"
+              title="Heure custom (admin)"
+            />
+          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleCheckOut}
+            loading={actionLoading}
+            disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
+            className="whitespace-nowrap"
+          >
+            <LogOut size={14} className="mr-1.5" />
+            Pointage sortie
+          </Button>
+        </div>
         <Button
           variant="secondary"
           size="sm"
