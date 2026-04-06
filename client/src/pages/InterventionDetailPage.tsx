@@ -461,8 +461,8 @@ export function InterventionDetailPage() {
         </div>
       </div>
 
-      {/* Row 3 : Action buttons — single line */}
-      <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-1">
+      {/* Row 3 : Action buttons */}
+      <div className="flex flex-wrap items-center gap-2 mb-8">
         <div className="flex items-center gap-1.5 shrink-0">
           {admin && (
             <input
@@ -544,22 +544,32 @@ export function InterventionDetailPage() {
               <ChevronDown size={14} className="ml-1.5" />
             </Button>
             {statusMenuOpen && (
-              <div className="absolute z-50 bottom-full mb-1 w-44 rounded-lg border border-border bg-bg-secondary shadow-lg">
-                {INTERVENTION_STATUS.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => handleStatusChange(s)}
-                    className={cn(
-                      'w-full text-left px-3 py-2 text-sm hover:bg-bg-tertiary transition-colors',
-                      s === intervention.status
-                        ? 'text-accent font-medium'
-                        : 'text-text-primary',
-                    )}
-                  >
-                    {INTERVENTION_STATUS_LABELS[s]}
-                  </button>
-                ))}
-              </div>
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setStatusMenuOpen(false)} />
+                <div className="fixed z-50 w-44 rounded-lg border border-border bg-bg-secondary shadow-lg" style={{ bottom: 'auto', left: 'auto' }} ref={(el) => {
+                  if (!el) return;
+                  const btn = el.previousElementSibling?.previousElementSibling as HTMLElement;
+                  if (!btn) return;
+                  const rect = btn.getBoundingClientRect();
+                  el.style.top = `${rect.bottom + 4}px`;
+                  el.style.left = `${rect.left}px`;
+                }}>
+                  {INTERVENTION_STATUS.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => handleStatusChange(s)}
+                      className={cn(
+                        'w-full text-left px-3 py-2 text-sm hover:bg-bg-tertiary transition-colors first:rounded-t-lg last:rounded-b-lg',
+                        s === intervention.status
+                          ? 'text-accent font-medium'
+                          : 'text-text-primary',
+                      )}
+                    >
+                      {INTERVENTION_STATUS_LABELS[s]}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}
