@@ -277,6 +277,20 @@ export function InterventionDetailPage() {
     }
   };
 
+  const handleDeleteIntervention = async () => {
+    if (!confirm('Supprimer definitivement cette intervention et toutes ses donnees (photos, timeline, etc.) ?')) return;
+    setActionLoading(true);
+    try {
+      await interventionsApi.delete(interventionId);
+      toast.success('Intervention supprimee');
+      navigate('/');
+    } catch {
+      toast.error('Echec de la suppression');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleSaveObservations = async () => {
     setSavingObs(true);
     try {
@@ -659,6 +673,18 @@ export function InterventionDetailPage() {
               </>
             )}
           </div>
+        )}
+        {admin && (intervention.status === 'cancelled' || intervention.status === 'closed') && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDeleteIntervention}
+            loading={actionLoading}
+            className="!text-red-500 hover:!bg-red-500/10 whitespace-nowrap"
+          >
+            <X size={14} className="mr-1.5" />
+            Supprimer
+          </Button>
         )}
       </div>
 
