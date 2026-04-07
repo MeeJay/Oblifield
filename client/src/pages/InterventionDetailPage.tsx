@@ -30,6 +30,7 @@ import type {
   InterventionPhoto,
   InterventionDocument,
   TimelineEvent,
+  Technician,
   TimelineEventType,
   DocDocument,
 } from '@oblifield/shared';
@@ -41,10 +42,12 @@ import {
 } from '@oblifield/shared';
 import { interventionsApi } from '@/api/interventions.api';
 import { documentsApi } from '@/api/documents.api';
+import { techniciansApi } from '@/api/technicians.api';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/common/Button';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { InterventionSteps } from '@/components/interventions/InterventionSteps';
+import { InterventionMiniMap } from '@/components/interventions/InterventionMiniMap';
 import { InterventionParts } from '@/components/interventions/InterventionParts';
 import { SignaturePanel } from '@/components/interventions/SignaturePanel';
 import { cn } from '@/utils/cn';
@@ -114,6 +117,10 @@ export function InterventionDetailPage() {
   // Admin custom timestamps
   const [customCheckInTime, setCustomCheckInTime] = useState('');
   const [customCheckOutTime, setCustomCheckOutTime] = useState('');
+
+  // Reassign technician
+  const [reassignOpen, setReassignOpen] = useState(false);
+  const [techList, setTechList] = useState<Technician[]>([]);
 
   // Documents state
   const [attachedDocs, setAttachedDocs] = useState<InterventionDocument[]>([]);
@@ -275,6 +282,41 @@ export function InterventionDetailPage() {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleReassign = async (technicianId: number) => {
+    setActionLoading(true);
+    try {
+      await interventionsApi.assign(interventionId, technicianId);
+      toast.success('Technicien reassigne');
+      setReassignOpen(false);
+      await fetchData();
+    } catch {
+      toast.error('Echec de la reassignation');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: number) => {
+    if (!confirm('Supprimer cette photo ?')) return;
+    try {
+      await interventionsApi.deletePhoto(interventionId, photoId);
+      toast.success('Photo supprimee');
+      await fetchData();
+    } catch {
+      toast.error('Echec de la suppression');
+    }
+  };
+
+  const openReassign = async () => {
+    if (techList.length === 0) {
+      try {
+        const list = await techniciansApi.list();
+        setTechList(list);
+      } catch { /* ignore */ }
+    }
+    setReassignOpen(true);
   };
 
   const handleDeleteTimelineEvent = async (eventId: number) => {
@@ -439,7 +481,17 @@ export function InterventionDetailPage() {
           </div>
           <hr className="border-border" />
           <div>
-            <span className="text-[11px] uppercase tracking-wide text-text-muted">Technicien assigne</span>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] uppercase tracking-wide text-text-muted">Technicien assigne</span>
+              {admin && intervention.status !== 'closed' && (
+                <button
+                  onClick={openReassign}
+                  className="text-xs text-accent hover:underline"
+                >
+                  Reassigner
+                </button>
+              )}
+            </div>
             {intervention.assignedTechnicianName ? (
               <p className="text-sm font-medium text-text-primary mt-1">
                 {intervention.assignedTechnicianName}
@@ -450,9 +502,41 @@ export function InterventionDetailPage() {
             ) : (
               <p className="text-sm text-text-muted mt-1">Non assigne</p>
             )}
+            {reassignOpen && (
+              <div className="mt-2 rounded-lg border border-border bg-bg-tertiary p-2 max-h-48 overflow-y-auto">
+                {techList.filter((t) => t.id !== intervention.assignedTechnicianId).map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => handleReassign(t.id)}
+                    className="w-full text-left px-3 py-1.5 text-sm text-text-primary hover:bg-bg-secondary rounded transition-colors"
+                  >
+                    {t.firstName} {t.lastName}
+                    {t.phone && <span className="text-text-muted text-xs ml-1">({t.phone})</span>}
+                  </button>
+                ))}
+                {techList.length === 0 && <p className="text-xs text-text-muted px-3 py-2">Chargement...</p>}
+              </div>
+            )}
           </div>
           <hr className="border-border" />
-          <FieldItem label="Adresse" value={intervention.address ?? '-'} />
+          <div className="flex items-center justify-between">
+            <FieldItem label="Adresse" value={intervention.address ?? '-'} />
+            {admin && !intervention.latitude && (
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch(`/api/geocoding/intervention/${interventionId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                    const body = await res.json();
+                    if (body.success) { toast.success('Geocodage effectue'); await fetchData(); }
+                    else toast.error(body.error || 'Echec du geocodage');
+                  } catch { toast.error('Echec du geocodage'); }
+                }}
+                className="text-xs text-accent hover:underline shrink-0"
+              >
+                <MapPin size={12} className="inline mr-0.5" />Geocoder
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Commentaires internes */}
@@ -531,6 +615,13 @@ export function InterventionDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* MiniMap */}
+      <InterventionMiniMap
+        latitude={intervention.latitude}
+        longitude={intervention.longitude}
+        timeline={timeline}
+      />
 
       {/* Row 3 : Action buttons */}
       {intervention.status === 'closed' && (
@@ -841,9 +932,18 @@ export function InterventionDetailPage() {
             {photos.map((photo) => (
               <div
                 key={photo.id}
-                className="rounded-lg border border-border bg-bg-secondary overflow-hidden cursor-pointer hover:border-accent transition-colors"
+                className="relative rounded-lg border border-border bg-bg-secondary overflow-hidden cursor-pointer hover:border-accent transition-colors group"
                 onClick={() => setLightboxIndex(photos.indexOf(photo))}
               >
+                {admin && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDeletePhoto(photo.id); }}
+                    className="absolute top-1 right-1 z-10 rounded-full bg-black/60 p-1 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Supprimer"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
                 <img
                   src={`/uploads/photos/${photo.filename}`}
                   alt={photo.originalName}

@@ -121,6 +121,10 @@ export const interventionsApi = {
     return res.data.data!;
   },
 
+  async deletePhoto(interventionId: number, photoId: number): Promise<void> {
+    await apiClient.delete(`/interventions/${interventionId}/photos/${photoId}`);
+  },
+
   async getScheduleRange(from: string, to: string): Promise<Intervention[]> {
     const res = await apiClient.get<ApiResponse<Intervention[]>>('/interventions/schedule-range', { params: { from, to } });
     return res.data.data!;

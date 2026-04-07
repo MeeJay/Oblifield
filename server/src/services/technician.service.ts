@@ -21,6 +21,7 @@ interface TechnicianRow {
   last_latitude: number | null;
   last_longitude: number | null;
   last_location_at: Date | null;
+  preferred_language: string;
   specialties: string[] | string | null;
   tenant_id: number;
   created_at: Date;
@@ -69,6 +70,7 @@ function rowToTechnician(row: TechnicianRow): Technician {
     lastLatitude: row.last_latitude,
     lastLongitude: row.last_longitude,
     lastLocationAt: row.last_location_at ? row.last_location_at.toISOString() : null,
+    preferredLanguage: row.preferred_language || 'fr',
     specialties: parseSpecialties(row.specialties),
     tenantId: row.tenant_id,
     createdAt: row.created_at.toISOString(),
@@ -101,6 +103,7 @@ export const technicianService = {
       actionRadiusKm?: number | null;
       type?: string | null;
       typeOther?: string | null;
+      preferredLanguage?: string;
       specialties?: string[];
     },
     tenantId: number,
@@ -119,6 +122,7 @@ export const technicianService = {
         action_radius_km: data.actionRadiusKm ?? null,
         type: data.type ?? null,
         type_other: data.typeOther ?? null,
+        preferred_language: data.preferredLanguage ?? 'fr',
         specialties: JSON.stringify(data.specialties ?? []),
         tenant_id: tenantId,
       })
@@ -158,6 +162,7 @@ export const technicianService = {
       actionRadiusKm: number | null;
       type: string | null;
       typeOther: string | null;
+      preferredLanguage: string;
       specialties: string[];
       rating: number | null;
       currentInterventionId: number | null;
@@ -165,6 +170,7 @@ export const technicianService = {
   ): Promise<Technician | null> {
     const updateData: Record<string, unknown> = { updated_at: new Date() };
 
+    if (data.preferredLanguage !== undefined) updateData.preferred_language = data.preferredLanguage;
     if (data.firstName !== undefined) updateData.first_name = data.firstName;
     if (data.lastName !== undefined) updateData.last_name = data.lastName;
     if (data.company !== undefined) updateData.company = data.company;

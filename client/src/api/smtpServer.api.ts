@@ -9,6 +9,11 @@ export interface CreateSmtpServerRequest {
   username: string;
   password: string;
   fromAddress: string;
+  authType?: 'basic' | 'oauth365';
+  oauthClientId?: string;
+  oauthClientSecret?: string;
+  oauthTenantId?: string;
+  oauthRefreshToken?: string;
 }
 
 export interface UpdateSmtpServerRequest {
@@ -19,6 +24,11 @@ export interface UpdateSmtpServerRequest {
   username?: string;
   password?: string;
   fromAddress?: string;
+  authType?: 'basic' | 'oauth365';
+  oauthClientId?: string;
+  oauthClientSecret?: string;
+  oauthTenantId?: string;
+  oauthRefreshToken?: string;
 }
 
 export const smtpServerApi = {

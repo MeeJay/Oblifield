@@ -35,6 +35,7 @@ export const appConfigService = {
       company_name: map['company_name'] || 'Oblifield',
       company_logo_path: map['company_logo_path'] || null,
       tech_panel_url: map['tech_panel_url'] || null,
+      email_notification_smtp_server_id: map['email_notification_smtp_server_id'] ? parseInt(map['email_notification_smtp_server_id'], 10) : null,
       pdf_color_primary: map['pdf_color_primary'] || null,
       pdf_color_accent_line: map['pdf_color_accent_line'] || null,
       pdf_color_section_bg: map['pdf_color_section_bg'] || null,

@@ -60,6 +60,7 @@ interface TechForm {
   company: string;
   phone: string;
   email: string;
+  preferredLanguage: string;
   address: string;
   postalCode: string;
   city: string;
@@ -77,6 +78,7 @@ const emptyForm: TechForm = {
   company: '',
   phone: '',
   email: '',
+  preferredLanguage: 'fr',
   address: '',
   postalCode: '',
   city: '',
@@ -144,6 +146,7 @@ export function TechnicianManagePage() {
       company: tech.company ?? '',
       phone: tech.phone ?? '',
       email: tech.email ?? '',
+      preferredLanguage: tech.preferredLanguage || 'fr',
       address: tech.address ?? '',
       postalCode: tech.postalCode ?? '',
       city: tech.city ?? '',
@@ -182,6 +185,7 @@ export function TechnicianManagePage() {
         company: form.company.trim() || undefined,
         phone: form.phone.trim() || undefined,
         email: form.email.trim() || undefined,
+        preferredLanguage: form.preferredLanguage,
         address: form.address.trim() || undefined,
         postalCode: form.postalCode.trim() || undefined,
         city: form.city.trim() || undefined,
@@ -260,6 +264,9 @@ export function TechnicianManagePage() {
                   Telephone
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">
+                  Email
+                </th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Type
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">
@@ -295,6 +302,9 @@ export function TechnicianManagePage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-text-secondary">
                       {tech.phone ?? '-'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-text-secondary truncate max-w-[180px]">
+                      {tech.email ?? '-'}
                     </td>
                     <td className="px-4 py-3 text-sm text-text-secondary">
                       {tech.type ? (tech.type === 'other' && tech.typeOther ? tech.typeOther : TYPE_LABELS[tech.type] ?? tech.type) : '-'}
@@ -392,6 +402,19 @@ export function TechnicianManagePage() {
                     onChange={handleChange}
                     type="email"
                   />
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Langue</label>
+                    <select
+                      value={form.preferredLanguage}
+                      onChange={(e) => setForm((f) => ({ ...f, preferredLanguage: e.target.value }))}
+                      className="w-full rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary"
+                    >
+                      <option value="fr">Francais</option>
+                      <option value="en">English</option>
+                      <option value="es">Espanol</option>
+                      <option value="de">Deutsch</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 

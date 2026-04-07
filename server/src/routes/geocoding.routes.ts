@@ -98,4 +98,48 @@ router.post('/batch', requireAdmin, async (req, res) => {
   }
 });
 
+// POST /geocoding/intervention/:id — geocode a single intervention by its address
+router.post('/intervention/:id', requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const intv = await db('interventions').where({ id }).select('id', 'title', 'address', 'site_id').first();
+    if (!intv) return res.status(404).json({ success: false, error: 'Intervention not found' });
+
+    let addr = intv.address;
+    if (!addr && intv.site_id) {
+      const site = await db('sites').where({ id: intv.site_id }).select('address', 'postal_code', 'city', 'country').first();
+      if (site) addr = geocodingService.buildAddressString([site.address, site.postal_code, site.city, site.country]);
+    }
+    if (!addr) return res.status(400).json({ success: false, error: 'Aucune adresse disponible' });
+
+    const result = await geocodingService.geocode(addr);
+    if (!result) return res.status(400).json({ success: false, error: `Adresse non trouvee : ${addr}` });
+
+    await db('interventions').where({ id }).update({ latitude: result.latitude, longitude: result.longitude });
+    res.json({ success: true, data: { latitude: result.latitude, longitude: result.longitude } });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /geocoding/technician/:id — geocode a single technician by their address
+router.post('/technician/:id', requireAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const tech = await db('technicians').where({ id }).select('id', 'address', 'postal_code', 'city', 'country').first();
+    if (!tech) return res.status(404).json({ success: false, error: 'Technician not found' });
+
+    const addr = geocodingService.buildAddressString([tech.address, tech.postal_code, tech.city, tech.country]);
+    if (!addr) return res.status(400).json({ success: false, error: 'Aucune adresse disponible' });
+
+    const result = await geocodingService.geocode(addr);
+    if (!result) return res.status(400).json({ success: false, error: `Adresse non trouvee : ${addr}` });
+
+    await db('technicians').where({ id }).update({ last_latitude: result.latitude, last_longitude: result.longitude });
+    res.json({ success: true, data: { latitude: result.latitude, longitude: result.longitude } });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;

@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
-import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
@@ -9,22 +8,9 @@ import { interventionService } from '../services/intervention.service';
 import { timelineService } from '../services/timeline.service';
 import { interventionStepService } from '../services/interventionStep.service';
 import { appConfigService } from '../services/appConfig.service';
+import { signLink, verifyLink } from '../utils/techPanelLink';
 
 const router = Router();
-
-// ── HMAC link signing (uid:timestamp → hex signature) ───────────────────────
-const LINK_SECRET = process.env.SESSION_SECRET || 'fallback-secret';
-const LINK_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-
-function signLink(uid: string, ts: number): string {
-  return crypto.createHmac('sha256', LINK_SECRET).update(`${uid}:${ts}`).digest('hex').slice(0, 16);
-}
-
-function verifyLink(uid: string, ts: number, sig: string): boolean {
-  if (Date.now() - ts > LINK_EXPIRY_MS) return false;
-  const expected = signLink(uid, ts);
-  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
-}
 
 // ── Rate limiter for lookup ─────────────────────────────────────────────────
 const lookupLimiter = rateLimit({

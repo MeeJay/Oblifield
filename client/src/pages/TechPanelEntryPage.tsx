@@ -19,7 +19,6 @@ export function TechPanelEntryPage() {
     e.preventDefault();
     if (!uid.trim()) return;
 
-    const today = new Date().toISOString().substring(0, 10);
     setLoading(true);
     try {
       const result = await techPanelApi.lookup(uid.trim());

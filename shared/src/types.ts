@@ -278,8 +278,24 @@ export interface Technician {
   lastLatitude: number | null;
   lastLongitude: number | null;
   lastLocationAt: string | null;
+  preferredLanguage: string;
   specialties: string[];
   tenantId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================
+// Email Template types
+// ============================================
+export interface EmailTemplate {
+  id: number;
+  slug: string;
+  language: string;
+  subject: string;
+  bodyHtml: string;
+  enabled: boolean;
+  tenantId: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -513,6 +529,9 @@ export interface SmtpServer {
   secure: boolean;
   username: string;
   fromAddress: string;
+  authType: 'basic' | 'oauth365';
+  oauthClientId: string | null;
+  oauthTenantId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -535,6 +554,7 @@ export interface AppConfig {
   company_name: string;
   company_logo_path: string | null;
   tech_panel_url: string | null;
+  email_notification_smtp_server_id: number | null;
   // PDF report colors
   pdf_color_primary: string | null;
   pdf_color_accent_line: string | null;

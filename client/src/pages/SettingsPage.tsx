@@ -4,11 +4,12 @@ import { SettingsPanel } from '@/components/settings/SettingsPanel';
 import { useAuthStore } from '@/store/authStore';
 import { smtpServerApi, type CreateSmtpServerRequest } from '@/api/smtpServer.api';
 import { appConfigApi } from '@/api/appConfig.api';
+import { emailTemplateApi } from '@/api/emailTemplate.api';
 import { systemApi, type SystemInfo } from '@/api/system.api';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Checkbox } from '@/components/ui/Checkbox';
-import type { SmtpServer, AppConfig, ObligateConfig } from '@oblifield/shared';
+import type { SmtpServer, AppConfig, ObligateConfig, EmailTemplate } from '@oblifield/shared';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/cn';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +33,11 @@ interface SmtpForm {
   username: string;
   password: string;
   fromAddress: string;
+  authType: 'basic' | 'oauth365';
+  oauthClientId: string;
+  oauthClientSecret: string;
+  oauthTenantId: string;
+  oauthRefreshToken: string;
 }
 
 const emptySmtpForm = (): SmtpForm => ({
@@ -42,7 +48,24 @@ const emptySmtpForm = (): SmtpForm => ({
   username: '',
   password: '',
   fromAddress: '',
+  authType: 'basic',
+  oauthClientId: '',
+  oauthClientSecret: '',
+  oauthTenantId: '',
+  oauthRefreshToken: '',
+
 });
+
+const SLUG_LABELS: Record<string, string> = {
+  intervention_assigned: 'Assignation',
+  intervention_checkin: 'Confirmation pointage',
+  intervention_closed: 'Cloture',
+};
+
+const LANG_LABELS: Record<string, string> = {
+  fr: 'Francais',
+  en: 'English',
+};
 
 export function SettingsPage() {
   const { t } = useTranslation();
@@ -57,6 +80,15 @@ export function SettingsPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [smtpSaving, setSmtpSaving] = useState(false);
   const [testingId, setTestingId] = useState<number | null>(null);
+
+  // ── Email Templates ──
+  const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
+  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
+  const [tplSubject, setTplSubject] = useState('');
+  const [tplBody, setTplBody] = useState('');
+  const [tplSaving, setTplSaving] = useState(false);
+  const [tplPreview, setTplPreview] = useState<string | null>(null);
+  const [emailSmtpServerId, setEmailSmtpServerId] = useState('');
 
   // ── App Config (2FA + company name) ──
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
@@ -97,10 +129,12 @@ export function SettingsPage() {
     setSystemInfoLoading(true);
     systemApi.getInfo().then(setSystemInfo).catch(() => {}).finally(() => setSystemInfoLoading(false));
     smtpServerApi.list().then(setServers).catch(() => {});
+    emailTemplateApi.list().then(setEmailTemplates).catch(() => {});
     appConfigApi.getConfig().then((cfg) => {
       setAppConfig(cfg);
       setCompanyName(cfg.company_name || '');
       setTechPanelUrl(cfg.tech_panel_url || '');
+      setEmailSmtpServerId(cfg.email_notification_smtp_server_id ? String(cfg.email_notification_smtp_server_id) : '');
       if (cfg.company_logo_path) {
         const logoFilename = cfg.company_logo_path.split('/').pop();
         if (logoFilename) setLogoUrl(`/uploads/logos/${logoFilename}`);
@@ -154,6 +188,11 @@ export function SettingsPage() {
       username: server.username,
       password: '',
       fromAddress: server.fromAddress,
+      authType: server.authType || 'basic',
+      oauthClientId: server.oauthClientId || '',
+      oauthClientSecret: '',
+      oauthTenantId: server.oauthTenantId || '',
+      oauthRefreshToken: '',
     });
     setShowPassword(false);
     setSmtpMode('edit');
@@ -170,12 +209,17 @@ export function SettingsPage() {
     try {
       const data: CreateSmtpServerRequest = {
         name: smtpForm.name,
-        host: smtpForm.host,
-        port: parseInt(smtpForm.port, 10),
-        secure: smtpForm.secure,
+        host: smtpForm.authType === 'oauth365' ? 'smtp.office365.com' : smtpForm.host,
+        port: smtpForm.authType === 'oauth365' ? 587 : parseInt(smtpForm.port, 10),
+        secure: smtpForm.authType === 'oauth365' ? false : smtpForm.secure,
         username: smtpForm.username,
         password: smtpForm.password,
         fromAddress: smtpForm.fromAddress,
+        authType: smtpForm.authType,
+        oauthClientId: smtpForm.oauthClientId || undefined,
+        oauthClientSecret: smtpForm.oauthClientSecret || undefined,
+        oauthTenantId: smtpForm.oauthTenantId || undefined,
+        oauthRefreshToken: smtpForm.oauthRefreshToken || undefined,
       };
       if (smtpMode === 'create') {
         const created = await smtpServerApi.create(data);
@@ -548,6 +592,141 @@ export function SettingsPage() {
 
       {admin && (
         <>
+          {/* ── Intervention Emails ── */}
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold text-text-primary mb-4">Emails d'intervention</h2>
+            <div className="rounded-lg border border-border bg-bg-secondary p-5 space-y-4">
+              {/* SMTP server selector for emails */}
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Serveur SMTP pour les emails</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={emailSmtpServerId}
+                    onChange={(e) => setEmailSmtpServerId(e.target.value)}
+                    className="flex-1 rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary"
+                  >
+                    <option value="">-- Non configure --</option>
+                    {servers.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name} ({s.authType === 'oauth365' ? 'OAuth 365' : s.host})</option>
+                    ))}
+                  </select>
+                  <Button size="sm" onClick={async () => {
+                    try {
+                      await appConfigApi.setConfig('email_notification_smtp_server_id', emailSmtpServerId || '');
+                      toast.success('Enregistre');
+                    } catch { toast.error('Erreur'); }
+                  }}>Enregistrer</Button>
+                </div>
+              </div>
+
+              {/* Templates table */}
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Templates</label>
+                <p className="text-xs text-text-muted mb-3">
+                  Variables disponibles : {'{{technicianName}}'}, {'{{interventionTitle}}'}, {'{{interventionUid}}'}, {'{{clientName}}'}, {'{{siteName}}'}, {'{{scheduledAt}}'}, {'{{techPanelLink}}'}, {'{{companyName}}'}
+                </p>
+                <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
+                  {emailTemplates.map((tpl) => (
+                    <div key={tpl.id} className="flex items-center justify-between px-4 py-2.5 bg-bg-tertiary">
+                      <div className="flex items-center gap-3">
+                        <span className={cn('inline-block w-2 h-2 rounded-full', tpl.enabled ? 'bg-green-500' : 'bg-gray-500')} />
+                        <span className="text-sm font-medium text-text-primary">{SLUG_LABELS[tpl.slug] || tpl.slug}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-bg-secondary text-text-muted">{LANG_LABELS[tpl.language] || tpl.language}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => {
+                          setEditingTemplate(tpl);
+                          setTplSubject(tpl.subject);
+                          setTplBody(tpl.bodyHtml);
+                          setTplPreview(null);
+                        }}>
+                          <Pencil size={13} />
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={async () => {
+                          try {
+                            await emailTemplateApi.update(tpl.id, { enabled: !tpl.enabled });
+                            setEmailTemplates((prev) => prev.map((t) => t.id === tpl.id ? { ...t, enabled: !t.enabled } : t));
+                            toast.success(tpl.enabled ? 'Desactive' : 'Active');
+                          } catch { toast.error('Erreur'); }
+                        }}>
+                          {tpl.enabled ? <Eye size={13} /> : <EyeOff size={13} />}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {emailTemplates.length === 0 && (
+                    <div className="px-4 py-6 text-center text-sm text-text-muted">Aucun template. Executez la migration pour generer les templates par defaut.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Template edit modal */}
+            {editingTemplate && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setEditingTemplate(null)}>
+                <div className="w-full max-w-2xl rounded-xl border border-border bg-bg-secondary shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-between p-5 border-b border-border">
+                    <h3 className="font-semibold text-text-primary">
+                      {SLUG_LABELS[editingTemplate.slug] || editingTemplate.slug} — {LANG_LABELS[editingTemplate.language] || editingTemplate.language}
+                    </h3>
+                    <button onClick={() => setEditingTemplate(null)} className="text-text-muted hover:text-text-primary"><X size={18} /></button>
+                  </div>
+                  <div className="p-5 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-text-secondary mb-1">Sujet</label>
+                      <input
+                        value={tplSubject}
+                        onChange={(e) => setTplSubject(e.target.value)}
+                        className="w-full rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-text-secondary mb-1">Corps HTML</label>
+                      <textarea
+                        value={tplBody}
+                        onChange={(e) => setTplBody(e.target.value)}
+                        rows={12}
+                        className="w-full rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary font-mono"
+                      />
+                    </div>
+                    {tplPreview && (
+                      <div>
+                        <label className="block text-sm font-medium text-text-secondary mb-1">Apercu</label>
+                        <div className="rounded-lg border border-border bg-white p-4" dangerouslySetInnerHTML={{ __html: tplPreview }} />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 justify-end">
+                      <Button size="sm" variant="secondary" onClick={async () => {
+                        try {
+                          const { html } = await emailTemplateApi.preview(editingTemplate.id);
+                          setTplPreview(html);
+                        } catch { toast.error('Erreur de preview'); }
+                      }}>Apercu</Button>
+                      <Button size="sm" variant="secondary" onClick={async () => {
+                        const email = prompt('Adresse email de test :');
+                        if (!email) return;
+                        try {
+                          await emailTemplateApi.testSend(editingTemplate.id, email);
+                          toast.success('Email de test envoye');
+                        } catch (err: any) { toast.error(err?.response?.data?.error || 'Echec de l\'envoi'); }
+                      }}>Envoyer un test</Button>
+                      <Button size="sm" variant="primary" loading={tplSaving} className="!bg-green-600 hover:!bg-green-700" onClick={async () => {
+                        setTplSaving(true);
+                        try {
+                          const updated = await emailTemplateApi.update(editingTemplate.id, { subject: tplSubject, bodyHtml: tplBody });
+                          setEmailTemplates((prev) => prev.map((t) => t.id === updated.id ? updated : t));
+                          setEditingTemplate(null);
+                          toast.success('Template enregistre');
+                        } catch { toast.error('Erreur'); }
+                        finally { setTplSaving(false); }
+                      }}>Enregistrer</Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* ── SMTP Servers ── */}
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -794,54 +973,109 @@ export function SettingsPage() {
                 placeholder={t('settings.smtp.namePlaceholder')}
                 required
               />
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Type d'authentification</label>
+                <select
+                  value={smtpForm.authType}
+                  onChange={(e) => setSmtpForm((f) => ({ ...f, authType: e.target.value as 'basic' | 'oauth365' }))}
+                  className="w-full rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary"
+                >
+                  <option value="basic">SMTP classique</option>
+                  <option value="oauth365">OAuth Microsoft 365</option>
+                </select>
+              </div>
+              {smtpForm.authType === 'basic' ? (
+                <>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <Input
+                        label={t('settings.smtp.hostLabel')}
+                        value={smtpForm.host}
+                        onChange={(e) => setSmtpForm((f) => ({ ...f, host: e.target.value }))}
+                        placeholder={t('settings.smtp.hostPlaceholder')}
+                        required
+                      />
+                    </div>
+                    <Input
+                      label={t('settings.smtp.portLabel')}
+                      type="number"
+                      value={smtpForm.port}
+                      onChange={(e) => setSmtpForm((f) => ({ ...f, port: e.target.value }))}
+                      placeholder={t('settings.smtp.portPlaceholder')}
+                      required
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer select-none">
+                    <Checkbox
+                      checked={smtpForm.secure}
+                      onCheckedChange={(v) => setSmtpForm((f) => ({ ...f, secure: v }))}
+                    />
+                    {t('settings.smtp.tlsLabel')}
+                  </label>
                   <Input
-                    label={t('settings.smtp.hostLabel')}
-                    value={smtpForm.host}
-                    onChange={(e) => setSmtpForm((f) => ({ ...f, host: e.target.value }))}
-                    placeholder={t('settings.smtp.hostPlaceholder')}
+                    label={t('settings.smtp.usernameLabel')}
+                    value={smtpForm.username}
+                    onChange={(e) => setSmtpForm((f) => ({ ...f, username: e.target.value }))}
                     required
                   />
-                </div>
-                <Input
-                  label={t('settings.smtp.portLabel')}
-                  type="number"
-                  value={smtpForm.port}
-                  onChange={(e) => setSmtpForm((f) => ({ ...f, port: e.target.value }))}
-                  placeholder={t('settings.smtp.portPlaceholder')}
-                  required
-                />
-              </div>
-              <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer select-none">
-                <Checkbox
-                  checked={smtpForm.secure}
-                  onCheckedChange={(v) => setSmtpForm((f) => ({ ...f, secure: v }))}
-                />
-                {t('settings.smtp.tlsLabel')}
-              </label>
-              <Input
-                label={t('settings.smtp.usernameLabel')}
-                value={smtpForm.username}
-                onChange={(e) => setSmtpForm((f) => ({ ...f, username: e.target.value }))}
-                required
-              />
-              <div className="relative">
-                <Input
-                  label={smtpMode === 'edit' ? t('settings.smtp.passwordEditLabel') : t('settings.smtp.passwordLabel')}
-                  type={showPassword ? 'text' : 'password'}
-                  value={smtpForm.password}
-                  onChange={(e) => setSmtpForm((f) => ({ ...f, password: e.target.value }))}
-                  required={smtpMode === 'create'}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2.5 bottom-2 text-text-muted hover:text-text-primary"
-                >
-                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                </button>
-              </div>
+                  <div className="relative">
+                    <Input
+                      label={smtpMode === 'edit' ? t('settings.smtp.passwordEditLabel') : t('settings.smtp.passwordLabel')}
+                      type={showPassword ? 'text' : 'password'}
+                      value={smtpForm.password}
+                      onChange={(e) => setSmtpForm((f) => ({ ...f, password: e.target.value }))}
+                      required={smtpMode === 'create'}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-2.5 bottom-2 text-text-muted hover:text-text-primary"
+                    >
+                      {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Input
+                    label="Email (utilisateur Office 365)"
+                    value={smtpForm.username}
+                    onChange={(e) => setSmtpForm((f) => ({ ...f, username: e.target.value }))}
+                    placeholder="user@company.com"
+                    required
+                  />
+                  <Input
+                    label="Azure AD Tenant ID"
+                    value={smtpForm.oauthTenantId}
+                    onChange={(e) => setSmtpForm((f) => ({ ...f, oauthTenantId: e.target.value }))}
+                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    required
+                  />
+                  <Input
+                    label="Client ID (Application)"
+                    value={smtpForm.oauthClientId}
+                    onChange={(e) => setSmtpForm((f) => ({ ...f, oauthClientId: e.target.value }))}
+                    required
+                  />
+                  <Input
+                    label="Client Secret"
+                    type="password"
+                    value={smtpForm.oauthClientSecret}
+                    onChange={(e) => setSmtpForm((f) => ({ ...f, oauthClientSecret: e.target.value }))}
+                    required={smtpMode === 'create'}
+                  />
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-1">Refresh Token</label>
+                    <textarea
+                      value={smtpForm.oauthRefreshToken}
+                      onChange={(e) => setSmtpForm((f) => ({ ...f, oauthRefreshToken: e.target.value }))}
+                      rows={3}
+                      className="w-full rounded-lg border border-border bg-bg-tertiary px-3 py-2 text-sm text-text-primary font-mono"
+                      required={smtpMode === 'create'}
+                    />
+                  </div>
+                </>
+              )}
               <Input
                 label={t('settings.smtp.fromLabel')}
                 type="email"

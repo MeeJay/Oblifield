@@ -10,6 +10,7 @@ import profileRoutes from './profile.routes';
 import teamsRoutes from './teams.routes';
 import importExportRoutes from './importExport.routes';
 import smtpServerRoutes from './smtpServer.routes';
+import emailTemplateRoutes from './emailTemplate.routes';
 import appConfigRoutes from './appConfig.routes';
 import twoFactorRoutes from './twoFactor.routes';
 import { liveAlertRouter } from './liveAlert.routes';
@@ -78,6 +79,7 @@ tenantRouter.use('/profile', profileRoutes);
 tenantRouter.use('/teams', teamsRoutes);
 tenantRouter.use('/admin', importExportRoutes);
 tenantRouter.use('/admin/smtp-servers', smtpServerRoutes);
+tenantRouter.use('/admin/email-templates', emailTemplateRoutes);
 
 router.use('/', tenantRouter);
 

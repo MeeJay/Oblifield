@@ -18,6 +18,7 @@ import { INTERVENTION_STATUS_LABELS } from '@oblifield/shared';
 import { techniciansApi } from '@/api/technicians.api';
 import { interventionsApi } from '@/api/interventions.api';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { TechnicianMiniMap } from '@/components/technicians/TechnicianMiniMap';
 import { cn } from '@/utils/cn';
 import toast from 'react-hot-toast';
 
@@ -234,6 +235,31 @@ export function TechnicianDetailPage() {
           value={technician.actionRadiusKm ? `${technician.actionRadiusKm} km` : '-'}
         />
       </div>
+
+      {/* MiniMap with action radius */}
+      <TechnicianMiniMap
+        latitude={technician.lastLatitude}
+        longitude={technician.lastLongitude}
+        actionRadiusKm={technician.actionRadiusKm}
+        name={`${technician.firstName} ${technician.lastName}`}
+      />
+      {!technician.lastLatitude && addressStr && (
+        <div className="mb-6">
+          <button
+            onClick={async () => {
+              try {
+                const res = await fetch(`/api/geocoding/technician/${technician.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                const body = await res.json();
+                if (body.success) { toast.success('Geocodage effectue'); window.location.reload(); }
+                else toast.error(body.error || 'Echec du geocodage');
+              } catch { toast.error('Echec du geocodage'); }
+            }}
+            className="text-xs text-accent hover:underline"
+          >
+            <MapPin size={12} className="inline mr-0.5" />Geocoder l'adresse du technicien
+          </button>
+        </div>
+      )}
 
       {/* Rating card */}
       <div className="rounded-lg border border-border bg-bg-secondary p-4 mb-6">

@@ -12,11 +12,15 @@ export const smtpServerController = {
 
   async create(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { name, host, port, secure, username, password, fromAddress } = req.body;
-      if (!name || !host || !port || !username || !password || !fromAddress) {
+      const { name, host, port, secure, username, password, fromAddress, authType, oauthClientId, oauthClientSecret, oauthTenantId, oauthRefreshToken } = req.body;
+      if (!name || !username || !fromAddress) {
         throw new AppError(400, 'Missing required fields');
       }
-      const server = await smtpServerService.create({ name, host, port: Number(port), secure: Boolean(secure), username, password, fromAddress, tenantId: req.tenantId });
+      const server = await smtpServerService.create({
+        name, host: host || 'smtp.office365.com', port: Number(port) || 587, secure: Boolean(secure), username, password: password || '',
+        fromAddress, tenantId: req.tenantId,
+        authType, oauthClientId, oauthClientSecret, oauthTenantId, oauthRefreshToken,
+      });
       res.status(201).json({ success: true, data: server });
     } catch (err) { next(err); }
   },
@@ -24,7 +28,7 @@ export const smtpServerController = {
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = parseInt(req.params.id, 10);
-      const { name, host, port, secure, username, password, fromAddress } = req.body;
+      const { name, host, port, secure, username, password, fromAddress, authType, oauthClientId, oauthClientSecret, oauthTenantId, oauthRefreshToken } = req.body;
       const server = await smtpServerService.update(id, {
         ...(name !== undefined && { name }),
         ...(host !== undefined && { host }),
@@ -33,6 +37,11 @@ export const smtpServerController = {
         ...(username !== undefined && { username }),
         ...(password !== undefined && { password }),
         ...(fromAddress !== undefined && { fromAddress }),
+        ...(authType !== undefined && { authType }),
+        ...(oauthClientId !== undefined && { oauthClientId }),
+        ...(oauthClientSecret !== undefined && { oauthClientSecret }),
+        ...(oauthTenantId !== undefined && { oauthTenantId }),
+        ...(oauthRefreshToken !== undefined && { oauthRefreshToken }),
       });
       if (!server) throw new AppError(404, 'SMTP server not found');
       res.json({ success: true, data: server });
