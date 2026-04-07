@@ -222,6 +222,9 @@ export function InterventionListPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-bg-tertiary border-b border-border">
+                <th className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider">
+                  UID
+                </th>
                 <th
                   className="text-left px-4 py-3 text-xs font-medium text-text-secondary uppercase tracking-wider cursor-pointer select-none"
                   onClick={() => toggleSort('title')}
@@ -273,6 +276,9 @@ export function InterventionListPage() {
                   onClick={() => navigate(`/intervention/${iv.id}`)}
                   className="bg-bg-secondary hover:bg-bg-tertiary transition-colors cursor-pointer"
                 >
+                  <td className="px-4 py-3 text-xs font-mono text-text-muted">
+                    {iv.uid}
+                  </td>
                   <td className="px-4 py-3 text-sm font-medium text-text-primary">
                     {iv.title}
                   </td>

@@ -339,7 +339,7 @@ export function TechPanelPage() {
         {/* ── Header ── */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <img src="/api/tech-panel/logo" alt="" className="h-8 max-w-[120px] object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+            <img src="/api/tech-panel/logo" alt="" className="h-16 max-w-[240px] object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">TechPanel</span>
           </div>
           {statusBadge(intervention.status)}
