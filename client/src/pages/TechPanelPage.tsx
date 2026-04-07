@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { techPanelApi, type TechPanelDetails } from '@/api/techPanel.api';
 import type { InterventionStep, InterventionSignature } from '@oblifield/shared';
 import toast, { Toaster } from 'react-hot-toast';
@@ -150,6 +150,7 @@ function SignatureSection({
 export function TechPanelPage() {
   const { uid } = useParams<{ uid: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [data, setData] = useState<TechPanelDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [observations, setObservations] = useState('');
@@ -161,7 +162,6 @@ export function TechPanelPage() {
   });
   const photoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const obsTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const fetchDetails = useCallback(async () => {
     if (!uid) return;
@@ -178,12 +178,14 @@ export function TechPanelPage() {
   }, [uid, navigate]);
 
   useEffect(() => {
+    // Accept date from URL query param, sessionStorage, or default to today
+    const urlDate = searchParams.get('date');
+    if (urlDate) sessionStorage.setItem('tech-panel-date', urlDate);
     if (!sessionStorage.getItem('tech-panel-date')) {
-      navigate('/tech');
-      return;
+      sessionStorage.setItem('tech-panel-date', new Date().toISOString().slice(0, 10));
     }
     fetchDetails();
-  }, [fetchDetails, navigate]);
+  }, [fetchDetails, searchParams]);
 
   function toggleSection(key: string) {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -231,18 +233,12 @@ export function TechPanelPage() {
     } catch (err: any) { toast.error(err.message); }
   }
 
-  // ── Observations auto-save ──
-  function handleObsChange(val: string) {
-    setObservations(val);
-    if (obsTimerRef.current) clearTimeout(obsTimerRef.current);
-    obsTimerRef.current = setTimeout(() => saveObservations(val), 1500);
-  }
-
-  async function saveObservations(text?: string) {
+  // ── Observations ──
+  async function saveObservations() {
     if (!uid) return;
     setObsSaving(true);
     try {
-      await techPanelApi.saveObservations(uid, text ?? observations);
+      await techPanelApi.saveObservations(uid, observations);
       toast.success('Observations enregistrees', { id: 'obs-save' });
     } catch (err: any) { toast.error(err.message); }
     finally { setObsSaving(false); }
@@ -449,21 +445,19 @@ export function TechPanelPage() {
         <Section id="observations" title="Observations" icon={<FileText size={16} className="text-yellow-400" />}>
           <textarea
             value={observations}
-            onChange={(e) => handleObsChange(e.target.value)}
-            onBlur={() => saveObservations()}
+            onChange={(e) => setObservations(e.target.value)}
             disabled={isDone}
-            rows={4}
+            rows={8}
             placeholder="Decrivez vos observations sur le terrain..."
             className="w-full rounded-lg border border-gray-600 bg-[#0f1117] px-4 py-3 text-base text-gray-100 placeholder:text-gray-500 focus:border-blue-500 outline-none resize-y"
           />
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-xs text-gray-500">{obsSaving ? 'Enregistrement...' : 'Auto-sauvegarde activee'}</span>
+          <div className="flex justify-end mt-2">
             <button
               onClick={() => saveObservations()}
               disabled={isDone || obsSaving}
               className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40 transition-colors"
             >
-              Enregistrer
+              {obsSaving ? 'Enregistrement...' : 'Enregistrer'}
             </button>
           </div>
         </Section>
@@ -546,7 +540,7 @@ export function TechPanelPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-600 pb-4">
-          Powered by Oblifield
+          Powered by <a href="https://field.obli.tools" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300">Oblifield</a>
         </p>
       </div>
     </div>

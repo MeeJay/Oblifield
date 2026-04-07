@@ -14,7 +14,7 @@ const router = Router();
 // ── Rate limiter for lookup ─────────────────────────────────────────────────
 const lookupLimiter = rateLimit({
   windowMs: 60_000,
-  max: 5,
+  max: 3,
   message: { success: false, error: 'Trop de tentatives. Reessayez dans une minute.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -102,6 +102,19 @@ router.get('/logo', async (_req, res) => {
       return res.status(404).json({ success: false, error: 'No logo configured' });
     }
     res.sendFile(path.resolve(logoPath));
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ── Photo serving (no auth — filename is opaque, must be before middleware) ──
+router.get('/:uid/photos/:filename', async (req, res) => {
+  try {
+    const filePath = path.resolve('/app/uploads/photos', req.params.filename);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, error: 'Photo not found' });
+    }
+    res.sendFile(filePath);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -261,19 +274,6 @@ router.post('/:uid/photos', async (req, res) => {
         });
       }
     });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// ── GET /tech-panel/:uid/photos/:filename ───────────────────────────────────
-router.get('/:uid/photos/:filename', async (req, res) => {
-  try {
-    const filePath = path.resolve('/app/uploads/photos', req.params.filename);
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ success: false, error: 'Photo not found' });
-    }
-    res.sendFile(filePath);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }

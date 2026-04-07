@@ -62,6 +62,7 @@ export function SettingsPage() {
   const [appConfig, setAppConfig] = useState<AppConfig | null>(null);
   const [configSaving, setConfigSaving] = useState(false);
   const [companyName, setCompanyName] = useState('');
+  const [techPanelUrl, setTechPanelUrl] = useState('');
   const [companySaving, setCompanySaving] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
@@ -99,6 +100,7 @@ export function SettingsPage() {
     appConfigApi.getConfig().then((cfg) => {
       setAppConfig(cfg);
       setCompanyName(cfg.company_name || '');
+      setTechPanelUrl(cfg.tech_panel_url || '');
       if (cfg.company_logo_path) {
         const logoFilename = cfg.company_logo_path.split('/').pop();
         if (logoFilename) setLogoUrl(`/uploads/logos/${logoFilename}`);
@@ -288,6 +290,41 @@ export function SettingsPage() {
               >
                 {t('common.save', 'Enregistrer')}
               </Button>
+            </div>
+
+            {/* TechPanel URL */}
+            <div className="mt-5 pt-5 border-t border-border">
+              <p className="text-sm text-text-muted mb-3">
+                URL du portail technicien (ex: https://techpanel.binaryhearts.me). Permet de generer les liens directs pour les techniciens.
+              </p>
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  <Input
+                    label="URL TechPanel"
+                    value={techPanelUrl}
+                    onChange={(e) => setTechPanelUrl(e.target.value)}
+                    placeholder="https://techpanel.example.com"
+                  />
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  loading={companySaving}
+                  onClick={async () => {
+                    setCompanySaving(true);
+                    try {
+                      await appConfigApi.setConfig('tech_panel_url', techPanelUrl.trim().replace(/\/+$/, ''));
+                      toast.success('Enregistre');
+                    } catch {
+                      toast.error('Erreur');
+                    } finally {
+                      setCompanySaving(false);
+                    }
+                  }}
+                >
+                  Enregistrer
+                </Button>
+              </div>
             </div>
 
             {/* Logo upload */}

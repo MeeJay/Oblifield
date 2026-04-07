@@ -534,6 +534,7 @@ export interface AppConfig {
   obligate_enabled: boolean;
   company_name: string;
   company_logo_path: string | null;
+  tech_panel_url: string | null;
   // PDF report colors
   pdf_color_primary: string | null;
   pdf_color_accent_line: string | null;
