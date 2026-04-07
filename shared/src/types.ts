@@ -352,6 +352,7 @@ export interface InterventionPhoto {
   originalName: string;
   mimeType: string;
   sizeBytes: number;
+  hiddenFromReport: boolean;
   uploadedBy: number | null;
   createdAt: string;
 }

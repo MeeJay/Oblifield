@@ -125,6 +125,11 @@ export const interventionsApi = {
     await apiClient.delete(`/interventions/${interventionId}/photos/${photoId}`);
   },
 
+  async togglePhotoVisibility(interventionId: number, photoId: number): Promise<InterventionPhoto> {
+    const res = await apiClient.patch<ApiResponse<InterventionPhoto>>(`/interventions/${interventionId}/photos/${photoId}/visibility`);
+    return res.data.data!;
+  },
+
   async getScheduleRange(from: string, to: string): Promise<Intervention[]> {
     const res = await apiClient.get<ApiResponse<Intervention[]>>('/interventions/schedule-range', { params: { from, to } });
     return res.data.data!;

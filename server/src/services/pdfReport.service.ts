@@ -238,6 +238,7 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
   }
 
   const validPhotos = photos.filter((p) => {
+    if (p.hiddenFromReport) return false;
     const filePath = path.join(UPLOAD_DIR, p.filename);
     return fs.existsSync(filePath);
   });

@@ -536,9 +536,33 @@ router.post('/:id/photos', async (req, res) => {
 // DELETE /interventions/:id/photos/:photoId — delete a photo
 router.delete('/:id/photos/:photoId', async (req, res) => {
   try {
+    const interventionId = Number(req.params.id);
     const { photoService } = await import('../services/photo.service');
+    const photo = await photoService.getById(Number(req.params.photoId));
     await photoService.deleteById(Number(req.params.photoId));
+
+    // Record deletion in timeline
+    if (photo) {
+      await timelineService.create({
+        interventionId,
+        type: 'note',
+        message: `Photo supprimee : ${photo.originalName}`,
+      });
+    }
+
     res.json({ success: true, data: null });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PATCH /interventions/:id/photos/:photoId/visibility — toggle visibility in report
+router.patch('/:id/photos/:photoId/visibility', async (req, res) => {
+  try {
+    const { photoService } = await import('../services/photo.service');
+    const updated = await photoService.toggleVisibility(Number(req.params.photoId));
+    if (!updated) return res.status(404).json({ success: false, error: 'Photo not found' });
+    res.json({ success: true, data: updated });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }

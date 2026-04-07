@@ -11,6 +11,7 @@ interface PhotoRow {
   original_name: string;
   mime_type: string;
   size_bytes: number;
+  hidden_from_report: boolean;
   uploaded_by: number | null;
   created_at: Date;
 }
@@ -24,6 +25,7 @@ function rowToPhoto(row: PhotoRow): InterventionPhoto {
     originalName: row.original_name,
     mimeType: row.mime_type,
     sizeBytes: row.size_bytes,
+    hiddenFromReport: row.hidden_from_report ?? false,
     uploadedBy: row.uploaded_by,
     createdAt: row.created_at.toISOString(),
   };
@@ -52,6 +54,21 @@ export const photoService = {
       })
       .returning('*');
     return rowToPhoto(row);
+  },
+
+  async getById(id: number): Promise<InterventionPhoto | null> {
+    const row = await db<PhotoRow>('intervention_photos').where({ id }).first();
+    return row ? rowToPhoto(row) : null;
+  },
+
+  async toggleVisibility(id: number): Promise<InterventionPhoto | null> {
+    const row = await db<PhotoRow>('intervention_photos').where({ id }).first();
+    if (!row) return null;
+    const [updated] = await db<PhotoRow>('intervention_photos')
+      .where({ id })
+      .update({ hidden_from_report: !row.hidden_from_report })
+      .returning('*');
+    return rowToPhoto(updated);
   },
 
   async deleteById(id: number): Promise<void> {

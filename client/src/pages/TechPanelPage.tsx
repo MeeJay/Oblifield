@@ -109,15 +109,17 @@ function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: string) => void;
 
 // ─── Signature Section ──────────────────────────────────────────────────────
 function SignatureSection({
-  title, type, uid, existing, onSaved,
+  title, type, uid, existing, onSaved, technicianName,
 }: {
   title: string;
   type: 'technician' | 'client';
   uid: string;
   existing: InterventionSignature | null;
   onSaved: () => void;
+  technicianName?: string;
 }) {
   const [showPad, setShowPad] = useState(false);
+  const [showNameInput, setShowNameInput] = useState(false);
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -131,42 +133,60 @@ function SignatureSection({
     );
   }
 
+  const isTechnician = type === 'technician';
+  const signerName = isTechnician ? (technicianName || 'Technicien') : name.trim();
+
+  async function handleSave(dataUrl: string) {
+    if (!signerName) { toast.error('Veuillez saisir le nom du client'); return; }
+    setSaving(true);
+    try {
+      await techPanelApi.saveSignature(uid, { type, signatureData: dataUrl, signerName });
+      toast.success('Signature enregistree');
+      setShowPad(false);
+      setShowNameInput(false);
+      onSaved();
+    } catch (err: any) { toast.error(err.message); }
+    finally { setSaving(false); }
+  }
+
   return (
     <div className="rounded-lg border border-gray-700/50 bg-[#1a1d2e] p-4">
       <h4 className="text-sm font-medium text-gray-300 mb-3">{title}</h4>
-      {!showPad ? (
-        <button onClick={() => setShowPad(true)} className="rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors w-full sm:w-auto">
+      {showPad ? (
+        <SignaturePad onCancel={() => setShowPad(false)} onSave={handleSave} />
+      ) : !isTechnician && !showNameInput ? (
+        <button onClick={() => setShowNameInput(true)} className="rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors w-full sm:w-auto">
           Signer
         </button>
-      ) : (
+      ) : !isTechnician && showNameInput ? (
         <div className="space-y-3">
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Nom du signataire"
+            placeholder="Nom du client"
+            autoFocus
             className="w-full rounded-lg border border-gray-600 bg-[#0f1117] px-3 py-2 text-base text-gray-100 placeholder:text-gray-500 focus:border-blue-500 outline-none"
           />
-          {name.trim() ? (
-            <SignaturePad
-              onCancel={() => setShowPad(false)}
-              onSave={async (dataUrl) => {
-                setSaving(true);
-                try {
-                  await techPanelApi.saveSignature(uid, { type, signatureData: dataUrl, signerName: name.trim() });
-                  toast.success('Signature enregistree');
-                  setShowPad(false);
-                  onSaved();
-                } catch (err: any) { toast.error(err.message); }
-                finally { setSaving(false); }
-              }}
-            />
-          ) : (
-            <p className="text-xs text-gray-400">Saisissez le nom du signataire pour ouvrir la zone de signature</p>
-          )}
-          {saving && <p className="text-xs text-gray-400">Enregistrement...</p>}
+          <div className="flex gap-2">
+            <button onClick={() => setShowNameInput(false)} className="rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors">
+              Annuler
+            </button>
+            <button
+              disabled={!name.trim()}
+              onClick={() => setShowPad(true)}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40 transition-colors"
+            >
+              Ouvrir la zone de signature
+            </button>
+          </div>
         </div>
+      ) : (
+        <button onClick={() => setShowPad(true)} className="rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 transition-colors w-full sm:w-auto">
+          Signer
+        </button>
       )}
+      {saving && <p className="text-xs text-gray-400 mt-2">Enregistrement...</p>}
     </div>
   );
 }
@@ -179,6 +199,7 @@ export function TechPanelPage() {
   const [data, setData] = useState<TechPanelDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [observations, setObservations] = useState('');
+  const [obsInitialized, setObsInitialized] = useState(false);
   const [obsSaving, setObsSaving] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
@@ -192,11 +213,11 @@ export function TechPanelPage() {
     if (!uid) return;
     try {
       const d = await techPanelApi.getDetails(uid);
-      setData((prev) => {
-        // Only update observations if they haven't been locally modified
-        if (!prev) setObservations(d.intervention.technicianObservations || '');
-        return d;
-      });
+      if (!obsInitialized) {
+        setObservations(d.intervention.technicianObservations || '');
+        setObsInitialized(true);
+      }
+      setData(d);
     } catch (err: any) {
       toast.error(err.message || 'Erreur de chargement');
       navigate((window as any).__TECH_PANEL__ ? '/' : '/tech');
@@ -547,7 +568,7 @@ export function TechPanelPage() {
         {/* ── Signatures ── */}
         <Section id="signatures" title="Signatures" icon={<FileText size={16} className="text-orange-400" />}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <SignatureSection title="Signature technicien" type="technician" uid={uid!} existing={techSig} onSaved={fetchDetails} />
+            <SignatureSection title="Signature technicien" type="technician" uid={uid!} existing={techSig} onSaved={fetchDetails} technicianName={intervention.assignedTechnicianName || undefined} />
             <SignatureSection title="Signature client" type="client" uid={uid!} existing={clientSig} onSaved={fetchDetails} />
           </div>
         </Section>

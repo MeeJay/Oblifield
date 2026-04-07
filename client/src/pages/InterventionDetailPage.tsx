@@ -23,6 +23,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Link2,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import type {
   Intervention,
@@ -306,6 +308,16 @@ export function InterventionDetailPage() {
       await fetchData();
     } catch {
       toast.error('Echec de la suppression');
+    }
+  };
+
+  const handleTogglePhotoVisibility = async (photoId: number) => {
+    try {
+      const updated = await interventionsApi.togglePhotoVisibility(interventionId, photoId);
+      setPhotos((prev) => prev.map((p) => p.id === updated.id ? updated : p));
+      toast.success(updated.hiddenFromReport ? 'Photo masquee du rapport' : 'Photo visible dans le rapport');
+    } catch {
+      toast.error('Echec');
     }
   };
 
@@ -932,17 +944,35 @@ export function InterventionDetailPage() {
             {photos.map((photo) => (
               <div
                 key={photo.id}
-                className="relative rounded-lg border border-border bg-bg-secondary overflow-hidden cursor-pointer hover:border-accent transition-colors group"
+                className={cn(
+                  'relative rounded-lg border bg-bg-secondary overflow-hidden cursor-pointer hover:border-accent transition-colors group',
+                  photo.hiddenFromReport ? 'border-orange-500/40 opacity-60' : 'border-border',
+                )}
                 onClick={() => setLightboxIndex(photos.indexOf(photo))}
               >
-                {admin && (
+                {/* Action buttons overlay */}
+                <div className="absolute top-1 right-1 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleDeletePhoto(photo.id); }}
-                    className="absolute top-1 right-1 z-10 rounded-full bg-black/60 p-1 text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Supprimer"
+                    onClick={(e) => { e.stopPropagation(); handleTogglePhotoVisibility(photo.id); }}
+                    className="rounded-full bg-black/60 p-1 text-gray-300 hover:text-white transition-colors"
+                    title={photo.hiddenFromReport ? 'Afficher dans le rapport' : 'Masquer du rapport'}
                   >
-                    <X size={14} />
+                    {photo.hiddenFromReport ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
+                  {admin && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeletePhoto(photo.id); }}
+                      className="rounded-full bg-black/60 p-1 text-red-400 hover:text-red-300 transition-colors"
+                      title="Supprimer"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                {photo.hiddenFromReport && (
+                  <div className="absolute top-1 left-1 z-10 rounded-full bg-orange-500/80 p-1">
+                    <EyeOff size={10} className="text-white" />
+                  </div>
                 )}
                 <img
                   src={`/uploads/photos/${photo.filename}`}
