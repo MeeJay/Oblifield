@@ -248,6 +248,22 @@ router.post('/:id/timeline', async (req, res) => {
   }
 });
 
+// DELETE /interventions/:id/timeline/:eventId — admin delete timeline event
+router.delete('/:id/timeline/:eventId', async (req, res) => {
+  try {
+    const tenantId = (req as any).tenantId;
+    const interventionId = Number(req.params.id);
+    const eventId = Number(req.params.eventId);
+    await timelineService.delete(eventId);
+    res.json({ success: true, data: null });
+
+    const io = req.app.get('io');
+    if (io) io.to(`tenant:${tenantId}`).emit(SOCKET_EVENTS.TIMELINE_EVENT_CREATED, { interventionId });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // POST /interventions/:id/check-in — technician check-in
 router.post('/:id/check-in', async (req, res) => {
   try {

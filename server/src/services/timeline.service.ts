@@ -104,4 +104,8 @@ export const timelineService = {
 
     return rows.map(rowToTimelineEvent);
   },
+
+  async delete(eventId: number): Promise<void> {
+    await db('timeline_events').where('id', eventId).delete();
+  },
 };

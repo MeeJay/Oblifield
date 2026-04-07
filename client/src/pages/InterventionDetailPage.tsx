@@ -223,6 +223,17 @@ export function InterventionDetailPage() {
     }
   };
 
+  const handleDeleteTimelineEvent = async (eventId: number) => {
+    if (!confirm('Supprimer cet evenement ?')) return;
+    try {
+      await interventionsApi.deleteTimelineEvent(interventionId, eventId);
+      toast.success('Evenement supprime');
+      await fetchData();
+    } catch {
+      toast.error('Echec de la suppression');
+    }
+  };
+
   const handleSaveObservations = async () => {
     setSavingObs(true);
     try {
@@ -743,9 +754,20 @@ export function InterventionDetailPage() {
                         {event.type.replace('_', ' ')}
                       </span>
                     </div>
-                    <span className="text-xs text-text-secondary">
-                      {formatDateTime(event.createdAt)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-text-secondary">
+                        {formatDateTime(event.createdAt)}
+                      </span>
+                      {admin && (
+                        <button
+                          onClick={() => handleDeleteTimelineEvent(event.id)}
+                          className="text-red-400 hover:text-red-300 transition-colors"
+                          title="Supprimer cet evenement"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {event.message && (
                     <p className="text-sm text-text-secondary">{event.message}</p>

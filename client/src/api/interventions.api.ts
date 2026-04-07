@@ -70,6 +70,10 @@ export const interventionsApi = {
     return res.data.data!;
   },
 
+  async deleteTimelineEvent(interventionId: number, eventId: number): Promise<void> {
+    await apiClient.delete(`/interventions/${interventionId}/timeline/${eventId}`);
+  },
+
   async checkIn(id: number, gps?: { latitude: number; longitude: number; accuracy?: number }, customTimestamp?: string): Promise<Intervention> {
     const res = await apiClient.post<ApiResponse<Intervention>>(`/interventions/${id}/check-in`, { ...gps, customTimestamp });
     return res.data.data!;
