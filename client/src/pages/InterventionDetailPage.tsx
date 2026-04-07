@@ -53,7 +53,9 @@ const STATUS_COLORS: Record<InterventionStatus, string> = {
   pending: 'bg-yellow-500/10 text-yellow-500',
   assigned: 'bg-blue-500/10 text-blue-500',
   in_progress: 'bg-accent/10 text-accent',
-  done: 'bg-green-500/10 text-green-500',
+  paused: 'bg-orange-500/10 text-orange-500',
+  pending_validation: 'bg-purple-500/10 text-purple-500',
+  closed: 'bg-green-500/10 text-green-500',
   issue: 'bg-red-500/10 text-red-500',
   cancelled: 'bg-gray-500/10 text-gray-500',
 };
@@ -68,6 +70,8 @@ const PRIORITY_COLORS: Record<string, string> = {
 const TIMELINE_ICONS: Record<TimelineEventType, React.ReactNode> = {
   check_in: <MapPin size={16} className="text-green-500" />,
   check_out: <MapPin size={16} className="text-red-500" />,
+  pause_start: <Clock size={16} className="text-orange-500" />,
+  pause_end: <Clock size={16} className="text-accent" />,
   note: <MessageSquare size={16} className="text-blue-500" />,
   photo: <Camera size={16} className="text-purple-500" />,
   status_change: <ArrowRight size={16} className="text-accent" />,
@@ -223,6 +227,45 @@ export function InterventionDetailPage() {
     }
   };
 
+  const handlePause = async () => {
+    setActionLoading(true);
+    try {
+      await interventionsApi.pause(interventionId);
+      toast.success('Intervention en pause');
+      await fetchData();
+    } catch {
+      toast.error('Echec de la mise en pause');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleResume = async () => {
+    setActionLoading(true);
+    try {
+      await interventionsApi.resume(interventionId);
+      toast.success('Intervention reprise');
+      await fetchData();
+    } catch {
+      toast.error('Echec de la reprise');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleClose = async () => {
+    setActionLoading(true);
+    try {
+      await interventionsApi.close(interventionId);
+      toast.success('Intervention cloturee');
+      await fetchData();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || 'Echec de la cloture');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleDeleteTimelineEvent = async (eventId: number) => {
     if (!confirm('Supprimer cet evenement ?')) return;
     try {
@@ -360,6 +403,9 @@ export function InterventionDetailPage() {
             <FieldItem label="Echeance" value={formatDateTime(intervention.dueAt)} />
             <FieldItem label="Contact" value={intervention.contactName ?? '-'} />
             <FieldItem label="Duree est." value={intervention.estimatedDurationMinutes ? `${intervention.estimatedDurationMinutes} min` : '-'} />
+            {intervention.totalPauseSeconds > 0 && (
+              <FieldItem label="Temps de pause" value={`${Math.floor(intervention.totalPauseSeconds / 60)} min`} />
+            )}
           </div>
           <hr className="border-border" />
           <div>
@@ -457,74 +503,120 @@ export function InterventionDetailPage() {
       </div>
 
       {/* Row 3 : Action buttons */}
+      {intervention.status === 'closed' && (
+        <div className="mb-8 rounded-lg border border-green-500/30 bg-green-500/5 p-3 text-sm text-green-400 flex items-center gap-2">
+          <CheckCircle2 size={16} />
+          Intervention cloturee — aucune modification possible
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2 mb-8">
-        <div className="flex items-center gap-1.5 shrink-0">
-          {admin && (
-            <input
-              type="datetime-local"
-              value={customCheckInTime}
-              onChange={(e) => setCustomCheckInTime(e.target.value)}
-              className="rounded-lg border border-border bg-bg-tertiary px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent w-[170px]"
-              title="Heure custom (admin)"
-            />
-          )}
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleCheckIn}
-            loading={actionLoading}
-            disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
-            className="whitespace-nowrap"
-          >
-            <LogIn size={14} className="mr-1.5" />
-            Pointage entree
-          </Button>
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          {admin && (
-            <input
-              type="datetime-local"
-              value={customCheckOutTime}
-              onChange={(e) => setCustomCheckOutTime(e.target.value)}
-              className="rounded-lg border border-border bg-bg-tertiary px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent w-[170px]"
-              title="Heure custom (admin)"
-            />
-          )}
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleCheckOut}
-            loading={actionLoading}
-            disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
-            className="whitespace-nowrap"
-          >
-            <LogOut size={14} className="mr-1.5" />
-            Pointage sortie
-          </Button>
-        </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          className="!border-red-500/30 !text-red-400 hover:!bg-red-500/10 whitespace-nowrap"
-          onClick={handleSignalIssue}
-          loading={actionLoading}
-          disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
-        >
-          <AlertTriangle size={14} className="mr-1.5" />
-          Signaler un probleme
-        </Button>
-        {admin && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCancel}
-            loading={actionLoading}
-            disabled={intervention.status === 'done' || intervention.status === 'cancelled'}
-            className="whitespace-nowrap"
-          >
-            <XCircle size={14} className="mr-1.5" />
-            Annuler
-          </Button>
+        {intervention.status !== 'closed' && (
+          <>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {admin && (
+                <input
+                  type="datetime-local"
+                  value={customCheckInTime}
+                  onChange={(e) => setCustomCheckInTime(e.target.value)}
+                  className="rounded-lg border border-border bg-bg-tertiary px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent w-[170px]"
+                  title="Heure custom (admin)"
+                />
+              )}
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleCheckIn}
+                loading={actionLoading}
+                disabled={intervention.status === 'pending_validation' || intervention.status === 'cancelled'}
+                className="whitespace-nowrap"
+              >
+                <LogIn size={14} className="mr-1.5" />
+                Pointage entree
+              </Button>
+            </div>
+            {intervention.status === 'in_progress' && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handlePause}
+                loading={actionLoading}
+                className="!border-orange-500/30 !text-orange-400 hover:!bg-orange-500/10 whitespace-nowrap"
+              >
+                <Clock size={14} className="mr-1.5" />
+                Pause
+              </Button>
+            )}
+            {intervention.status === 'paused' && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleResume}
+                loading={actionLoading}
+                className="!border-accent/30 !text-accent hover:!bg-accent/10 whitespace-nowrap"
+              >
+                <Clock size={14} className="mr-1.5" />
+                Reprendre
+              </Button>
+            )}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {admin && (
+                <input
+                  type="datetime-local"
+                  value={customCheckOutTime}
+                  onChange={(e) => setCustomCheckOutTime(e.target.value)}
+                  className="rounded-lg border border-border bg-bg-tertiary px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent w-[170px]"
+                  title="Heure custom (admin)"
+                />
+              )}
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleCheckOut}
+                loading={actionLoading}
+                disabled={intervention.status === 'pending_validation' || intervention.status === 'cancelled'}
+                className="whitespace-nowrap"
+              >
+                <LogOut size={14} className="mr-1.5" />
+                Pointage sortie
+              </Button>
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="!border-red-500/30 !text-red-400 hover:!bg-red-500/10 whitespace-nowrap"
+              onClick={handleSignalIssue}
+              loading={actionLoading}
+              disabled={intervention.status === 'pending_validation' || intervention.status === 'cancelled'}
+            >
+              <AlertTriangle size={14} className="mr-1.5" />
+              Signaler un probleme
+            </Button>
+            {admin && intervention.status === 'pending_validation' && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleClose}
+                loading={actionLoading}
+                className="!bg-green-600 hover:!bg-green-700 whitespace-nowrap"
+              >
+                <CheckCircle2 size={14} className="mr-1.5" />
+                Valider et cloturer
+              </Button>
+            )}
+            {admin && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancel}
+                loading={actionLoading}
+                disabled={intervention.status === 'cancelled'}
+                className="whitespace-nowrap"
+              >
+                <XCircle size={14} className="mr-1.5" />
+                Annuler
+              </Button>
+            )}
+          </>
         )}
         {admin && (
           <div className="relative">

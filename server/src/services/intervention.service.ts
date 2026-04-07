@@ -56,6 +56,7 @@ interface InterventionRow {
   supervisor_id: number | null;
   step_template_id: number | null;
   recurring_schedule_id: number | null;
+  total_pause_seconds: number;
   created_by: number | null;
   tenant_id: number;
   created_at: Date;
@@ -116,6 +117,7 @@ function rowToIntervention(row: InterventionRow): Intervention {
     supervisorId: row.supervisor_id,
     stepTemplateId: row.step_template_id,
     recurringScheduleId: row.recurring_schedule_id,
+    totalPauseSeconds: row.total_pause_seconds ?? 0,
     createdBy: row.created_by,
     tenantId: row.tenant_id,
     createdAt: row.created_at.toISOString(),
@@ -311,8 +313,14 @@ export const interventionService = {
 
     if (newStatus === 'in_progress') {
       updateData.started_at = ts;
-    } else if (newStatus === 'done') {
+    } else if (newStatus === 'pending_validation') {
       updateData.completed_at = ts;
+    } else if (newStatus === 'closed') {
+      // Validate that started_at and completed_at exist before closing
+      const current = await db('interventions').where({ id }).select('started_at', 'completed_at').first();
+      if (!current?.started_at || !current?.completed_at) {
+        throw new Error('Impossible de cloturer : date de debut et de fin obligatoires');
+      }
     }
 
     const [row] = await db('interventions')
@@ -358,7 +366,9 @@ export const interventionService = {
       pending: 0,
       assigned: 0,
       in_progress: 0,
-      done: 0,
+      paused: 0,
+      pending_validation: 0,
+      closed: 0,
       issue: 0,
       cancelled: 0,
     };

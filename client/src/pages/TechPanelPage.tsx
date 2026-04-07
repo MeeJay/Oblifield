@@ -190,7 +190,7 @@ export function TechPanelPage() {
   }
 
   const intervention = data?.intervention;
-  const isDone = intervention?.status === 'done' || intervention?.status === 'cancelled';
+  const isDone = intervention?.status === 'pending_validation' || intervention?.status === 'closed' || intervention?.status === 'cancelled';
   const hasCheckedIn = data?.timeline.some((e) => e.type === 'check_in');
   const hasCheckedOut = data?.timeline.some((e) => e.type === 'check_out');
   const checkInEvent = data?.timeline.find((e) => e.type === 'check_in');
@@ -221,12 +221,12 @@ export function TechPanelPage() {
   }
 
   // ── Check-out ──
-  async function handleCheckOut(status: 'done' | 'issue') {
+  async function handleCheckOut(status: 'pending_validation' | 'issue') {
     if (!uid) return;
     const gps = await getGps();
     try {
       await techPanelApi.checkOut(uid, gps, status);
-      toast.success(status === 'done' ? 'Intervention terminee' : 'Probleme signale');
+      toast.success(status === 'pending_validation' ? 'Intervention terminee' : 'Probleme signale');
       fetchDetails();
     } catch (err: any) { toast.error(err.message); }
   }
@@ -525,7 +525,7 @@ export function TechPanelPage() {
           ) : (
             <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={() => handleCheckOut('done')}
+                onClick={() => handleCheckOut('pending_validation')}
                 disabled={isDone || gpsLoading}
                 className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700 disabled:opacity-40 transition-colors w-full sm:w-auto"
               >

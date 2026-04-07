@@ -177,9 +177,7 @@ export function ReportFormPage() {
         : '';
       window.open(`/api/interventions/${interventionId}/report/pdf${supervisorParam}`, '_blank');
 
-      // Set status to done
-      await interventionsApi.changeStatus(interventionId, 'done');
-      toast.success('Intervention cloturee');
+      toast.success('Rapport genere');
       navigate(`/intervention/${interventionId}`);
     } catch {
       toast.error('Echec de la cloture');

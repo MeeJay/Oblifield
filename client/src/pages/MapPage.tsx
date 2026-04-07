@@ -25,7 +25,9 @@ const STATUS_COLORS: Record<InterventionStatus, string> = {
   pending: '#eab308',
   assigned: '#3b82f6',
   in_progress: '#AEEA00',
-  done: '#22c55e',
+  paused: '#f97316',
+  pending_validation: '#a855f7',
+  closed: '#22c55e',
   issue: '#ef4444',
   cancelled: '#6b7280',
 };
@@ -316,7 +318,7 @@ export function MapPage() {
   ];
 
   const defaultCenter: [number, number] = [46.6, 2.3];
-  const STATUSES: InterventionStatus[] = ['pending', 'assigned', 'in_progress', 'done', 'issue', 'cancelled'];
+  const STATUSES: InterventionStatus[] = ['pending', 'assigned', 'in_progress', 'paused', 'pending_validation', 'closed', 'issue', 'cancelled'];
 
   return (
     <div className="flex h-full flex-col">

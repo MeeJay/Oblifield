@@ -11,7 +11,9 @@ export const INTERVENTION_STATUS = [
   'pending',
   'assigned',
   'in_progress',
-  'done',
+  'paused',
+  'pending_validation',
+  'closed',
   'issue',
   'cancelled',
 ] as const;
@@ -37,6 +39,8 @@ export type TechnicianStatus = (typeof TECHNICIAN_STATUS)[number];
 export const TIMELINE_EVENT_TYPES = [
   'check_in',
   'check_out',
+  'pause_start',
+  'pause_end',
   'note',
   'photo',
   'status_change',
@@ -53,12 +57,14 @@ export const INTERVENTION_TYPE_LABELS: Record<InterventionType, string> = {
 };
 
 export const INTERVENTION_STATUS_LABELS: Record<InterventionStatus, string> = {
-  pending: 'Pending',
-  assigned: 'Assigned',
-  in_progress: 'In Progress',
-  done: 'Done',
-  issue: 'Issue',
-  cancelled: 'Cancelled',
+  pending: 'En attente',
+  assigned: 'Assignee',
+  in_progress: 'En cours',
+  paused: 'En pause',
+  pending_validation: 'En validation',
+  closed: 'Cloturee',
+  issue: 'Probleme',
+  cancelled: 'Annulee',
 };
 
 export const INTERVENTION_PRIORITY_LABELS: Record<InterventionPriority, string> = {

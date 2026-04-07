@@ -8,12 +8,14 @@ interface Props {
 }
 
 const statusConfig: Record<InterventionStatus, { dotClass: string; bgClass: string }> = {
-  pending:     { dotClass: 'bg-status-pending',      bgClass: 'bg-status-pending-bg text-status-pending' },
-  assigned:    { dotClass: 'bg-status-maintenance',   bgClass: 'bg-status-maintenance-bg text-status-maintenance' },
-  in_progress: { dotClass: 'bg-status-in-progress',   bgClass: 'bg-status-in-progress-bg text-status-in-progress' },
-  done:        { dotClass: 'bg-status-up',             bgClass: 'bg-status-up-bg text-status-up' },
-  issue:       { dotClass: 'bg-status-down',           bgClass: 'bg-status-down-bg text-status-down' },
-  cancelled:   { dotClass: 'bg-status-paused',         bgClass: 'bg-status-paused-bg text-status-paused' },
+  pending:            { dotClass: 'bg-status-pending',      bgClass: 'bg-status-pending-bg text-status-pending' },
+  assigned:           { dotClass: 'bg-status-maintenance',   bgClass: 'bg-status-maintenance-bg text-status-maintenance' },
+  in_progress:        { dotClass: 'bg-status-in-progress',   bgClass: 'bg-status-in-progress-bg text-status-in-progress' },
+  paused:             { dotClass: 'bg-orange-500',            bgClass: 'bg-orange-500/10 text-orange-500' },
+  pending_validation: { dotClass: 'bg-purple-500',            bgClass: 'bg-purple-500/10 text-purple-500' },
+  closed:             { dotClass: 'bg-status-up',             bgClass: 'bg-status-up-bg text-status-up' },
+  issue:              { dotClass: 'bg-status-down',           bgClass: 'bg-status-down-bg text-status-down' },
+  cancelled:          { dotClass: 'bg-status-paused',         bgClass: 'bg-status-paused-bg text-status-paused' },
 };
 
 const sizes = {

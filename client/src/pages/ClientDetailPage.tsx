@@ -73,9 +73,9 @@ export function ClientDetailPage() {
 
   const totalCount = interventions.length;
   const pendingCount = interventions.filter(
-    (i) => i.status === 'pending' || i.status === 'assigned' || i.status === 'in_progress',
+    (i) => i.status === 'pending' || i.status === 'assigned' || i.status === 'in_progress' || i.status === 'paused',
   ).length;
-  const doneCount = interventions.filter((i) => i.status === 'done').length;
+  const doneCount = interventions.filter((i) => i.status === 'closed' || i.status === 'pending_validation').length;
 
   return (
     <div className="p-6 max-w-5xl mx-auto">

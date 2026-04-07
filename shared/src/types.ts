@@ -87,6 +87,7 @@ export interface Intervention {
   supervisorId: number | null;
   stepTemplateId: number | null;
   recurringScheduleId: number | null;
+  totalPauseSeconds: number;
   createdBy: number | null;
   tenantId: number;
   createdAt: string;

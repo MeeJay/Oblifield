@@ -34,7 +34,9 @@ const STATUS_CARD_CONFIG: Record<
   pending: { label: 'En attente', colorClass: 'text-yellow-500', icon: <Clock size={20} /> },
   assigned: { label: 'Assignee', colorClass: 'text-blue-500', icon: <UserCheck size={20} /> },
   in_progress: { label: 'En cours', colorClass: 'text-accent', icon: <Wrench size={20} /> },
-  done: { label: 'Terminee', colorClass: 'text-green-500', icon: <CheckCircle2 size={20} /> },
+  paused: { label: 'En pause', colorClass: 'text-orange-500', icon: <Clock size={20} /> },
+  pending_validation: { label: 'En validation', colorClass: 'text-purple-500', icon: <CheckCircle2 size={20} /> },
+  closed: { label: 'Cloturee', colorClass: 'text-green-500', icon: <CheckCircle2 size={20} /> },
   issue: { label: 'Probleme', colorClass: 'text-red-500', icon: <AlertTriangle size={20} /> },
   cancelled: { label: 'Annulee', colorClass: 'text-gray-500', icon: <XCircle size={20} /> },
 };
@@ -94,8 +96,8 @@ export function DashboardPage() {
     );
   }
 
-  const statuses: InterventionStatus[] = ['pending', 'assigned', 'in_progress', 'done', 'issue', 'cancelled'];
-  const activeCount = (summary?.pending ?? 0) + (summary?.assigned ?? 0) + (summary?.in_progress ?? 0);
+  const statuses: InterventionStatus[] = ['pending', 'assigned', 'in_progress', 'paused', 'pending_validation', 'closed', 'issue', 'cancelled'];
+  const activeCount = (summary?.pending ?? 0) + (summary?.assigned ?? 0) + (summary?.in_progress ?? 0) + (summary?.paused ?? 0);
 
   // Technician availability stats
   const techByStatus = new Map<TechnicianStatus, number>();
@@ -212,7 +214,9 @@ export function DashboardPage() {
                       intv.status === 'pending' && 'bg-yellow-500/10 text-yellow-500',
                       intv.status === 'assigned' && 'bg-blue-500/10 text-blue-500',
                       intv.status === 'in_progress' && 'bg-accent/10 text-accent',
-                      intv.status === 'done' && 'bg-green-500/10 text-green-500',
+                      intv.status === 'paused' && 'bg-orange-500/10 text-orange-500',
+                      intv.status === 'pending_validation' && 'bg-purple-500/10 text-purple-500',
+                      intv.status === 'closed' && 'bg-green-500/10 text-green-500',
                       intv.status === 'issue' && 'bg-red-500/10 text-red-500',
                       intv.status === 'cancelled' && 'bg-gray-500/10 text-gray-500',
                     )}

@@ -130,7 +130,7 @@ export function TechnicianDetailPage() {
       : TYPE_LABELS[technician.type] ?? technician.type
     : null;
 
-  const completedInterventions = interventions.filter((i) => i.status === 'done');
+  const completedInterventions = interventions.filter((i) => i.status === 'closed' || i.status === 'pending_validation');
   const completedCount = completedInterventions.length;
 
   const durations = completedInterventions
@@ -146,7 +146,7 @@ export function TechnicianDetailPage() {
       : null;
 
   const pastInterventions = interventions.filter(
-    (i) => i.status === 'done' || i.status === 'cancelled' || i.status === 'issue',
+    (i) => i.status === 'closed' || i.status === 'pending_validation' || i.status === 'cancelled' || i.status === 'issue',
   );
 
   const addressStr = [technician.address, technician.postalCode, technician.city, technician.country]

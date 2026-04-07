@@ -63,7 +63,7 @@ export const techPanelApi = {
     return json<Intervention>(res);
   },
 
-  async checkOut(uid: string, gps?: { latitude: number; longitude: number; accuracy: number }, status?: 'done' | 'issue'): Promise<Intervention> {
+  async checkOut(uid: string, gps?: { latitude: number; longitude: number; accuracy: number }, status?: 'pending_validation' | 'issue'): Promise<Intervention> {
     const res = await fetch(`${BASE}/${uid}/check-out`, {
       method: 'POST',
       headers: headers(),

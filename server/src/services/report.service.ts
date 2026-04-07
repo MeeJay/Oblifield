@@ -61,7 +61,7 @@ export const reportService = {
     if (from) q = q.where('created_at', '>=', from);
     if (to) q = q.where('created_at', '<=', to);
 
-    const completedQ = q.clone().where('status', 'done');
+    const completedQ = q.clone().whereIn('status', ['pending_validation', 'closed']);
     const completedCount = await completedQ.clone().count('* as count').first();
     const avgDur = await completedQ.clone()
       .whereNotNull('started_at')

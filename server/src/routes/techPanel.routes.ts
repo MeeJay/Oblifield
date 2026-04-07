@@ -183,7 +183,7 @@ router.post('/:uid/check-out', async (req, res) => {
   try {
     const intervention = (req as any).intervention;
     const { latitude, longitude, accuracy, status } = req.body;
-    const finalStatus = status === 'issue' ? 'issue' : 'done';
+    const finalStatus = status === 'issue' ? 'issue' : 'pending_validation';
 
     await timelineService.create({
       interventionId: intervention.id,

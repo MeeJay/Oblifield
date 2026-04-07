@@ -81,9 +81,24 @@ export const interventionsApi = {
 
   async checkOut(
     id: number,
-    data: { latitude?: number; longitude?: number; accuracy?: number; status?: 'done' | 'issue'; customTimestamp?: string },
+    data: { latitude?: number; longitude?: number; accuracy?: number; status?: 'pending_validation' | 'issue'; customTimestamp?: string },
   ): Promise<Intervention> {
     const res = await apiClient.post<ApiResponse<Intervention>>(`/interventions/${id}/check-out`, data);
+    return res.data.data!;
+  },
+
+  async pause(id: number): Promise<Intervention> {
+    const res = await apiClient.post<ApiResponse<Intervention>>(`/interventions/${id}/pause`);
+    return res.data.data!;
+  },
+
+  async resume(id: number): Promise<Intervention> {
+    const res = await apiClient.post<ApiResponse<Intervention>>(`/interventions/${id}/resume`);
+    return res.data.data!;
+  },
+
+  async close(id: number): Promise<Intervention> {
+    const res = await apiClient.post<ApiResponse<Intervention>>(`/interventions/${id}/close`);
     return res.data.data!;
   },
 

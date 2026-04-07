@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { SOCKET_EVENTS } from '@oblifield/shared';
+import { db } from '../db';
 import { interventionService } from '../services/intervention.service';
 import { timelineService } from '../services/timeline.service';
 import { interventionStepService } from '../services/interventionStep.service';
@@ -325,7 +326,7 @@ router.post('/:id/check-out', async (req, res) => {
     const interventionId = Number(req.params.id);
     const { latitude, longitude, accuracy, status, customTimestamp } = req.body;
 
-    const finalStatus = status === 'issue' ? 'issue' : 'done';
+    const finalStatus = status === 'issue' ? 'issue' : 'pending_validation';
 
     // 1. Load intervention first to get assignedTechnicianId
     const intervention = await interventionService.getById(interventionId);
@@ -369,6 +370,104 @@ router.post('/:id/check-out', async (req, res) => {
     }
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /interventions/:id/pause — pause intervention
+router.post('/:id/pause', async (req, res) => {
+  try {
+    const tenantId = (req as any).tenantId;
+    const interventionId = Number(req.params.id);
+    const intervention = await interventionService.getById(interventionId);
+    if (!intervention) {
+      return res.status(404).json({ success: false, error: 'Intervention not found' });
+    }
+
+    await timelineService.create({
+      interventionId,
+      technicianId: intervention.assignedTechnicianId ?? null,
+      type: 'pause_start',
+    });
+
+    const updated = await interventionService.changeStatus(interventionId, 'paused');
+    res.json({ success: true, data: updated });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`tenant:${tenantId}`).emit(SOCKET_EVENTS.INTERVENTION_STATUS_CHANGE, { intervention: updated });
+      io.to(`tenant:${tenantId}`).emit(SOCKET_EVENTS.INTERVENTION_UPDATED, { intervention: updated });
+      if (intervention.assignedTechnicianId) {
+        io.to(`tenant:${tenantId}`).emit(SOCKET_EVENTS.TECHNICIAN_STATUS_CHANGED, { technicianId: intervention.assignedTechnicianId, status: 'on_break' });
+      }
+    }
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /interventions/:id/resume — resume intervention after pause
+router.post('/:id/resume', async (req, res) => {
+  try {
+    const tenantId = (req as any).tenantId;
+    const interventionId = Number(req.params.id);
+    const intervention = await interventionService.getById(interventionId);
+    if (!intervention) {
+      return res.status(404).json({ success: false, error: 'Intervention not found' });
+    }
+
+    // Calculate pause duration from last pause_start event
+    const timeline = await timelineService.getByIntervention(interventionId);
+    const lastPauseStart = timeline.find((e) => e.type === 'pause_start');
+    let pauseSeconds = 0;
+    if (lastPauseStart) {
+      pauseSeconds = Math.round((Date.now() - new Date(lastPauseStart.createdAt).getTime()) / 1000);
+    }
+
+    await timelineService.create({
+      interventionId,
+      technicianId: intervention.assignedTechnicianId ?? null,
+      type: 'pause_end',
+      message: pauseSeconds > 0 ? `Pause : ${Math.round(pauseSeconds / 60)} min` : null,
+    });
+
+    // Accumulate total pause time
+    const currentTotal = intervention.totalPauseSeconds ?? 0;
+    await db('interventions')
+      .where({ id: interventionId })
+      .update({ total_pause_seconds: currentTotal + pauseSeconds });
+
+    const updated = await interventionService.changeStatus(interventionId, 'in_progress');
+    res.json({ success: true, data: updated });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`tenant:${tenantId}`).emit(SOCKET_EVENTS.INTERVENTION_STATUS_CHANGE, { intervention: updated });
+      io.to(`tenant:${tenantId}`).emit(SOCKET_EVENTS.INTERVENTION_UPDATED, { intervention: updated });
+      if (intervention.assignedTechnicianId) {
+        io.to(`tenant:${tenantId}`).emit(SOCKET_EVENTS.TECHNICIAN_STATUS_CHANGED, { technicianId: intervention.assignedTechnicianId, status: 'on_site' });
+      }
+    }
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /interventions/:id/close — supervisor validates and closes
+router.post('/:id/close', async (req, res) => {
+  try {
+    const tenantId = (req as any).tenantId;
+    const interventionId = Number(req.params.id);
+
+    const updated = await interventionService.changeStatus(interventionId, 'closed');
+    res.json({ success: true, data: updated });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`tenant:${tenantId}`).emit(SOCKET_EVENTS.INTERVENTION_STATUS_CHANGE, { intervention: updated });
+      io.to(`tenant:${tenantId}`).emit(SOCKET_EVENTS.INTERVENTION_UPDATED, { intervention: updated });
+    }
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
   }
 });
 
@@ -672,8 +771,13 @@ router.get('/:id/report/pdf', async (req, res) => {
       colors,
     });
 
-    const safeTitle = intervention.title.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50);
-    const filename = `rapport-${safeTitle}-${intervention.id}.pdf`;
+    const sanitize = (str: string) =>
+      str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').slice(0, 50);
+    const parts = ['rapport'];
+    if (intervention.clientName) parts.push(sanitize(intervention.clientName));
+    if (intervention.siteName) parts.push(sanitize(intervention.siteName));
+    parts.push(sanitize(intervention.title));
+    const filename = `${parts.join('-')}.pdf`;
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);

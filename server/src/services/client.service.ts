@@ -228,8 +228,8 @@ export const clientService = {
       const cnt = Number(r.count);
       stats[clientId].total += cnt;
       if (r.status === 'pending') stats[clientId].pending += cnt;
-      else if (r.status === 'in_progress') stats[clientId].inProgress += cnt;
-      else if (r.status === 'done') stats[clientId].done += cnt;
+      else if (r.status === 'in_progress' || r.status === 'paused') stats[clientId].inProgress += cnt;
+      else if (r.status === 'pending_validation' || r.status === 'closed') stats[clientId].done += cnt;
     }
 
     return stats;
