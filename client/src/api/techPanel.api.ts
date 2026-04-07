@@ -2,18 +2,17 @@ import type { Intervention, InterventionStep, InterventionPhoto, InterventionSig
 
 const BASE = '/api/tech-panel';
 
-function headers(): Record<string, string> {
-  const h: Record<string, string> = { 'Content-Type': 'application/json' };
-  const date = sessionStorage.getItem('tech-panel-date');
-  if (date) h['X-Tech-Date'] = date;
+function authHeaders(): Record<string, string> {
+  const h: Record<string, string> = {};
+  const sig = sessionStorage.getItem('tech-panel-sig');
+  const ts = sessionStorage.getItem('tech-panel-ts');
+  if (sig) h['X-Tech-Sig'] = sig;
+  if (ts) h['X-Tech-Ts'] = ts;
   return h;
 }
 
-function headersNoBody(): Record<string, string> {
-  const h: Record<string, string> = {};
-  const date = sessionStorage.getItem('tech-panel-date');
-  if (date) h['X-Tech-Date'] = date;
-  return h;
+function headers(): Record<string, string> {
+  return { 'Content-Type': 'application/json', ...authHeaders() };
 }
 
 async function json<T>(res: Response): Promise<T> {
@@ -29,6 +28,8 @@ export interface LookupResult {
   clientName: string | null;
   siteName: string | null;
   logoUrl: string | null;
+  sig: string;
+  ts: number;
 }
 
 export interface TechPanelDetails {
@@ -40,17 +41,17 @@ export interface TechPanelDetails {
 }
 
 export const techPanelApi = {
-  async lookup(uid: string, date: string): Promise<LookupResult> {
+  async lookup(uid: string): Promise<LookupResult> {
     const res = await fetch(`${BASE}/lookup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid: uid.toUpperCase(), date }),
+      body: JSON.stringify({ uid: uid.toUpperCase() }),
     });
     return json<LookupResult>(res);
   },
 
   async getDetails(uid: string): Promise<TechPanelDetails> {
-    const res = await fetch(`${BASE}/${uid}/details`, { headers: headersNoBody() });
+    const res = await fetch(`${BASE}/${uid}/details`, { headers: authHeaders() });
     return json<TechPanelDetails>(res);
   },
 
@@ -84,12 +85,9 @@ export const techPanelApi = {
   async uploadPhoto(uid: string, file: File): Promise<InterventionPhoto> {
     const formData = new FormData();
     formData.append('photo', file);
-    const h: Record<string, string> = {};
-    const date = sessionStorage.getItem('tech-panel-date');
-    if (date) h['X-Tech-Date'] = date;
     const res = await fetch(`${BASE}/${uid}/photos`, {
       method: 'POST',
-      headers: h,
+      headers: authHeaders(),
       body: formData,
     });
     return json<InterventionPhoto>(res);
@@ -109,7 +107,7 @@ export const techPanelApi = {
   },
 
   async getSteps(uid: string): Promise<InterventionStep[]> {
-    const res = await fetch(`${BASE}/${uid}/steps`, { headers: headersNoBody() });
+    const res = await fetch(`${BASE}/${uid}/steps`, { headers: authHeaders() });
     return json<InterventionStep[]>(res);
   },
 

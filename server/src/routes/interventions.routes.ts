@@ -727,6 +727,28 @@ router.delete('/:id/parts/:partId', async (req, res) => {
   }
 });
 
+// GET /interventions/:id/tech-link — generate signed TechPanel link
+router.get('/:id/tech-link', async (req, res) => {
+  try {
+    const interventionId = Number(req.params.id);
+    const intervention = await interventionService.getById(interventionId);
+    if (!intervention) return res.status(404).json({ success: false, error: 'Not found' });
+
+    const techPanelUrl = await (await import('../services/appConfig.service')).appConfigService.get('tech_panel_url');
+    if (!techPanelUrl) return res.status(400).json({ success: false, error: 'URL TechPanel non configuree dans les parametres' });
+
+    const crypto = await import('crypto');
+    const secret = process.env.SESSION_SECRET || 'fallback-secret';
+    const ts = Date.now();
+    const sig = crypto.createHmac('sha256', secret).update(`${intervention.uid}:${ts}`).digest('hex').slice(0, 16);
+
+    const url = `${techPanelUrl}/${intervention.uid}?sig=${sig}&ts=${ts}`;
+    res.json({ success: true, data: { url } });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // GET /interventions/:id/report/pdf — generate PDF report
 router.get('/:id/report/pdf', async (req, res) => {
   try {

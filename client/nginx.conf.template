@@ -5,6 +5,10 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # Anti-indexation
+    add_header X-Robots-Tag "noindex, nofollow, noarchive" always;
+    location = /robots.txt { return 200 "User-agent: *\nDisallow: /\n"; }
+
     # API tech-panel only (no auth required)
     location /api/tech-panel/ {
         proxy_pass http://server:3001;

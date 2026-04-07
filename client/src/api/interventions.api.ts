@@ -35,6 +35,11 @@ export const interventionsApi = {
     await apiClient.delete(`/interventions/${id}`);
   },
 
+  async getTechLink(id: number): Promise<string> {
+    const res = await apiClient.get<ApiResponse<{ url: string }>>(`/interventions/${id}/tech-link`);
+    return res.data.data!.url;
+  },
+
   async assign(id: number, technicianId: number | null): Promise<Intervention> {
     const res = await apiClient.post<ApiResponse<Intervention>>(`/interventions/${id}/assign`, { technicianId });
     return res.data.data!;

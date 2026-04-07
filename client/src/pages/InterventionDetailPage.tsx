@@ -41,7 +41,6 @@ import {
 } from '@oblifield/shared';
 import { interventionsApi } from '@/api/interventions.api';
 import { documentsApi } from '@/api/documents.api';
-import { appConfigApi } from '@/api/appConfig.api';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/common/Button';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -116,9 +115,6 @@ export function InterventionDetailPage() {
   const [customCheckInTime, setCustomCheckInTime] = useState('');
   const [customCheckOutTime, setCustomCheckOutTime] = useState('');
 
-  // TechPanel URL
-  const [techPanelUrl, setTechPanelUrl] = useState<string | null>(null);
-
   // Documents state
   const [attachedDocs, setAttachedDocs] = useState<InterventionDocument[]>([]);
   const [allDocs, setAllDocs] = useState<DocDocument[]>([]);
@@ -153,14 +149,16 @@ export function InterventionDetailPage() {
 
   useEffect(() => {
     fetchData();
-    appConfigApi.getConfig().then((cfg) => setTechPanelUrl(cfg.tech_panel_url || null)).catch(() => {});
   }, [fetchData]);
 
-  const handleCopyTechLink = () => {
-    if (!techPanelUrl || !intervention) return;
-    const date = intervention.scheduledAt ? intervention.scheduledAt.slice(0, 10) : new Date().toISOString().slice(0, 10);
-    const url = `${techPanelUrl}/${intervention.uid}?date=${date}`;
-    navigator.clipboard.writeText(url).then(() => toast.success('Lien copie dans le presse-papier'));
+  const handleCopyTechLink = async () => {
+    try {
+      const url = await interventionsApi.getTechLink(interventionId);
+      await navigator.clipboard.writeText(url);
+      toast.success('Lien copie dans le presse-papier');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || 'Echec de la generation du lien');
+    }
   };
 
   const handleCheckIn = async () => {
@@ -409,12 +407,10 @@ export function InterventionDetailPage() {
               Generer & Cloturer
             </Button>
           </Link>
-          {techPanelUrl && (
-            <Button variant="secondary" size="sm" onClick={handleCopyTechLink}>
-              <Link2 size={14} className="mr-1.5" />
-              Lien technicien
-            </Button>
-          )}
+          <Button variant="secondary" size="sm" onClick={handleCopyTechLink}>
+            <Link2 size={14} className="mr-1.5" />
+            Lien technicien
+          </Button>
           <Link to={`/intervention/${intervention.id}/edit`}>
             <Button variant="secondary" size="sm">
               <Pencil size={14} className="mr-1.5" />

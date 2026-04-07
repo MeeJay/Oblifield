@@ -22,8 +22,9 @@ export function TechPanelEntryPage() {
     const today = new Date().toISOString().substring(0, 10);
     setLoading(true);
     try {
-      await techPanelApi.lookup(uid.trim(), today);
-      sessionStorage.setItem('tech-panel-date', today);
+      const result = await techPanelApi.lookup(uid.trim());
+      sessionStorage.setItem('tech-panel-sig', result.sig);
+      sessionStorage.setItem('tech-panel-ts', String(result.ts));
       const prefix = (window as any).__TECH_PANEL__ ? '' : '/tech';
       navigate(`${prefix}/${uid.trim().toUpperCase()}`);
     } catch (err: any) {

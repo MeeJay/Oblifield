@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
@@ -11,6 +12,20 @@ import { appConfigService } from '../services/appConfig.service';
 
 const router = Router();
 
+// ── HMAC link signing (uid:timestamp → hex signature) ───────────────────────
+const LINK_SECRET = process.env.SESSION_SECRET || 'fallback-secret';
+const LINK_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+function signLink(uid: string, ts: number): string {
+  return crypto.createHmac('sha256', LINK_SECRET).update(`${uid}:${ts}`).digest('hex').slice(0, 16);
+}
+
+function verifyLink(uid: string, ts: number, sig: string): boolean {
+  if (Date.now() - ts > LINK_EXPIRY_MS) return false;
+  const expected = signLink(uid, ts);
+  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+}
+
 // ── Rate limiter for lookup ─────────────────────────────────────────────────
 const lookupLimiter = rateLimit({
   windowMs: 60_000,
@@ -20,26 +35,20 @@ const lookupLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// ── Middleware: resolve intervention by UID + verify date ────────────────────
+// ── Middleware: resolve intervention by UID + verify HMAC signature ──────────
 async function resolveIntervention(req: Request, res: Response, next: NextFunction) {
   try {
     const uid = req.params.uid?.toUpperCase();
     if (!uid) return res.status(400).json({ success: false, error: 'UID is required' });
 
+    // Verify HMAC signature from query or header
+    const sig = (req.query.sig as string) || (req.headers['x-tech-sig'] as string);
+    const ts = Number(req.query.ts || req.headers['x-tech-ts']);
+    if (!sig || !ts) return res.status(403).json({ success: false, error: 'Lien invalide' });
+    if (!verifyLink(uid, ts, sig)) return res.status(403).json({ success: false, error: 'Lien expire ou invalide' });
+
     const intervention = await interventionService.getByUid(uid);
     if (!intervention) return res.status(404).json({ success: false, error: 'Intervention not found' });
-
-    // Verify date from header
-    const techDate = req.headers['x-tech-date'] as string | undefined;
-    if (!techDate) return res.status(400).json({ success: false, error: 'X-Tech-Date header is required' });
-
-    const scheduled = intervention.scheduledAt || intervention.dueAt || intervention.createdAt;
-    const scheduledDay = scheduled.substring(0, 10); // YYYY-MM-DD
-    const providedDay = techDate.substring(0, 10);
-
-    if (scheduledDay !== providedDay) {
-      return res.status(403).json({ success: false, error: 'Date does not match' });
-    }
 
     (req as any).intervention = intervention;
     next();
@@ -51,9 +60,9 @@ async function resolveIntervention(req: Request, res: Response, next: NextFuncti
 // ── POST /tech-panel/lookup ─────────────────────────────────────────────────
 router.post('/lookup', lookupLimiter, async (req, res) => {
   try {
-    const { uid, date } = req.body;
-    if (!uid || !date) {
-      return res.status(400).json({ success: false, error: 'uid and date are required' });
+    const { uid } = req.body;
+    if (!uid) {
+      return res.status(400).json({ success: false, error: 'uid is required' });
     }
 
     const intervention = await interventionService.getByUid(uid.toUpperCase());
@@ -61,14 +70,9 @@ router.post('/lookup', lookupLimiter, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Intervention not found' });
     }
 
-    // Verify date matches
-    const scheduled = intervention.scheduledAt || intervention.dueAt || intervention.createdAt;
-    const scheduledDay = scheduled.substring(0, 10);
-    const providedDay = date.substring(0, 10);
-
-    if (scheduledDay !== providedDay) {
-      return res.status(404).json({ success: false, error: 'Intervention not found' });
-    }
+    // Generate HMAC signature for this session
+    const ts = Date.now();
+    const sig = signLink(intervention.uid, ts);
 
     // Get logo URL
     const logoPath = await appConfigService.get('company_logo_path');
@@ -87,6 +91,8 @@ router.post('/lookup', lookupLimiter, async (req, res) => {
         clientName: intervention.clientName,
         siteName: intervention.siteName,
         logoUrl,
+        sig,
+        ts,
       },
     });
   } catch (err: any) {

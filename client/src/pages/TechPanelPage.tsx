@@ -171,21 +171,26 @@ export function TechPanelPage() {
       setObservations(d.intervention.technicianObservations || '');
     } catch (err: any) {
       toast.error(err.message || 'Erreur de chargement');
-      navigate('/tech');
+      navigate((window as any).__TECH_PANEL__ ? '/' : '/tech');
     } finally {
       setLoading(false);
     }
   }, [uid, navigate]);
 
   useEffect(() => {
-    // Accept date from URL query param, sessionStorage, or default to today
-    const urlDate = searchParams.get('date');
-    if (urlDate) sessionStorage.setItem('tech-panel-date', urlDate);
-    if (!sessionStorage.getItem('tech-panel-date')) {
-      sessionStorage.setItem('tech-panel-date', new Date().toISOString().slice(0, 10));
+    // Accept sig+ts from URL query params (direct link) or sessionStorage
+    const urlSig = searchParams.get('sig');
+    const urlTs = searchParams.get('ts');
+    if (urlSig && urlTs) {
+      sessionStorage.setItem('tech-panel-sig', urlSig);
+      sessionStorage.setItem('tech-panel-ts', urlTs);
+    }
+    if (!sessionStorage.getItem('tech-panel-sig')) {
+      navigate((window as any).__TECH_PANEL__ ? '/' : '/tech');
+      return;
     }
     fetchDetails();
-  }, [fetchDetails, searchParams]);
+  }, [fetchDetails, searchParams, navigate]);
 
   function toggleSection(key: string) {
     setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
