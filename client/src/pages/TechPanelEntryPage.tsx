@@ -29,7 +29,8 @@ export function TechPanelEntryPage() {
     try {
       await techPanelApi.lookup(uid.trim(), date);
       sessionStorage.setItem('tech-panel-date', date);
-      navigate(`/tech/${uid.trim().toUpperCase()}`);
+      const prefix = (window as any).__TECH_PANEL__ ? '' : '/tech';
+      navigate(`${prefix}/${uid.trim().toUpperCase()}`);
     } catch (err: any) {
       toast.error(err.message || 'Intervention introuvable');
     } finally {

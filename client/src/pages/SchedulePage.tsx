@@ -35,7 +35,9 @@ const STATUS_BORDER: Record<InterventionStatus, string> = {
   pending: 'border-l-yellow-500',
   assigned: 'border-l-blue-500',
   in_progress: 'border-l-accent',
-  done: 'border-l-green-500',
+  paused: 'border-l-orange-500',
+  pending_validation: 'border-l-purple-500',
+  closed: 'border-l-green-500',
   issue: 'border-l-red-500',
   cancelled: 'border-l-gray-500',
 };
@@ -44,7 +46,9 @@ const STATUS_BG: Record<InterventionStatus, string> = {
   pending: 'bg-yellow-500/10',
   assigned: 'bg-blue-500/10',
   in_progress: 'bg-accent/10',
-  done: 'bg-green-500/10',
+  paused: 'bg-orange-500/10',
+  pending_validation: 'bg-purple-500/10',
+  closed: 'bg-green-500/10',
   issue: 'bg-red-500/10',
   cancelled: 'bg-gray-500/10',
 };
@@ -53,7 +57,9 @@ const STATUS_DOT: Record<InterventionStatus, string> = {
   pending: 'bg-yellow-500',
   assigned: 'bg-blue-500',
   in_progress: 'bg-accent',
-  done: 'bg-green-500',
+  paused: 'bg-orange-500',
+  pending_validation: 'bg-purple-500',
+  closed: 'bg-green-500',
   issue: 'bg-red-500',
   cancelled: 'bg-gray-500',
 };
@@ -62,7 +68,9 @@ const STATUS_LABEL: Record<InterventionStatus, string> = {
   pending: 'En attente',
   assigned: 'Assignee',
   in_progress: 'En cours',
-  done: 'Terminee',
+  paused: 'En pause',
+  pending_validation: 'En validation',
+  closed: 'Cloturee',
   issue: 'Probleme',
   cancelled: 'Annulee',
 };

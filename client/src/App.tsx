@@ -35,12 +35,36 @@ import { TechPanelEntryPage } from '@/pages/TechPanelEntryPage';
 import { TechPanelPage } from '@/pages/TechPanelPage';
 import '@/i18n';
 
+// Detect if we're on the TechPanel (injected by Nginx sub_filter)
+const isTechPanel = !!(window as any).__TECH_PANEL__;
+
 export default function App() {
   const { checkSession } = useAuthStore();
 
   useEffect(() => {
-    checkSession();
+    if (!isTechPanel) checkSession();
   }, [checkSession]);
+
+  if (isTechPanel) {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<TechPanelEntryPage />} />
+          <Route path="/tech" element={<TechPanelEntryPage />} />
+          <Route path="/tech/:uid" element={<TechPanelPage />} />
+          <Route path="/:uid" element={<TechPanelPage />} />
+          <Route path="*" element={<TechPanelEntryPage />} />
+        </Routes>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            className: '!bg-bg-secondary !text-text-primary !border !border-border',
+            duration: 4000,
+          }}
+        />
+      </BrowserRouter>
+    );
+  }
 
   return (
     <BrowserRouter>

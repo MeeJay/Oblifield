@@ -21,8 +21,10 @@ server {
     location /socket.io/ { return 403; }
     location /auth/ { return 403; }
 
-    # SPA fallback
+    # SPA fallback — inject tech panel flag into index.html
     location / {
+        sub_filter '</head>' '<script>window.__TECH_PANEL__=true;</script></head>';
+        sub_filter_once on;
         try_files $uri $uri/ /index.html;
     }
 

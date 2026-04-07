@@ -281,11 +281,13 @@ export function TechPanelPage() {
   function statusBadge(s: string) {
     const colors: Record<string, string> = {
       pending: 'bg-gray-600', assigned: 'bg-blue-600', in_progress: 'bg-yellow-600',
-      done: 'bg-green-600', issue: 'bg-red-600', cancelled: 'bg-gray-500',
+      paused: 'bg-orange-600', pending_validation: 'bg-purple-600', closed: 'bg-green-600',
+      issue: 'bg-red-600', cancelled: 'bg-gray-500',
     };
     const labels: Record<string, string> = {
       pending: 'En attente', assigned: 'Assignee', in_progress: 'En cours',
-      done: 'Terminee', issue: 'Probleme', cancelled: 'Annulee',
+      paused: 'En pause', pending_validation: 'En validation', closed: 'Cloturee',
+      issue: 'Probleme', cancelled: 'Annulee',
     };
     return <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium text-white ${colors[s] || 'bg-gray-600'}`}>{labels[s] || s}</span>;
   }

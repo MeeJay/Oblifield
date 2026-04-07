@@ -23,7 +23,9 @@ const STATUS_COLORS: Record<InterventionStatus, string> = {
   pending: 'bg-yellow-500/10 text-yellow-500',
   assigned: 'bg-blue-500/10 text-blue-500',
   in_progress: 'bg-accent/10 text-accent',
-  done: 'bg-green-500/10 text-green-500',
+  paused: 'bg-orange-500/10 text-orange-500',
+  pending_validation: 'bg-purple-500/10 text-purple-500',
+  closed: 'bg-green-500/10 text-green-500',
   issue: 'bg-red-500/10 text-red-500',
   cancelled: 'bg-gray-500/10 text-gray-500',
 };
