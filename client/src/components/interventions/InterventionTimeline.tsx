@@ -114,8 +114,8 @@ export function InterventionTimeline({ events }: Props) {
 
                 {event.latitude != null && event.longitude != null && (
                   <span className="mt-1 block text-[10px] text-text-muted">
-                    GPS: {event.latitude.toFixed(6)}, {event.longitude.toFixed(6)}
-                    {event.accuracy != null && ` (~${Math.round(event.accuracy)}m)`}
+                    GPS: {Number(event.latitude).toFixed(6)}, {Number(event.longitude).toFixed(6)}
+                    {event.accuracy != null && ` (~${Math.round(Number(event.accuracy))}m)`}
                   </span>
                 )}
               </div>

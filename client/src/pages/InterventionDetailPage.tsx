@@ -759,8 +759,8 @@ export function InterventionDetailPage() {
                   {event.latitude != null && event.longitude != null && (
                     <p className="text-xs text-text-secondary mt-1">
                       <MapPin size={12} className="inline mr-1" />
-                      {event.latitude.toFixed(5)}, {event.longitude.toFixed(5)}
-                      {event.accuracy != null && ` (\u00b1${Math.round(event.accuracy)}m)`}
+                      {Number(event.latitude).toFixed(5)}, {Number(event.longitude).toFixed(5)}
+                      {event.accuracy != null && ` (\u00b1${Math.round(Number(event.accuracy))}m)`}
                     </p>
                   )}
                 </div>
