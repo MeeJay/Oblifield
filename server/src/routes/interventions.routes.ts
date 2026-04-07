@@ -256,23 +256,23 @@ router.post('/:id/check-in', async (req, res) => {
     const interventionId = Number(req.params.id);
     const { latitude, longitude, accuracy, customTimestamp } = req.body;
 
-    // 1. Create timeline event
-    await timelineService.create({
-      interventionId,
-      technicianId: userId,
-      type: 'check_in',
-      message: customTimestamp ? `Pointage manuel : ${new Date(customTimestamp).toLocaleString('fr-FR')}` : null,
-      latitude,
-      longitude,
-      accuracy,
-      createdAt: customTimestamp || null,
-    });
-
-    // 2. Update intervention status to in_progress and set startedAt
+    // 1. Load intervention first to get assignedTechnicianId
     const intervention = await interventionService.getById(interventionId);
     if (!intervention) {
       return res.status(404).json({ success: false, error: 'Intervention not found' });
     }
+
+    // 2. Create timeline event (use assigned technician, not the logged-in admin)
+    await timelineService.create({
+      interventionId,
+      technicianId: intervention.assignedTechnicianId ?? null,
+      type: 'check_in',
+      message: customTimestamp ? `Pointage manuel : ${new Date(customTimestamp).toLocaleString('fr-FR')}` : null,
+      latitude: latitude ?? intervention.latitude ?? null,
+      longitude: longitude ?? intervention.longitude ?? null,
+      accuracy: accuracy ?? null,
+      createdAt: customTimestamp || null,
+    });
 
     const updated = await interventionService.changeStatus(interventionId, 'in_progress', customTimestamp || null);
 
@@ -311,23 +311,23 @@ router.post('/:id/check-out', async (req, res) => {
 
     const finalStatus = status === 'issue' ? 'issue' : 'done';
 
-    // 1. Create timeline event
-    await timelineService.create({
-      interventionId,
-      technicianId: userId,
-      type: 'check_out',
-      message: customTimestamp ? `Pointage manuel : ${new Date(customTimestamp).toLocaleString('fr-FR')}` : null,
-      latitude,
-      longitude,
-      accuracy,
-      createdAt: customTimestamp || null,
-    });
-
-    // 2. Update intervention status and set completedAt
+    // 1. Load intervention first to get assignedTechnicianId
     const intervention = await interventionService.getById(interventionId);
     if (!intervention) {
       return res.status(404).json({ success: false, error: 'Intervention not found' });
     }
+
+    // 2. Create timeline event (use assigned technician, not the logged-in admin)
+    await timelineService.create({
+      interventionId,
+      technicianId: intervention.assignedTechnicianId ?? null,
+      type: 'check_out',
+      message: customTimestamp ? `Pointage manuel : ${new Date(customTimestamp).toLocaleString('fr-FR')}` : null,
+      latitude: latitude ?? intervention.latitude ?? null,
+      longitude: longitude ?? intervention.longitude ?? null,
+      accuracy: accuracy ?? null,
+      createdAt: customTimestamp || null,
+    });
 
     const updated = await interventionService.changeStatus(interventionId, finalStatus, customTimestamp || null);
 

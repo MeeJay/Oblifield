@@ -146,28 +146,13 @@ export function InterventionDetailPage() {
     fetchData();
   }, [fetchData]);
 
-  const captureGPS = (): Promise<{ latitude: number; longitude: number; accuracy?: number }> =>
-    new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocalisation non supportee'));
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        (pos) =>
-          resolve({
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            accuracy: pos.coords.accuracy,
-          }),
-        (err) => reject(err),
-        { enableHighAccuracy: true, timeout: 10000 },
-      );
-    });
-
   const handleCheckIn = async () => {
     setActionLoading(true);
     try {
-      const gps = customCheckInTime ? undefined : await captureGPS().catch(() => undefined);
+      // Supervisor: use intervention site coordinates instead of real GPS
+      const gps = intervention?.latitude && intervention?.longitude
+        ? { latitude: intervention.latitude, longitude: intervention.longitude }
+        : undefined;
       await interventionsApi.checkIn(interventionId, gps, customCheckInTime || undefined);
       toast.success(customCheckInTime ? 'Pointage entree manuel effectue' : 'Pointage entree effectue');
       setCustomCheckInTime('');
@@ -182,11 +167,10 @@ export function InterventionDetailPage() {
   const handleCheckOut = async () => {
     setActionLoading(true);
     try {
-      const gps = customCheckOutTime ? undefined : await captureGPS().catch(() => undefined);
+      // Supervisor: use intervention site coordinates instead of real GPS
       await interventionsApi.checkOut(interventionId, {
-        latitude: gps?.latitude,
-        longitude: gps?.longitude,
-        accuracy: gps?.accuracy,
+        latitude: intervention?.latitude ?? undefined,
+        longitude: intervention?.longitude ?? undefined,
         customTimestamp: customCheckOutTime || undefined,
       });
       toast.success(customCheckOutTime ? 'Pointage sortie manuel effectue' : 'Pointage sortie effectue');
