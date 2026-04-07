@@ -52,7 +52,7 @@ export function TechPanelEntryPage() {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           {logoUrl ? (
-            <img src={logoUrl} alt="Logo" className="h-24 max-w-[320px] object-contain" />
+            <img src={logoUrl} alt="Logo" className="h-40 max-w-[400px] object-contain" />
           ) : (
             <h1 className="text-2xl font-bold text-white">TechPanel</h1>
           )}

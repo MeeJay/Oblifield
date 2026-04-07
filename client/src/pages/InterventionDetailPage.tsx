@@ -371,6 +371,7 @@ export function InterventionDetailPage() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-text-primary mb-2">
+            <span className="text-sm font-mono text-text-muted mr-2">{intervention.uid}</span>
             {intervention.title}
           </h1>
           <div className="flex items-center gap-2">
