@@ -191,6 +191,25 @@ function SignatureSection({
   );
 }
 
+// ─── Collapsible Section (stable reference — must be outside component) ─────
+function Section({ id, title, icon, children, expanded, onToggle }: {
+  id: string; title: string; icon: React.ReactNode; children: React.ReactNode;
+  expanded: boolean; onToggle: (id: string) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-700/50 bg-[#1a1d2e] overflow-hidden">
+      <button onClick={() => onToggle(id)} className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-gray-800/30 transition-colors">
+        <div className="flex items-center gap-2.5">
+          {icon}
+          <span className="text-sm font-semibold text-gray-200">{title}</span>
+        </div>
+        {expanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+      </button>
+      {expanded && <div className="px-5 pb-5 pt-1">{children}</div>}
+    </div>
+  );
+}
+
 // ─── Main TechPanel Page ────────────────────────────────────────────────────
 export function TechPanelPage() {
   const { uid } = useParams<{ uid: string }>();
@@ -199,7 +218,7 @@ export function TechPanelPage() {
   const [data, setData] = useState<TechPanelDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [observations, setObservations] = useState('');
-  const [obsInitialized, setObsInitialized] = useState(false);
+  const obsInitializedRef = useRef(false);
   const [obsSaving, setObsSaving] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
@@ -213,9 +232,9 @@ export function TechPanelPage() {
     if (!uid) return;
     try {
       const d = await techPanelApi.getDetails(uid);
-      if (!obsInitialized) {
+      if (!obsInitializedRef.current) {
         setObservations(d.intervention.technicianObservations || '');
-        setObsInitialized(true);
+        obsInitializedRef.current = true;
       }
       setData(d);
     } catch (err: any) {
@@ -342,23 +361,6 @@ export function TechPanelPage() {
     return <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium text-white ${colors[s] || 'bg-gray-600'}`}>{labels[s] || s}</span>;
   }
 
-  // ── Section wrapper ──
-  function Section({ id, title, icon, children }: { id: string; title: string; icon: React.ReactNode; children: React.ReactNode }) {
-    const expanded = expandedSections[id] ?? true;
-    return (
-      <div className="rounded-xl border border-gray-700/50 bg-[#1a1d2e] overflow-hidden">
-        <button onClick={() => toggleSection(id)} className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-gray-800/30 transition-colors">
-          <div className="flex items-center gap-2.5">
-            {icon}
-            <span className="text-sm font-semibold text-gray-200">{title}</span>
-          </div>
-          {expanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
-        </button>
-        {expanded && <div className="px-5 pb-5 pt-1">{children}</div>}
-      </div>
-    );
-  }
-
   // ── Loading / error ──
   if (loading) {
     return (
@@ -457,7 +459,7 @@ export function TechPanelPage() {
         )}
 
         {/* ── Check-In ── */}
-        <Section id="checkin" title="Check-In" icon={<LogIn size={16} className="text-green-400" />}>
+        <Section id="checkin" title="Check-In" icon={<LogIn size={16} className="text-green-400" />} expanded={expandedSections.checkin ?? true} onToggle={toggleSection}>
           {hasCheckedIn ? (
             <div className="flex items-center gap-2 text-green-400">
               <CheckCircle2 size={18} />
@@ -478,7 +480,7 @@ export function TechPanelPage() {
 
         {/* ── Steps ── */}
         {totalSteps > 0 && (
-          <Section id="steps" title={`Etapes (${validatedSteps}/${totalSteps})`} icon={<CheckCircle2 size={16} className="text-blue-400" />}>
+          <Section id="steps" title={`Etapes (${validatedSteps}/${totalSteps})`} icon={<CheckCircle2 size={16} className="text-blue-400" />} expanded={expandedSections.steps ?? true} onToggle={toggleSection}>
             {/* Progress bar */}
             <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
               <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${totalSteps > 0 ? (validatedSteps / totalSteps) * 100 : 0}%` }} />
@@ -506,7 +508,7 @@ export function TechPanelPage() {
         )}
 
         {/* ── Observations ── */}
-        <Section id="observations" title="Observations" icon={<FileText size={16} className="text-yellow-400" />}>
+        <Section id="observations" title="Observations" icon={<FileText size={16} className="text-yellow-400" />} expanded={expandedSections.observations ?? true} onToggle={toggleSection}>
           <textarea
             value={observations}
             onChange={(e) => setObservations(e.target.value)}
@@ -527,7 +529,7 @@ export function TechPanelPage() {
         </Section>
 
         {/* ── Photos ── */}
-        <Section id="photos" title={`Photos (${data.photos.length})`} icon={<Camera size={16} className="text-purple-400" />}>
+        <Section id="photos" title={`Photos (${data.photos.length})`} icon={<Camera size={16} className="text-purple-400" />} expanded={expandedSections.photos ?? true} onToggle={toggleSection}>
           {/* Hidden inputs */}
           <input ref={photoInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handlePhotoUpload(e.target.files)} />
           <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handlePhotoUpload(e.target.files)} />
@@ -566,7 +568,7 @@ export function TechPanelPage() {
         </Section>
 
         {/* ── Signatures ── */}
-        <Section id="signatures" title="Signatures" icon={<FileText size={16} className="text-orange-400" />}>
+        <Section id="signatures" title="Signatures" icon={<FileText size={16} className="text-orange-400" />} expanded={expandedSections.signatures ?? true} onToggle={toggleSection}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <SignatureSection title="Signature technicien" type="technician" uid={uid!} existing={techSig} onSaved={fetchDetails} technicianName={intervention.assignedTechnicianName || undefined} />
             <SignatureSection title="Signature client" type="client" uid={uid!} existing={clientSig} onSaved={fetchDetails} />
@@ -574,7 +576,7 @@ export function TechPanelPage() {
         </Section>
 
         {/* ── Check-Out ── */}
-        <Section id="checkout" title="Check-Out" icon={<LogOut size={16} className="text-red-400" />}>
+        <Section id="checkout" title="Check-Out" icon={<LogOut size={16} className="text-red-400" />} expanded={expandedSections.checkout ?? true} onToggle={toggleSection}>
           {hasCheckedOut ? (
             <div className="flex items-center gap-2 text-blue-400">
               <CheckCircle2 size={18} />

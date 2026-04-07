@@ -82,6 +82,7 @@ const TIMELINE_ICONS: Record<TimelineEventType, React.ReactNode> = {
   photo: <Camera size={16} className="text-purple-500" />,
   status_change: <ArrowRight size={16} className="text-accent" />,
   assignment: <User size={16} className="text-yellow-500" />,
+  step_validated: <CheckCircle2 size={16} className="text-teal-500" />,
 };
 
 function formatDateTime(dateStr: string | null): string {

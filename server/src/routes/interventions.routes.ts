@@ -627,10 +627,12 @@ router.post('/:id/steps/instantiate', async (req, res) => {
 // POST /interventions/:id/steps/:stepId/validate-technician
 router.post('/:id/steps/:stepId/validate-technician', async (req, res) => {
   try {
+    const interventionId = Number(req.params.id);
     const { technicianId } = req.body;
     if (!technicianId) return res.status(400).json({ success: false, error: 'technicianId is required' });
     const data = await interventionStepService.validateTechnician(Number(req.params.stepId), technicianId);
     if (!data) return res.status(404).json({ success: false, error: 'Step not found' });
+    await timelineService.create({ interventionId, technicianId, type: 'step_validated', message: `Etape validee (technicien) : ${data.label}` });
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -640,8 +642,10 @@ router.post('/:id/steps/:stepId/validate-technician', async (req, res) => {
 // DELETE /interventions/:id/steps/:stepId/validate-technician
 router.delete('/:id/steps/:stepId/validate-technician', async (req, res) => {
   try {
+    const interventionId = Number(req.params.id);
     const data = await interventionStepService.unvalidateTechnician(Number(req.params.stepId));
     if (!data) return res.status(404).json({ success: false, error: 'Step not found' });
+    await timelineService.create({ interventionId, type: 'step_validated', message: `Etape devalidee (technicien) : ${data.label}` });
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -651,10 +655,12 @@ router.delete('/:id/steps/:stepId/validate-technician', async (req, res) => {
 // POST /interventions/:id/steps/:stepId/validate-supervisor
 router.post('/:id/steps/:stepId/validate-supervisor', async (req, res) => {
   try {
+    const interventionId = Number(req.params.id);
     const userId = req.session?.userId;
     if (!userId) return res.status(401).json({ success: false, error: 'Not authenticated' });
     const data = await interventionStepService.validateSupervisor(Number(req.params.stepId), userId);
     if (!data) return res.status(404).json({ success: false, error: 'Step not found' });
+    await timelineService.create({ interventionId, type: 'step_validated', message: `Etape validee (superviseur) : ${data.label}` });
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -664,8 +670,10 @@ router.post('/:id/steps/:stepId/validate-supervisor', async (req, res) => {
 // DELETE /interventions/:id/steps/:stepId/validate-supervisor
 router.delete('/:id/steps/:stepId/validate-supervisor', async (req, res) => {
   try {
+    const interventionId = Number(req.params.id);
     const data = await interventionStepService.unvalidateSupervisor(Number(req.params.stepId));
     if (!data) return res.status(404).json({ success: false, error: 'Step not found' });
+    await timelineService.create({ interventionId, type: 'step_validated', message: `Etape devalidee (superviseur) : ${data.label}` });
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

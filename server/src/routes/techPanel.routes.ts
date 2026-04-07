@@ -319,6 +319,7 @@ router.post('/:uid/steps/:stepId/validate', async (req, res) => {
 
     const data = await interventionStepService.validateTechnician(Number(req.params.stepId), techId);
     if (!data) return res.status(404).json({ success: false, error: 'Step not found' });
+    await timelineService.create({ interventionId: intervention.id, technicianId: techId, type: 'step_validated', message: `Etape validee : ${data.label}` });
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -328,8 +329,10 @@ router.post('/:uid/steps/:stepId/validate', async (req, res) => {
 // ── POST /tech-panel/:uid/steps/:stepId/unvalidate ──────────────────────────
 router.post('/:uid/steps/:stepId/unvalidate', async (req, res) => {
   try {
+    const intervention = (req as any).intervention;
     const data = await interventionStepService.unvalidateTechnician(Number(req.params.stepId));
     if (!data) return res.status(404).json({ success: false, error: 'Step not found' });
+    await timelineService.create({ interventionId: intervention.id, type: 'step_validated', message: `Etape devalidee : ${data.label}` });
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
