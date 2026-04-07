@@ -380,6 +380,7 @@ export function TechPanelPage() {
 
   const validatedSteps = data.steps.filter((s) => s.technicianValidatedAt).length;
   const totalSteps = data.steps.length;
+  const allStepsValidated = totalSteps === 0 || validatedSteps === totalSteps;
   const techSig = data.signatures.find((s) => s.type === 'technician') || null;
   const clientSig = data.signatures.find((s) => s.type === 'client') || null;
 
@@ -588,11 +589,14 @@ export function TechPanelPage() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => handleCheckOut('pending_validation')}
-                disabled={isDone || gpsLoading}
+                disabled={isDone || gpsLoading || !allStepsValidated}
                 className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700 disabled:opacity-40 transition-colors w-full sm:w-auto"
               >
                 <CheckCircle2 size={18} /> Terminer l'intervention
               </button>
+              {!allStepsValidated && (
+                <p className="text-xs text-orange-400">Toutes les etapes doivent etre validees avant de pouvoir terminer.</p>
+              )}
               <button
                 onClick={() => handleCheckOut('issue')}
                 disabled={isDone || gpsLoading}
