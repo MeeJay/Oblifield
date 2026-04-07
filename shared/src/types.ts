@@ -556,6 +556,7 @@ export interface AppConfig {
   company_logo_path: string | null;
   tech_panel_url: string | null;
   email_notification_smtp_server_id: number | null;
+  support_phone: string | null;
   // PDF report colors
   pdf_color_primary: string | null;
   pdf_color_accent_line: string | null;

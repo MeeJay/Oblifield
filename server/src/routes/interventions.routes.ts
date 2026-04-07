@@ -702,14 +702,17 @@ router.post('/:id/signatures', async (req, res) => {
       return res.status(400).json({ success: false, error: 'type, signatureData, and signerName are required' });
     }
     const userId = req.session?.userId ?? null;
+    const interventionId = Number(req.params.id);
     const data = await signatureService.save({
-      interventionId: Number(req.params.id),
+      interventionId,
       type,
       signatureData,
       signerName,
       signedByUserId: type === 'supervisor' ? userId : null,
       signedByTechnicianId: null,
     });
+    const typeLabels: Record<string, string> = { technician: 'technicien', supervisor: 'superviseur', client: 'client' };
+    await timelineService.create({ interventionId, type: 'signature', message: `Signature ${typeLabels[type] || type} : ${signerName}` });
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

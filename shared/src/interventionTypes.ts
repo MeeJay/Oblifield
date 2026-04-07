@@ -46,6 +46,7 @@ export const TIMELINE_EVENT_TYPES = [
   'status_change',
   'assignment',
   'step_validated',
+  'signature',
 ] as const;
 export type TimelineEventType = (typeof TIMELINE_EVENT_TYPES)[number];
 

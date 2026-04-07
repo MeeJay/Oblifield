@@ -391,12 +391,18 @@ export function TechPanelPage() {
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
         {/* ── Header ── */}
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <img src="/api/tech-panel/logo" alt="" className="h-16 max-w-[240px] object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">TechPanel</span>
-          </div>
+          <img src="/api/tech-panel/logo" alt="" className="h-20 max-w-[280px] object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           {statusBadge(intervention.status)}
         </div>
+
+        {data.supportPhone && (
+          <a
+            href={`tel:${data.supportPhone}`}
+            className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-700 transition-colors mb-4"
+          >
+            <Phone size={16} /> Appeler Support
+          </a>
+        )}
 
         {/* ── Resume ── */}
         <div className="rounded-xl border border-gray-700/50 bg-[#1a1d2e] p-5">
@@ -456,6 +462,30 @@ export function TechPanelPage() {
               <FileText size={15} /> Ordre de mission
             </h3>
             <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{intervention.description}</p>
+          </div>
+        )}
+
+        {/* ── Documents ── */}
+        {data.documents.length > 0 && (
+          <div className="rounded-xl border border-gray-700/50 bg-[#1a1d2e] p-4">
+            <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+              <FileText size={15} /> Documents ({data.documents.length})
+            </h3>
+            <div className="space-y-2">
+              {data.documents.map((doc) => (
+                <a
+                  key={doc.documentId}
+                  href={`/api/tech-panel/${uid}/documents/${doc.documentId}?sig=${sessionStorage.getItem('tech-panel-sig') || ''}&ts=${sessionStorage.getItem('tech-panel-ts') || ''}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-lg border border-gray-700 bg-[#0f1117] px-3 py-2.5 text-sm text-blue-400 hover:text-blue-300 hover:border-blue-500/50 transition-colors"
+                >
+                  <FileText size={14} className="shrink-0" />
+                  <span className="truncate">{doc.documentTitle}</span>
+                  {doc.categoryName && <span className="text-xs text-gray-500 shrink-0">({doc.categoryName})</span>}
+                </a>
+              ))}
+            </div>
           </div>
         )}
 

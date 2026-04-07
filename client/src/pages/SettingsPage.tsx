@@ -95,6 +95,7 @@ export function SettingsPage() {
   const [configSaving, setConfigSaving] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [techPanelUrl, setTechPanelUrl] = useState('');
+  const [supportPhone, setSupportPhone] = useState('');
   const [companySaving, setCompanySaving] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
@@ -134,6 +135,7 @@ export function SettingsPage() {
       setAppConfig(cfg);
       setCompanyName(cfg.company_name || '');
       setTechPanelUrl(cfg.tech_panel_url || '');
+      setSupportPhone(cfg.support_phone || '');
       setEmailSmtpServerId(cfg.email_notification_smtp_server_id ? String(cfg.email_notification_smtp_server_id) : '');
       if (cfg.company_logo_path) {
         const logoFilename = cfg.company_logo_path.split('/').pop();
@@ -358,6 +360,42 @@ export function SettingsPage() {
                     setCompanySaving(true);
                     try {
                       await appConfigApi.setConfig('tech_panel_url', techPanelUrl.trim().replace(/\/+$/, ''));
+                      toast.success('Enregistre');
+                    } catch {
+                      toast.error('Erreur');
+                    } finally {
+                      setCompanySaving(false);
+                    }
+                  }}
+                >
+                  Enregistrer
+                </Button>
+              </div>
+            </div>
+
+            {/* Support phone */}
+            <div className="mt-5 pt-5 border-t border-border">
+              <p className="text-sm text-text-muted mb-3">
+                Numero de telephone du support affiche dans le portail technicien.
+              </p>
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  <Input
+                    label="Telephone support"
+                    value={supportPhone}
+                    onChange={(e) => setSupportPhone(e.target.value)}
+                    placeholder="+33 1 23 45 67 89"
+                    type="tel"
+                  />
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  loading={companySaving}
+                  onClick={async () => {
+                    setCompanySaving(true);
+                    try {
+                      await appConfigApi.setConfig('support_phone', supportPhone.trim());
                       toast.success('Enregistre');
                     } catch {
                       toast.error('Erreur');

@@ -1,4 +1,4 @@
-import type { Intervention, InterventionStep, InterventionPhoto, InterventionSignature, TimelineEvent } from '@oblifield/shared';
+import type { Intervention, InterventionStep, InterventionPhoto, InterventionSignature, InterventionDocument, TimelineEvent } from '@oblifield/shared';
 
 const BASE = '/api/tech-panel';
 
@@ -38,6 +38,8 @@ export interface TechPanelDetails {
   photos: InterventionPhoto[];
   signatures: InterventionSignature[];
   timeline: TimelineEvent[];
+  documents: InterventionDocument[];
+  supportPhone: string | null;
 }
 
 export const techPanelApi = {

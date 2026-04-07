@@ -122,11 +122,13 @@ router.get('/:uid/details', async (req, res) => {
     const { photoService } = await import('../services/photo.service');
     const { signatureService } = await import('../services/signature.service');
 
-    const [steps, photos, signatures, timeline] = await Promise.all([
+    const [steps, photos, signatures, timeline, supportPhone, documents] = await Promise.all([
       interventionStepService.getByIntervention(intervention.id),
       photoService.getByIntervention(intervention.id),
       signatureService.getByIntervention(intervention.id),
       timelineService.getByIntervention(intervention.id, 100),
+      appConfigService.get('support_phone'),
+      import('../services/interventionDocument.service').then((m) => m.interventionDocumentService.getByIntervention(intervention.id)),
     ]);
 
     res.json({
@@ -137,6 +139,8 @@ router.get('/:uid/details', async (req, res) => {
         photos,
         signatures,
         timeline,
+        supportPhone: supportPhone || null,
+        documents,
       },
     });
   } catch (err: any) {
@@ -271,6 +275,26 @@ router.post('/:uid/photos', async (req, res) => {
   }
 });
 
+// ── GET /tech-panel/:uid/documents/:docId ─────────────────────────────────
+router.get('/:uid/documents/:docId', async (req, res) => {
+  try {
+    const intervention = (req as any).intervention;
+    // Verify document is attached to this intervention
+    const { interventionDocumentService } = await import('../services/interventionDocument.service');
+    const docs = await interventionDocumentService.getByIntervention(intervention.id);
+    const docId = Number(req.params.docId);
+    if (!docs.some((d: any) => d.documentId === docId)) {
+      return res.status(403).json({ success: false, error: 'Document not attached to this intervention' });
+    }
+    const { documentService } = await import('../services/document.service');
+    const doc = await documentService.getById(docId);
+    if (!doc) return res.status(404).json({ success: false, error: 'Document not found' });
+    res.json({ success: true, data: doc });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ── POST /tech-panel/:uid/signatures ────────────────────────────────────────
 router.post('/:uid/signatures', async (req, res) => {
   try {
@@ -293,6 +317,8 @@ router.post('/:uid/signatures', async (req, res) => {
       signedByUserId: null,
       signedByTechnicianId: intervention.assignedTechnicianId,
     });
+    const typeLabels: Record<string, string> = { technician: 'technicien', client: 'client' };
+    await timelineService.create({ interventionId: intervention.id, technicianId: intervention.assignedTechnicianId, type: 'signature', message: `Signature ${typeLabels[type] || type} : ${signerName}` });
     res.json({ success: true, data });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
