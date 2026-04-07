@@ -65,7 +65,7 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
 
   const doc = new PDFDocument({
     size: 'A4',
-    margins: { top: 40, bottom: 60, left: 50, right: 50 },
+    margins: { top: 40, bottom: 0, left: 50, right: 50 },
     bufferPages: true,
   });
 
