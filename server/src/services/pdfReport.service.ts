@@ -93,7 +93,7 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
       .fontSize(11)
       .font('Helvetica-Bold')
       .fillColor(SECTION_TEXT)
-      .text(label, leftMargin + 10, y + 6, { width: contentWidth - 20 });
+      .text(label, leftMargin + 10, y + 6, { width: contentWidth - 20, lineBreak: false });
     doc.restore();
     return y + h + 8;
   }
@@ -111,11 +111,11 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
       .fontSize(10)
       .font('Helvetica-Bold')
       .fillColor(LABEL_COLOR)
-      .text(label, leftMargin + 5, y + 5, { width: 120 });
+      .text(label, leftMargin + 5, y + 5, { width: 120, lineBreak: false });
     doc
       .font('Helvetica')
       .fillColor(VALUE_COLOR)
-      .text(value || '\u2014', leftMargin + 130, y + 5, { width: contentWidth - 140 });
+      .text(value || '\u2014', leftMargin + 130, y + 5, { width: contentWidth - 140, lineBreak: false });
     return y + rowH;
   }
 
@@ -144,6 +144,7 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
     .text("RAPPORT D'INTERVENTION", 250, 35, {
       width: contentWidth - 200,
       align: 'right',
+      lineBreak: false,
     });
 
   // Subtitle: intervention title (smaller, under the main title)
@@ -154,6 +155,7 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
     .text(intervention.title, 250, 58, {
       width: contentWidth - 200,
       align: 'right',
+      lineBreak: false,
     });
 
   // Red accent line under header
@@ -169,7 +171,7 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
 
   const startTime = formatTime(intervention.startedAt);
   const endTime = formatTime(intervention.completedAt);
-  const timeRange = startTime ? `${startTime} \u2192 ${endTime || '\u2014'}` : '\u2014';
+  const timeRange = startTime ? `${startTime} - ${endTime || '\u2014'}` : '\u2014';
   y = drawInfoRow('D\u00e9but / Fin :', timeRange, y);
 
   y = drawInfoRow('Technicien :', intervention.assignedTechnicianName ?? '', y);
@@ -181,21 +183,25 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
 
   y += 20;
 
+  const pageBottom = doc.page.height - 60; // bottom margin
+
+  // ── Helper: draw a block of text, handling page breaks manually ────────
+  function drawTextBlock(text: string, startY: number): number {
+    const textOpts = { width: contentWidth - 20, lineGap: 5 };
+    doc.fontSize(10).font('Helvetica').fillColor(VALUE_COLOR);
+    const textH = doc.heightOfString(text, textOpts);
+    if (startY + textH > pageBottom) {
+      doc.addPage();
+      startY = 40;
+    }
+    doc.text(text, leftMargin + 10, startY, textOpts);
+    return doc.y + 15;
+  }
+
   // ── Observations Technicien section ─────────────────────────────────────
   if (intervention.technicianObservations) {
     y = drawSectionHeader('Observations Technicien', y);
-
-    doc
-      .fontSize(10)
-      .font('Helvetica')
-      .fillColor(VALUE_COLOR);
-
-    doc.text(intervention.technicianObservations, leftMargin + 10, y, {
-      width: contentWidth - 20,
-      lineGap: 5,
-    });
-
-    y = doc.y + 15;
+    y = drawTextBlock(intervention.technicianObservations, y);
   }
 
   // ── Commentaires section (supervisor observations + timeline notes) ────
@@ -215,19 +221,7 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
 
   if (commentParts.length > 0) {
     y = drawSectionHeader('Commentaires', y);
-
-    doc
-      .fontSize(10)
-      .font('Helvetica')
-      .fillColor(VALUE_COLOR);
-
-    const commentText = commentParts.join('\n');
-    doc.text(commentText, leftMargin + 10, y, {
-      width: contentWidth - 20,
-      lineGap: 5,
-    });
-
-    y = doc.y + 15;
+    y = drawTextBlock(commentParts.join('\n'), y);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -266,10 +260,10 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
         .font('Helvetica-Bold')
         .fillColor(NAVY)
         .text(
-          `Annexe photos \u2014 page ${page + 1}/${totalPhotoPages}`,
+          `Annexe photos - page ${page + 1}/${totalPhotoPages}`,
           leftMargin,
           35,
-          { width: contentWidth },
+          { width: contentWidth, lineBreak: false },
         );
 
       // Thin line under title
@@ -343,6 +337,7 @@ export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
             .text(photo.originalName, x + 4, rowY + cellH / 2 - 5, {
               width: cellW - 8,
               align: 'center',
+              lineBreak: false,
             });
         }
 

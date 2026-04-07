@@ -1,6 +1,6 @@
 {
   "name": "@oblifield/server",
-  "version": "0.0.28",
+  "version": "0.0.29",
   "private": true,
   "main": "dist/src/index.js",
   "scripts": {
