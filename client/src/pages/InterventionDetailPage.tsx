@@ -462,7 +462,7 @@ export function InterventionDetailPage() {
         </div>
       </div>
 
-      {/* Row 1 : Fiche infos + Commentaires internes (50/50) */}
+      {/* Row 1 : Fiche infos + Ordre de mission (50/50) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 mb-2.5">
         {/* Fiche infos */}
         <div className="rounded-lg border border-border bg-bg-secondary p-4 flex flex-col gap-3">
@@ -539,12 +539,12 @@ export function InterventionDetailPage() {
           </div>
         </div>
 
-        {/* Commentaires internes */}
+        {/* Ordre de mission */}
         <div className="rounded-lg border border-border border-l-[3px] border-l-amber-500 bg-bg-secondary flex flex-col">
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border">
             <AlertTriangle size={14} className="text-amber-500 shrink-0" />
-            <span className="text-xs font-medium uppercase tracking-wide text-text-muted">Commentaires internes</span>
-            <span className="ml-auto text-[11px] text-text-muted">Non visible dans le rapport</span>
+            <span className="text-xs font-medium uppercase tracking-wide text-text-muted">Ordre de mission</span>
+            <span className="ml-auto text-[11px] text-text-muted">Visible par le technicien, non inclus dans le rapport</span>
           </div>
           <div className="flex-1 p-4">
             <textarea

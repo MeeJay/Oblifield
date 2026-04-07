@@ -9,11 +9,22 @@ import {
 } from 'lucide-react';
 
 // ─── Signature Pad (self-contained) ─────────────────────────────────────────
-function SignaturePad({ onSave }: { onSave: (dataUrl: string) => void }) {
+function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: string) => void; onCancel: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [drawing, setDrawing] = useState(false);
   const [hasStrokes, setHasStrokes] = useState(false);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
+
+  // Resize canvas to fill container
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+    const rect = container.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+  }, []);
 
   function getPos(e: React.MouseEvent | React.TouchEvent): { x: number; y: number } {
     const canvas = canvasRef.current!;
@@ -42,7 +53,7 @@ function SignaturePad({ onSave }: { onSave: (dataUrl: string) => void }) {
     ctx.moveTo(lastPos.current.x, lastPos.current.y);
     ctx.lineTo(pos.x, pos.y);
     ctx.strokeStyle = '#e2e8f0';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
     ctx.stroke();
     lastPos.current = pos;
@@ -55,32 +66,39 @@ function SignaturePad({ onSave }: { onSave: (dataUrl: string) => void }) {
   }
 
   function clear() {
-    const ctx = canvasRef.current?.getContext('2d');
-    if (ctx) {
-      ctx.clearRect(0, 0, canvasRef.current!.width, canvasRef.current!.height);
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (ctx && canvas) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
     setHasStrokes(false);
   }
 
   return (
-    <div>
-      <canvas
-        ref={canvasRef}
-        width={500}
-        height={200}
-        className="w-full rounded-lg border border-gray-600 bg-[#0f1117] touch-none cursor-crosshair"
-        style={{ maxWidth: 500, minHeight: 150 }}
-        onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
-        onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw}
-      />
-      <div className="flex gap-2 mt-2">
-        <button onClick={clear} className="rounded-lg border border-gray-600 px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 transition-colors">
+    <div className="fixed inset-0 z-50 bg-[#0f1117] flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
+        <span className="text-sm font-medium text-gray-300">Signez dans la zone ci-dessous</span>
+        <button onClick={onCancel} className="text-gray-400 hover:text-white text-sm">Annuler</button>
+      </div>
+      {/* Canvas zone */}
+      <div ref={containerRef} className="flex-1 relative">
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 w-full h-full touch-none cursor-crosshair"
+          onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
+          onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw}
+        />
+      </div>
+      {/* Bottom buttons */}
+      <div className="flex gap-3 px-4 py-3 border-t border-gray-700">
+        <button onClick={clear} className="flex-1 rounded-lg border border-gray-600 px-3 py-2.5 text-sm text-gray-300 hover:bg-gray-700 transition-colors">
           Effacer
         </button>
         <button
           disabled={!hasStrokes}
           onClick={() => onSave(canvasRef.current!.toDataURL('image/png'))}
-          className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40 transition-colors"
+          className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40 transition-colors"
         >
           Valider la signature
         </button>
@@ -129,16 +147,23 @@ function SignatureSection({
             placeholder="Nom du signataire"
             className="w-full rounded-lg border border-gray-600 bg-[#0f1117] px-3 py-2 text-base text-gray-100 placeholder:text-gray-500 focus:border-blue-500 outline-none"
           />
-          <SignaturePad onSave={async (dataUrl) => {
-            if (!name.trim()) { toast.error('Veuillez saisir un nom'); return; }
-            setSaving(true);
-            try {
-              await techPanelApi.saveSignature(uid, { type, signatureData: dataUrl, signerName: name.trim() });
-              toast.success('Signature enregistree');
-              onSaved();
-            } catch (err: any) { toast.error(err.message); }
-            finally { setSaving(false); }
-          }} />
+          {name.trim() ? (
+            <SignaturePad
+              onCancel={() => setShowPad(false)}
+              onSave={async (dataUrl) => {
+                setSaving(true);
+                try {
+                  await techPanelApi.saveSignature(uid, { type, signatureData: dataUrl, signerName: name.trim() });
+                  toast.success('Signature enregistree');
+                  setShowPad(false);
+                  onSaved();
+                } catch (err: any) { toast.error(err.message); }
+                finally { setSaving(false); }
+              }}
+            />
+          ) : (
+            <p className="text-xs text-gray-400">Saisissez le nom du signataire pour ouvrir la zone de signature</p>
+          )}
           {saving && <p className="text-xs text-gray-400">Enregistrement...</p>}
         </div>
       )}
@@ -167,8 +192,11 @@ export function TechPanelPage() {
     if (!uid) return;
     try {
       const d = await techPanelApi.getDetails(uid);
-      setData(d);
-      setObservations(d.intervention.technicianObservations || '');
+      setData((prev) => {
+        // Only update observations if they haven't been locally modified
+        if (!prev) setObservations(d.intervention.technicianObservations || '');
+        return d;
+      });
     } catch (err: any) {
       toast.error(err.message || 'Erreur de chargement');
       navigate((window as any).__TECH_PANEL__ ? '/' : '/tech');
@@ -396,6 +424,16 @@ export function TechPanelPage() {
             )}
           </div>
         </div>
+
+        {/* ── Ordre de mission (notes internes, read-only) ── */}
+        {intervention.description && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+            <h3 className="text-sm font-semibold text-amber-400 mb-2 flex items-center gap-2">
+              <FileText size={15} /> Ordre de mission
+            </h3>
+            <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{intervention.description}</p>
+          </div>
+        )}
 
         {/* ── Check-In ── */}
         <Section id="checkin" title="Check-In" icon={<LogIn size={16} className="text-green-400" />}>
