@@ -1,6 +1,6 @@
 {
   "name": "@oblifield/client",
-  "version": "0.0.54",
+  "version": "0.0.57",
   "private": true,
   "type": "module",
   "scripts": {

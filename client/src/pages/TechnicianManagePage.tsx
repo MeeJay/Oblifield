@@ -25,7 +25,7 @@ const STATUS_CONFIG: Record<TechnicianStatus, { label: string; color: string }> 
 };
 
 const TYPE_LABELS: Record<string, string> = {
-  electrician: 'Electricien',
+  electrician: '\u00c9lectricien',
   it: 'Informatique',
   other: 'Autre',
 };

@@ -1105,7 +1105,9 @@
     "pending": "Pending",
     "assigned": "Assigned",
     "in_progress": "In Progress",
-    "done": "Done",
+    "paused": "Paused",
+    "pending_validation": "Pending Validation",
+    "closed": "Closed",
     "issue": "Issue",
     "cancelled": "Cancelled"
   },

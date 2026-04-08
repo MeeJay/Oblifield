@@ -354,9 +354,9 @@ export function TechPanelPage() {
       issue: 'bg-red-600', cancelled: 'bg-gray-500',
     };
     const labels: Record<string, string> = {
-      pending: 'En attente', assigned: 'Assignee', in_progress: 'En cours',
-      paused: 'En pause', pending_validation: 'En validation', closed: 'Cloturee',
-      issue: 'Probleme', cancelled: 'Annulee',
+      pending: 'En attente', assigned: 'Assign\u00e9e', in_progress: 'En cours',
+      paused: 'En pause', pending_validation: 'En validation', closed: 'Cl\u00f4tur\u00e9e',
+      issue: 'Probl\u00e8me', cancelled: 'Annul\u00e9e',
     };
     return <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium text-white ${colors[s] || 'bg-gray-600'}`}>{labels[s] || s}</span>;
   }

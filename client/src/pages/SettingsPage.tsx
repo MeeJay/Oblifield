@@ -59,11 +59,11 @@ const emptySmtpForm = (): SmtpForm => ({
 const SLUG_LABELS: Record<string, string> = {
   intervention_assigned: 'Assignation',
   intervention_checkin: 'Confirmation pointage',
-  intervention_closed: 'Cloture',
+  intervention_closed: 'Cl\u00f4ture',
 };
 
 const LANG_LABELS: Record<string, string> = {
-  fr: 'Francais',
+  fr: 'Fran\u00e7ais',
   en: 'English',
 };
 

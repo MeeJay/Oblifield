@@ -16,6 +16,7 @@ import type {
   Technician,
   Client,
 } from '@oblifield/shared';
+import { INTERVENTION_STATUS_LABELS } from '@oblifield/shared';
 import { interventionsApi } from '@/api/interventions.api';
 import { techniciansApi } from '@/api/technicians.api';
 import { clientsApi } from '@/api/clients.api';
@@ -64,16 +65,7 @@ const STATUS_DOT: Record<InterventionStatus, string> = {
   cancelled: 'bg-gray-500',
 };
 
-const STATUS_LABEL: Record<InterventionStatus, string> = {
-  pending: 'En attente',
-  assigned: 'Assignee',
-  in_progress: 'En cours',
-  paused: 'En pause',
-  pending_validation: 'En validation',
-  closed: 'Cloturee',
-  issue: 'Probleme',
-  cancelled: 'Annulee',
-};
+const STATUS_LABEL = INTERVENTION_STATUS_LABELS;
 
 // ---------------------------------------------------------------------------
 // Helpers

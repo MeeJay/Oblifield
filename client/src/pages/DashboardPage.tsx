@@ -32,13 +32,13 @@ const STATUS_CARD_CONFIG: Record<
   { label: string; colorClass: string; icon: React.ReactNode }
 > = {
   pending: { label: 'En attente', colorClass: 'text-yellow-500', icon: <Clock size={20} /> },
-  assigned: { label: 'Assignee', colorClass: 'text-blue-500', icon: <UserCheck size={20} /> },
+  assigned: { label: 'Assign\u00e9e', colorClass: 'text-blue-500', icon: <UserCheck size={20} /> },
   in_progress: { label: 'En cours', colorClass: 'text-accent', icon: <Wrench size={20} /> },
   paused: { label: 'En pause', colorClass: 'text-orange-500', icon: <Clock size={20} /> },
   pending_validation: { label: 'En validation', colorClass: 'text-purple-500', icon: <CheckCircle2 size={20} /> },
-  closed: { label: 'Cloturee', colorClass: 'text-green-500', icon: <CheckCircle2 size={20} /> },
-  issue: { label: 'Probleme', colorClass: 'text-red-500', icon: <AlertTriangle size={20} /> },
-  cancelled: { label: 'Annulee', colorClass: 'text-gray-500', icon: <XCircle size={20} /> },
+  closed: { label: 'Cl\u00f4tur\u00e9e', colorClass: 'text-green-500', icon: <CheckCircle2 size={20} /> },
+  issue: { label: 'Probl\u00e8me', colorClass: 'text-red-500', icon: <AlertTriangle size={20} /> },
+  cancelled: { label: 'Annul\u00e9e', colorClass: 'text-gray-500', icon: <XCircle size={20} /> },
 };
 
 const TECH_STATUS_CONFIG: Record<TechnicianStatus, { label: string; color: string }> = {

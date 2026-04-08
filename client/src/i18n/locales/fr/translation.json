@@ -972,11 +972,13 @@
   },
   "interventionStatus": {
     "pending": "En attente",
-    "assigned": "Assigné",
+    "assigned": "Assignée",
     "in_progress": "En cours",
-    "done": "Terminé",
+    "paused": "En pause",
+    "pending_validation": "En validation",
+    "closed": "Clôturée",
     "issue": "Problème",
-    "cancelled": "Annulé"
+    "cancelled": "Annulée"
   },
   "interventionPriority": {
     "low": "Basse",

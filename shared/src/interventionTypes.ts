@@ -53,36 +53,36 @@ export type TimelineEventType = (typeof TIMELINE_EVENT_TYPES)[number];
 export const INTERVENTION_TYPE_LABELS: Record<InterventionType, string> = {
   installation: 'Installation',
   maintenance: 'Maintenance',
-  repair: 'Repair',
+  repair: 'R\u00e9paration',
   inspection: 'Inspection',
-  other: 'Other',
+  other: 'Autre',
 };
 
 export const INTERVENTION_STATUS_LABELS: Record<InterventionStatus, string> = {
   pending: 'En attente',
-  assigned: 'Assignee',
+  assigned: 'Assign\u00e9e',
   in_progress: 'En cours',
   paused: 'En pause',
   pending_validation: 'En validation',
-  closed: 'Cloturee',
-  issue: 'Probleme',
-  cancelled: 'Annulee',
+  closed: 'Cl\u00f4tur\u00e9e',
+  issue: 'Probl\u00e8me',
+  cancelled: 'Annul\u00e9e',
 };
 
 export const INTERVENTION_PRIORITY_LABELS: Record<InterventionPriority, string> = {
-  low: 'Low',
-  normal: 'Normal',
-  high: 'High',
-  urgent: 'Urgent',
+  low: 'Basse',
+  normal: 'Normale',
+  high: 'Haute',
+  urgent: 'Urgente',
 };
 
 export const TECHNICIAN_TYPES = ['electrician', 'it', 'other'] as const;
 export type TechnicianType = (typeof TECHNICIAN_TYPES)[number];
 
 export const TECHNICIAN_TYPE_LABELS: Record<TechnicianType, string> = {
-  electrician: 'Electrician',
-  it: 'IT',
-  other: 'Other',
+  electrician: '\u00c9lectricien',
+  it: 'Informatique',
+  other: 'Autre',
 };
 
 export const USER_ROLES = ['admin', 'user'] as const;
