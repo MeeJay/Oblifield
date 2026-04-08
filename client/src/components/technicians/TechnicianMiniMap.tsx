@@ -53,7 +53,10 @@ export function TechnicianMiniMap({ latitude, longitude, actionRadiusKm, name }:
         weight: 1.5,
         dashArray: '6 4',
       }).addTo(map);
-      map.fitBounds(circle.getBounds().pad(0.1));
+      // Defer fitBounds until map has a size
+      map.whenReady(() => {
+        try { map.fitBounds(circle.getBounds().pad(0.1)); } catch { map.setView([lat, lng], 10); }
+      });
     } else {
       map.setView([lat, lng], 14);
     }

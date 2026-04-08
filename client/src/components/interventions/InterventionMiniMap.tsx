@@ -94,11 +94,15 @@ export function InterventionMiniMap({ latitude, longitude, timeline }: Props) {
       markers.push(marker.getLatLng());
     }
 
-    if (markers.length === 1) {
-      map.setView(markers[0], 16);
-    } else {
-      map.fitBounds(L.latLngBounds(markers).pad(0.3));
-    }
+    map.whenReady(() => {
+      try {
+        if (markers.length === 1) {
+          map.setView(markers[0], 16);
+        } else {
+          map.fitBounds(L.latLngBounds(markers).pad(0.3));
+        }
+      } catch { /* map not ready */ }
+    });
 
     return () => {
       if (leafletRef.current) {
