@@ -7,7 +7,7 @@
 
 services:
   server:
-    image: alexandreaj/oblifield-server:${OBLIFIELD_VERSION:-latest}
+    image: meejay/oblifield-server:${OBLIFIELD_VERSION:-latest}
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -21,7 +21,7 @@ services:
       - uploads_data:/app/uploads
 
   client:
-    image: alexandreaj/oblifield-client:${OBLIFIELD_VERSION:-latest}
+    image: meejay/oblifield-client:${OBLIFIELD_VERSION:-latest}
     restart: unless-stopped
     depends_on:
       server:

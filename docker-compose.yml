@@ -20,7 +20,7 @@ services:
       start_period: 60s
 
   server:
-    image: alexandreaj/oblifield-server:${OBLIFIELD_VERSION:-latest}
+    image: meejay/oblifield-server:${OBLIFIELD_VERSION:-latest}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -37,7 +37,7 @@ services:
       - uploads_data:/app/uploads
 
   client:
-    image: alexandreaj/oblifield-client:${OBLIFIELD_VERSION:-latest}
+    image: meejay/oblifield-client:${OBLIFIELD_VERSION:-latest}
     restart: unless-stopped
     depends_on:
       server:

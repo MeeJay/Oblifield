@@ -182,7 +182,7 @@ Set `DATABASE_URL` in your `.env` to point at your existing PostgreSQL instance.
 > This project was built using Claude Code as a development assistant throughout the entire process.
 
 <p align="center">
-  <a href="https://github.com/alexandreaj/Oblifield">github.com/alexandreaj/Oblifield</a>
+  <a href="https://github.com/MeeJay/Oblifield">github.com/MeeJay/Oblifield</a>
   &nbsp;&bull;&nbsp;
   <a href="https://obli.tools">obli.tools</a>
 </p>
