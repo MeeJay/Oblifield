@@ -269,10 +269,10 @@ export function InterventionEditPage() {
           required
         />
 
-        {/* Description */}
+        {/* Ordre de mission */}
         <div className="space-y-1">
           <label className="block text-sm font-medium text-text-secondary">
-            Description
+            Ordre de mission
           </label>
           <textarea
             name="description"
@@ -280,8 +280,9 @@ export function InterventionEditPage() {
             onChange={handleChange}
             rows={4}
             className={cn(selectClass, 'resize-y')}
-            placeholder="Description detaillee..."
+            placeholder="Instructions pour le technicien..."
           />
+          <p className="text-xs text-text-muted">Visible par le technicien, non inclus dans le rapport</p>
         </div>
 
         {/* Type + Priority */}
