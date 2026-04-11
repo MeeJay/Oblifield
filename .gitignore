@@ -1,10 +1,9 @@
 node_modules/
 dist/
-!agent/dist/
-agent/dist/*.exe
-agent/bin/*.exe
 !desktop-app/dist/
 .env
+.env.*
+!.env.example
 *.log
 .DS_Store
 Thumbs.db
@@ -12,14 +11,27 @@ coverage/
 .vscode/
 .idea/
 *.tsbuildinfo
-*.bat
 
-# Claude Code internal files (conversation history, memory, etc.)
+# Dangerous / binary files — never commit
+*.bat
+*.pdf
+*.ps1
+*.exe
+*.msi
+*.dll
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.secret
+*.credentials
+
+# Claude Code internal files
 .claude/
 CLAUDE.md
 
 # Local dev / planning notes
 PLAN.md
 custom/
-start.ps1
-/obli.tools/start.ps1

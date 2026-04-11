@@ -96,10 +96,10 @@ export default function App() {
             <Route path="/intervention/:id" element={<InterventionDetailPage />} />
             <Route path="/intervention/:id/edit" element={<InterventionEditPage />} />
             <Route path="/intervention/:id/report" element={<ReportFormPage />} />
-            <Route path="/client/:id" element={<ClientDetailPage />} />
 
             {/* Admin-only routes */}
             <Route element={<ProtectedRoute requiredRole="admin" />}>
+              <Route path="/client/:id" element={<ClientDetailPage />} />
               <Route path="/clients" element={<ClientManagePage />} />
               <Route path="/technicians" element={<TechnicianManagePage />} />
               <Route path="/technicians/:id" element={<TechnicianDetailPage />} />
