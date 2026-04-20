@@ -5,6 +5,7 @@ import { interventionService } from '../services/intervention.service';
 import { timelineService } from '../services/timeline.service';
 import { interventionStepService } from '../services/interventionStep.service';
 import { interventionDocumentService } from '../services/interventionDocument.service';
+import { normalizeClientTimestamp } from '../utils/dateParse';
 
 const router = Router();
 
@@ -275,6 +276,7 @@ router.post('/:id/check-in', async (req, res) => {
     const userId = req.session.userId;
     const interventionId = Number(req.params.id);
     const { latitude, longitude, accuracy, customTimestamp } = req.body;
+    const normalizedTs = customTimestamp ? normalizeClientTimestamp(customTimestamp) : null;
 
     // 1. Load intervention first to get assignedTechnicianId
     const intervention = await interventionService.getById(interventionId);
@@ -287,14 +289,14 @@ router.post('/:id/check-in', async (req, res) => {
       interventionId,
       technicianId: intervention.assignedTechnicianId ?? null,
       type: 'check_in',
-      message: customTimestamp ? `Pointage manuel : ${new Date(customTimestamp).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}` : null,
+      message: normalizedTs ? `Pointage manuel : ${new Date(normalizedTs).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}` : null,
       latitude: latitude ?? intervention.latitude ?? null,
       longitude: longitude ?? intervention.longitude ?? null,
       accuracy: accuracy ?? null,
-      createdAt: customTimestamp || null,
+      createdAt: normalizedTs,
     });
 
-    const updated = await interventionService.changeStatus(interventionId, 'in_progress', customTimestamp || null);
+    const updated = await interventionService.changeStatus(interventionId, 'in_progress', normalizedTs);
 
     // 3. Update technician status
     if (intervention.assignedTechnicianId) {
@@ -331,6 +333,7 @@ router.post('/:id/check-out', async (req, res) => {
     const userId = req.session.userId;
     const interventionId = Number(req.params.id);
     const { latitude, longitude, accuracy, status, customTimestamp } = req.body;
+    const normalizedTs = customTimestamp ? normalizeClientTimestamp(customTimestamp) : null;
 
     const finalStatus = status === 'issue' ? 'issue' : 'pending_validation';
 
@@ -345,14 +348,14 @@ router.post('/:id/check-out', async (req, res) => {
       interventionId,
       technicianId: intervention.assignedTechnicianId ?? null,
       type: 'check_out',
-      message: customTimestamp ? `Pointage manuel : ${new Date(customTimestamp).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}` : null,
+      message: normalizedTs ? `Pointage manuel : ${new Date(normalizedTs).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}` : null,
       latitude: latitude ?? intervention.latitude ?? null,
       longitude: longitude ?? intervention.longitude ?? null,
       accuracy: accuracy ?? null,
-      createdAt: customTimestamp || null,
+      createdAt: normalizedTs,
     });
 
-    const updated = await interventionService.changeStatus(interventionId, finalStatus, customTimestamp || null);
+    const updated = await interventionService.changeStatus(interventionId, finalStatus, normalizedTs);
 
     // 3. Update technician status
     if (intervention.assignedTechnicianId) {

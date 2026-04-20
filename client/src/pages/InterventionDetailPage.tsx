@@ -172,13 +172,6 @@ export function InterventionDetailPage() {
     }
   };
 
-  // Convert datetime-local (local time, no TZ) to ISO with browser's TZ offset
-  const toLocalIso = (dt: string): string => {
-    if (!dt) return dt;
-    const d = new Date(dt); // browser interprets as local
-    return d.toISOString();
-  };
-
   const handleCheckIn = async () => {
     setActionLoading(true);
     try {
@@ -186,7 +179,8 @@ export function InterventionDetailPage() {
       const gps = intervention?.latitude && intervention?.longitude
         ? { latitude: intervention.latitude, longitude: intervention.longitude }
         : undefined;
-      const ts = customCheckInTime ? toLocalIso(customCheckInTime) : undefined;
+      // Send raw datetime-local string: server normalizes to Europe/Paris
+      const ts = customCheckInTime || undefined;
       await interventionsApi.checkIn(interventionId, gps, ts);
       toast.success(customCheckInTime ? 'Pointage entree manuel effectue' : 'Pointage entree effectue');
       setCustomCheckInTime('');
@@ -205,7 +199,7 @@ export function InterventionDetailPage() {
       await interventionsApi.checkOut(interventionId, {
         latitude: intervention?.latitude ?? undefined,
         longitude: intervention?.longitude ?? undefined,
-        customTimestamp: customCheckOutTime ? toLocalIso(customCheckOutTime) : undefined,
+        customTimestamp: customCheckOutTime || undefined,
       });
       toast.success(customCheckOutTime ? 'Pointage sortie manuel effectue' : 'Pointage sortie effectue');
       setCustomCheckOutTime('');
