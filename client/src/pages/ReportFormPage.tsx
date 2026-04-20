@@ -92,14 +92,22 @@ export function ReportFormPage() {
           setSites(clientSites);
         }
 
-        // Format times
-        const startTime = intv.startedAt ? new Date(intv.startedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
-        const endTime = intv.completedAt ? new Date(intv.completedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
+        // Format times (Europe/Paris to avoid UTC drift on servers)
+        const parisTime = (iso: string) => new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' });
+        const parisDate = (iso: string) => {
+          const parts = new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(iso));
+          const y = parts.find(p => p.type === 'year')?.value;
+          const m = parts.find(p => p.type === 'month')?.value;
+          const d = parts.find(p => p.type === 'day')?.value;
+          return `${y}-${m}-${d}`;
+        };
+        const startTime = intv.startedAt ? parisTime(intv.startedAt) : '';
+        const endTime = intv.completedAt ? parisTime(intv.completedAt) : '';
         const date = intv.startedAt
-          ? new Date(intv.startedAt).toISOString().slice(0, 10)
+          ? parisDate(intv.startedAt)
           : intv.scheduledAt
-            ? new Date(intv.scheduledAt).toISOString().slice(0, 10)
-            : new Date().toISOString().slice(0, 10);
+            ? parisDate(intv.scheduledAt)
+            : parisDate(new Date().toISOString());
 
         setForm({
           clientName: intv.clientName ?? '',

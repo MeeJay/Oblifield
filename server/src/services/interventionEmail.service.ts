@@ -34,7 +34,7 @@ async function sendEmail(slug: string, interventionId: number): Promise<void> {
   const techPanelLink = await generateTechPanelUrl(intervention.uid) || '';
 
   const scheduledAt = intervention.scheduledAt
-    ? new Date(intervention.scheduledAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    ? new Date(intervention.scheduledAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' })
     : '-';
 
   const variables: Record<string, string> = {

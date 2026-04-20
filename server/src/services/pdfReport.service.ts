@@ -42,13 +42,13 @@ interface ReportData {
 function formatDate(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Paris' });
 }
 
 function formatTime(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
-  return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+  return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' }).replace(':', 'h');
 }
 
 export function generateInterventionPdf(data: ReportData): PDFKit.PDFDocument {
